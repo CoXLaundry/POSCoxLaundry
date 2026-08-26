@@ -212,22 +212,12 @@
                     </div>
                 </div>
 
-                <!-- Filter Kategori Layanan -->
+                <!-- Filter Kategori Layanan (Hanya Kiloan & Satuan) -->
                 <div>
                     <label class="block text-[11px] font-medium text-blue-300 mb-1">Pilih Kategori Layanan</label>
-                    <div class="grid grid-cols-3 gap-2">
-                        <button type="button" onclick="filterKategori('Semua', this)" class="btn-kat bg-cox-cyan/20 border border-cox-cyan text-cox-cyan py-1.5 rounded-lg text-xs font-semibold transition">Semua</button>
-                        <button type="button" onclick="filterKategori('Kiloan', this)" class="btn-kat bg-slate-900 border border-blue-800 text-blue-200 py-1.5 rounded-lg text-xs transition">Kiloan</button>
-                        <button type="button" onclick="filterKategori('Satuan', this)" class="btn-kat bg-slate-900 border border-blue-800 text-blue-200 py-1.5 rounded-lg text-xs transition">Satuan</button>
-                    </div>
-                </div>
-
-                <!-- Pilihan Tipe Pengerjaan (Reguler / Express) -->
-                <div>
-                    <label class="block text-[11px] font-medium text-blue-300 mb-1">Tipe Pengerjaan</label>
                     <div class="grid grid-cols-2 gap-2">
-                        <button type="button" onclick="pilihTipePengerjaan('Reguler', this)" class="btn-tipe bg-cox-cyan/20 border border-cox-cyan text-cox-cyan py-1.5 rounded-lg text-xs font-semibold transition">Reguler</button>
-                        <button type="button" onclick="pilihTipePengerjaan('Express', this)" class="btn-tipe bg-slate-900 border border-blue-800 text-blue-200 py-1.5 rounded-lg text-xs transition">Express (-50% Durasi)</button>
+                        <button type="button" onclick="filterKategori('Kiloan', this)" class="btn-kat bg-cox-cyan/20 border border-cox-cyan text-cox-cyan py-1.5 rounded-lg text-xs font-semibold transition">Kiloan</button>
+                        <button type="button" onclick="filterKategori('Satuan', this)" class="btn-kat bg-slate-900 border border-blue-800 text-blue-200 py-1.5 rounded-lg text-xs transition">Satuan</button>
                     </div>
                 </div>
 
@@ -262,11 +252,11 @@
                     </div>
                 </div>
 
-                <!-- Tanggal Masuk (Tanpa Jam) & Tanggal Selesai (Otomatis / Manual) -->
+                <!-- Tanggal Masuk (Dengan Waktu HH:MM) & Tanggal Selesai -->
                 <div class="grid grid-cols-2 gap-3 pt-2 border-t border-blue-900/50">
                     <div>
                         <label class="block text-[11px] font-medium text-blue-300 mb-1">Tanggal Masuk</label>
-                        <input type="date" id="inputTglMasuk" onchange="hitungOtomatisTanggalSelesai()" class="w-full bg-slate-900 border border-blue-800 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:border-cox-cyan [color-scheme:dark]">
+                        <input type="datetime-local" id="inputTglMasuk" onchange="hitungOtomatisTanggalSelesai()" class="w-full bg-slate-900 border border-blue-800 rounded-xl py-2 px-3 text-[11px] text-white focus:outline-none focus:border-cox-cyan [color-scheme:dark]">
                     </div>
                     <div>
                         <label class="block text-[11px] font-medium text-blue-300 mb-1">Tanggal Selesai (Estimasi)</label>
@@ -312,16 +302,22 @@
     <script>
         const API_URL = 'https://script.google.com/macros/s/AKfycbxq3pGfjN4bLTZ9X-ZxoDdZNkI2goBWGC_3pkP6w0HdImBi5JVB0JnbvAEwm7-MIzZd/exec'; 
 
-        const today = new Date();
-        const todayString = today.toISOString().split('T')[0];
-        document.getElementById('tanggalHariIni').innerText = today.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const currentDateTimeString = `${year}-${month}-${day}T${hours}:${minutes}`;
+
+        document.getElementById('tanggalHariIni').innerText = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
         
-        document.getElementById('inputTglMasuk').value = todayString;
+        // Set default Tanggal Masuk dengan waktu saat ini
+        document.getElementById('inputTglMasuk').value = currentDateTimeString;
 
         let masterLayanan = [];
         let keranjangItem = [];
-        let kategoriAktif = 'Semua';
-        let tipePengerjaanAktif = 'Reguler'; // Reguler / Express
+        let kategoriAktif = 'Kiloan'; // Default kategori saat modal dibuka adalah Kiloan
 
         hitungOtomatisTanggalSelesai();
 
@@ -398,31 +394,22 @@
             renderDropdownLayanan();
         }
 
-        function pilihTipePengerjaan(tipe, element) {
-            tipePengerjaanAktif = tipe;
-            document.querySelectorAll('.btn-tipe').forEach(b => {
-                b.className = "btn-tipe bg-slate-900 border border-blue-800 text-blue-200 py-1.5 rounded-lg text-xs transition";
-            });
-            element.className = "btn-tipe bg-cox-cyan/20 border border-cox-cyan text-cox-cyan py-1.5 rounded-lg text-xs font-semibold transition";
-            hitungOtomatisTanggalSelesai();
-        }
-
-        // Otomasi Tanggal Selesai Berdasarkan Kategori Item di Keranjang (Kiloan=24j, Satuan=36j) + Diskon Express (-50%)
+        // Otomasi Tanggal Selesai Berdasarkan Jenis Layanan (Mendeteksi Reguler/Express dan Kiloan/Satuan)
         function hitungOtomatisTanggalSelesai() {
             const tglMasukVal = document.getElementById('inputTglMasuk').value;
             if (!tglMasukVal) return;
 
             let dateObj = new Date(tglMasukVal);
-            dateObj.setHours(8, 0, 0, 0); // Default jam operasional pagi pukul 08:00
 
-            // Cek apakah di keranjang ada item berstatus 'Satuan'
+            // Cek apakah ada layanan yang mengandung kata 'Express' di keranjang atau di dropdown yang sedang dipilih
+            let adaExpress = keranjangItem.some(item => item.nama.toLowerCase().includes('express'));
             let adaSatuan = keranjangItem.some(item => String(item.kategori).trim().toLowerCase() === 'satuan');
 
-            // Dasar durasi: Satuan = 36 jam, Kiloan murni = 24 jam
+            // Durasi dasar: Kiloan Reguler = 24 jam, Satuan Reguler = 36 jam
             let durasiJam = adaSatuan ? 36 : 24;
 
-            // Jika tipe pengerjaan Express, durasi dipangkas 50% (18 jam untuk satuan, 12 jam untuk kiloan)
-            if (tipePengerjaanAktif === 'Express') {
+            // Jika ada layanan Express, durasi dipangkas 50% (12 jam untuk kiloan, 18 jam untuk satuan)
+            if (adaExpress) {
                 durasiJam = durasiJam / 2;
             }
 
@@ -441,10 +428,7 @@
             const select = document.getElementById('inputLayanan');
             select.innerHTML = '<option value="" disabled selected>Pilih layanan...</option>';
             
-            let filtered = masterLayanan;
-            if (kategoriAktif !== 'Semua') {
-                filtered = masterLayanan.filter(item => String(item.Kategori).trim().toLowerCase() === kategoriAktif.toLowerCase());
-            }
+            let filtered = masterLayanan.filter(item => String(item.Kategori).trim().toLowerCase() === kategoriAktif.toLowerCase());
 
             filtered.forEach(item => {
                 let rawHarga = item.Harga !== undefined && item.Harga !== "" ? item.Harga : "0";
@@ -459,7 +443,7 @@
                 opt.value = item.Nama_Layanan;
                 opt.setAttribute('data-harga', harga);
                 opt.setAttribute('data-kategori', item.Kategori || 'Kiloan');
-                opt.innerText = `${item.Nama_Layanan} (${item.Kategori || 'Umum'}) - Rp ${harga.toLocaleString('id-ID')}`;
+                opt.innerText = `${item.Nama_Layanan} - Rp ${harga.toLocaleString('id-ID')}`;
                 select.appendChild(opt);
             });
         }
@@ -495,7 +479,7 @@
             jumlahInput.value = '';
 
             renderKeranjang();
-            hitungOtomatisTanggalSelesai(); // Update otomatis tanggal selesai jika item satuan ditambahkan
+            hitungOtomatisTanggalSelesai(); // Update estimasi waktu otomatis sesuai item yang dimasukkan
         }
 
         function hapusItemKeranjang(index) {
@@ -542,7 +526,7 @@
             let antrean = 0;
 
             dataTransaksi.forEach(trx => {
-                if (trx.Tanggal_Masuk && String(trx.Tanggal_Masuk).includes(todayString)) {
+                if (trx.Tanggal_Masuk && String(trx.Tanggal_Masuk).includes(currentDateTimeString.split('T')[0])) {
                     pendapatan += parseFloat(trx.Total_Harga) || 0;
                 }
                 if (trx.Status && trx.Status.toLowerCase() !== 'selesai' && trx.Status.toLowerCase() !== 'diambil') {
@@ -644,7 +628,7 @@
             document.getElementById('inputNamaPelanggan').value = '';
             document.getElementById('inputNoHP').value = '';
             document.getElementById('inputJumlah').value = '';
-            document.getElementById('inputTglMasuk').value = todayString;
+            document.getElementById('inputTglMasuk').value = currentDateTimeString;
             hitungOtomatisTanggalSelesai();
             document.getElementById('inputMetodePembayaran').value = '';
             keranjangItem = [];
@@ -679,7 +663,7 @@
                 return;
             }
 
-            let gabunganLayanan = `[${tipePengerjaanAktif}] ` + keranjangItem.map(item => `${item.nama} (${item.qty})`).join(', ');
+            let gabunganLayanan = keranjangItem.map(item => `${item.nama} (${item.qty})`).join(', ');
             let totalHargaKeseluruhan = keranjangItem.reduce((sum, item) => sum + item.subtotal, 0);
 
             const btn = document.getElementById('btnSimpanPesanan');
