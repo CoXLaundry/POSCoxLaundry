@@ -1,56 +1,36 @@
-<<<<<<< HEAD
-const CACHE_NAME = 'cox-pos-v1';
+const CACHE_NAME = 'cox-pos-v2'; // Naikkan versi dari v1 ke v2
 const urlsToCache = [
   './',
   './index.html',
   './manifest.json'
 ];
 
-// Install Service Worker
+// Install Service Worker & Hapus Cache Lama
 self.addEventListener('install', event => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => {
-        return cache.addAll(urlsToCache);
-      })
+      .then(cache => cache.addAll(urlsToCache))
   );
 });
 
-// Fetch dari Cache
-self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        // Jika ada di cache, gunakan itu. Jika tidak, ambil dari network
-        return response || fetch(event.request);
-      })
-  );
-=======
-const CACHE_NAME = 'cox-pos-v1';
-const urlsToCache = [
-  './',
-  './index.html',
-  './manifest.json'
-];
-
-// Install Service Worker
-self.addEventListener('install', event => {
+self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        return cache.addAll(urlsToCache);
-      })
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    }).then(() => self.clients.claim())
   );
 });
 
-// Fetch dari Cache
+// Fetch dari Network dulu, fallback ke Cache
 self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        // Jika ada di cache, gunakan itu. Jika tidak, ambil dari network
-        return response || fetch(event.request);
-      })
+    fetch(event.request).catch(() => caches.match(event.request))
   );
->>>>>>> f2600f1362997388c97a5b59960e10652e7ff3fe
 });
