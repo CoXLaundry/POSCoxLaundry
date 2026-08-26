@@ -207,12 +207,12 @@
                 <!-- Data Pelanggan -->
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-[11px] font-medium text-blue-300 mb-1">Nama Pelanggan</label>
-                        <input type="text" id="inputNamaPelanggan" class="w-full bg-slate-900 border border-blue-800/80 rounded-xl py-2.5 px-3 text-xs text-white focus:outline-none focus:border-cox-cyan" placeholder="Nama...">
+                        <label class="block text-[11px] font-medium text-blue-300 mb-1">No. WhatsApp</label>
+                        <input type="tel" id="inputNoHP" oninput="cekPelangganByHP()" class="w-full bg-slate-900 border border-blue-800/80 rounded-xl py-2.5 px-3 text-xs text-white focus:outline-none focus:border-cox-cyan" placeholder="08...">
                     </div>
                     <div>
-                        <label class="block text-[11px] font-medium text-blue-300 mb-1">No. WhatsApp</label>
-                        <input type="tel" id="inputNoHP" class="w-full bg-slate-900 border border-blue-800/80 rounded-xl py-2.5 px-3 text-xs text-white focus:outline-none focus:border-cox-cyan" placeholder="08...">
+                        <label class="block text-[11px] font-medium text-blue-300 mb-1">Nama Pelanggan</label>
+                        <input type="text" id="inputNamaPelanggan" class="w-full bg-slate-900 border border-blue-800/80 rounded-xl py-2.5 px-3 text-xs text-white focus:outline-none focus:border-cox-cyan" placeholder="Nama...">
                     </div>
                 </div>
 
@@ -302,7 +302,7 @@
         }
     </script>
 
-    <!-- LOGIKA UTAMA APLIKASI & KEAMANAN -->
+    <!-- LOGIKA UTAMA APLIKASI & DATABASE PELANGGAN -->
     <script>
         const API_URL = 'https://script.google.com/macros/s/AKfycbxq3pGfjN4bLTZ9X-ZxoDdZNkI2goBWGC_3pkP6w0HdImBi5JVB0JnbvAEwm7-MIzZd/exec'; 
 
@@ -318,6 +318,7 @@
         document.getElementById('inputTglMasuk').value = currentDateTimeString;
 
         let masterLayanan = [];
+        let masterPelanggan = [];
         let keranjangItem = [];
         let kategoriAktif = 'Kiloan';
         let percobaanLogin = 0;
@@ -334,7 +335,7 @@
         masterLayanan = defaultLayanan;
         renderDropdownLayanan();
 
-        // Cek Sesi Login saat halaman dimuat (Menggunakan sessionStorage agar aman dan tidak reset saat refresh)
+        // Cek Sesi Login saat halaman dimuat
         window.addEventListener('DOMContentLoaded', () => {
             const sesiAktif = sessionStorage.getItem('cox_logged_in');
             const namaKasirSesi = sessionStorage.getItem('cox_kasir');
@@ -396,6 +397,7 @@
             syncIcon.classList.add('fa-spin');
 
             try {
+                // Ambil Data Layanan
                 const resLayanan = await fetch(`${API_URL}?sheetName=Layanan`);
                 const jsonLayanan = await resLayanan.json();
                 if (jsonLayanan.data && jsonLayanan.data.length > 0) {
@@ -403,6 +405,14 @@
                     renderDropdownLayanan();
                 }
 
+                // Ambil Data Pelanggan untuk Auto-Complete
+                const resPelanggan = await fetch(`${API_URL}?sheetName=Pelanggan`);
+                const jsonPelanggan = await resPelanggan.json();
+                if (jsonPelanggan.data) {
+                    masterPelanggan = jsonPelanggan.data;
+                }
+
+                // Ambil Data Transaksi
                 const resTransaksi = await fetch(`${API_URL}?sheetName=Transaksi`);
                 const jsonTransaksi = await resTransaksi.json();
                 
@@ -412,6 +422,19 @@
                 console.log("Menggunakan data lokal/fallback.");
             } finally {
                 syncIcon.classList.remove('fa-spin');
+            }
+        }
+
+        // Fungsi Auto-Complete: Cek Pelanggan Berdasarkan No HP
+        function cekPelangganByHP() {
+            const noHpInput = document.getElementById('inputNoHP').value.trim();
+            const namaInput = document.getElementById('inputNamaPelanggan');
+
+            if (noHpInput.length < 3) return;
+
+            const found = masterPelanggan.find(p => String(p.No_HP).trim() === noHpInput);
+            if (found && found.Nama) {
+                namaInput.value = found.Nama;
             }
         }
 
@@ -603,7 +626,6 @@
             container.innerHTML = html;
         }
 
-        // Proses Login dengan Proteksi Brute-Force / Burst Password (Anti Asal-Asalan)
         function prosesLogin(e) {
             e.preventDefault();
             const user = document.getElementById('username').value;
@@ -616,9 +638,7 @@
             btn.disabled = true;
             
             setTimeout(() => {
-                // Di sini Anda bisa menyesuaikan validasi kredensial (sementara dibebaskan asal terisi, atau sesuaikan dengan rule Anda)
                 if (user.trim() !== "" && pass.trim() !== "") {
-                    // Simpan sesi ke sessionStorage (otomatis terhapus jika tab ditutup)
                     sessionStorage.setItem('cox_logged_in', 'true');
                     sessionStorage.setItem('cox_kasir', user);
 
@@ -629,7 +649,7 @@
                         document.getElementById('loginScreen').classList.add('hidden');
                         const app = document.getElementById('appContainer');
                         app.classList.remove('hidden');
-                        setTimeout(() => app.classList.remove('opacity-0'), 50);
+                        app.classList.remove('opacity-0'), 50;
                         sinkronisasiData();
                     }, 500);
                 } else {
@@ -720,14 +740,14 @@
             }
 
             const noInv = document.getElementById('noInvoiceDisplay').innerText;
-            const nama = document.getElementById('inputNamaPelanggan').value;
-            const noHp = document.getElementById('inputNoHP').value;
+            const nama = document.getElementById('inputNamaPelanggan').value.trim();
+            const noHp = document.getElementById('inputNoHP').value.trim();
             const tglMasuk = document.getElementById('inputTglMasuk').value;
             const tglSelesai = document.getElementById('inputTglSelesai').value;
             const metodeBayar = document.getElementById('inputMetodePembayaran').value;
 
-            if (!nama || keranjangItem.length === 0 || !tglSelesai || !metodeBayar) {
-                alert('Mohon lengkapi nama pelanggan, masukkan minimal 1 item layanan ke keranjang, tentukan tanggal selesai, dan pilih pembayaran!'); 
+            if (!nama || !noHp || keranjangItem.length === 0 || !tglSelesai || !metodeBayar) {
+                alert('Mohon lengkapi No. WhatsApp, Nama pelanggan, masukkan minimal 1 item layanan, tanggal selesai, dan metode pembayaran!'); 
                 return;
             }
 
@@ -739,7 +759,8 @@
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
             btn.disabled = true;
 
-            const payload = {
+            // 1. Simpan Transaksi ke Spreadsheet
+            const payloadTransaksi = {
                 sheetName: "Transaksi", action: "insert",
                 rowData: {
                     "No_Invoice": noInv, 
@@ -755,14 +776,37 @@
                 }
             };
 
+            // 2. Cek dan Simpan/Update Pelanggan Otomatis ke Sheet Pelanggan
+            let existingPelanggan = masterPelanggan.find(p => String(p.No_HP).trim() === noHp);
+            let totalOrderBaru = existingPelanggan ? (parseInt(existingPelanggan.Total_Order || 0) + 1) : 1;
+            let idPelanggan = existingPelanggan ? existingPelanggan.ID_Pelanggan : "CUST" + Date.now().toString().slice(-6);
+
+            const payloadPelanggan = {
+                sheetName: "Pelanggan", action: "insert",
+                rowData: {
+                    "ID_Pelanggan": idPelanggan,
+                    "Nama": nama,
+                    "No_HP": noHp,
+                    "Total_Order": totalOrderBaru
+                }
+            };
+
             try {
+                // Kirim transaksi
                 await fetch(API_URL, {
                     method: 'POST', mode: 'no-cors', cache: 'no-cache',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify(payloadTransaksi)
                 });
                 
-                alert(`Transaksi ${noInv} Berhasil Disimpan!`);
+                // Kirim / perbarui data pelanggan secara background
+                await fetch(API_URL, {
+                    method: 'POST', mode: 'no-cors', cache: 'no-cache',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payloadPelanggan)
+                });
+
+                alert(`Transaksi ${noInv} Berhasil Disimpan & Pelanggan Tercatat!`);
                 tutupModalPesanan();
                 sinkronisasiData();
             } catch (error) {
