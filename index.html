@@ -252,7 +252,7 @@
                     </div>
                 </div>
 
-                <!-- Tanggal Masuk (Dengan Waktu HH:MM) & Tanggal Selesai -->
+                <!-- Tanggal Masuk & Selesai -->
                 <div class="grid grid-cols-2 gap-3 pt-2 border-t border-blue-900/50">
                     <div>
                         <label class="block text-[11px] font-medium text-blue-300 mb-1">Tanggal Masuk</label>
@@ -316,7 +316,7 @@
 
         let masterLayanan = [];
         let keranjangItem = [];
-        let kategoriAktif = 'Kiloan'; // Default awal Kiloan
+        let kategoriAktif = 'Kiloan';
 
         hitungOtomatisTanggalSelesai();
 
@@ -393,23 +393,25 @@
             renderDropdownLayanan();
         }
 
-        // Otomasi Tanggal Selesai dengan Membaca Kategori & Kata 'Express' pada Keranjang
+        // Otomasi Tanggal Selesai: 
+        // - Kiloan Reguler = 24 jam
+        // - Kiloan Express = 12 jam
+        // - Satuan (Semua Satuan) = 72 jam (3 hari)
         function hitungOtomatisTanggalSelesai() {
             const tglMasukVal = document.getElementById('inputTglMasuk').value;
             if (!tglMasukVal) return;
 
             let dateObj = new Date(tglMasukVal);
 
-            // Cek apakah item di keranjang memiliki kategori Satuan (menggunakan properti .kategori dengan huruf kecil sesuai penyimpanan item keranjang)
             let adaSatuan = keranjangItem.some(item => String(item.kategori).trim().toLowerCase() === 'satuan');
             let adaExpress = keranjangItem.some(item => item.nama.toLowerCase().includes('express'));
 
-            // Durasi dasar: Kiloan = 24 jam, Satuan = 36 jam
-            let durasiJam = adaSatuan ? 36 : 24;
+            let durasiJam = 24; // Default Kiloan Reguler
 
-            // Jika ada layanan express, durasi dipangkas 50%
-            if (adaExpress) {
-                durasiJam = durasiJam / 2;
+            if (adaSatuan) {
+                durasiJam = 72; // Satuan selalu 72 jam (3 hari)
+            } else if (adaExpress) {
+                durasiJam = 12; // Kiloan Express
             }
 
             dateObj.setTime(dateObj.getTime() + (durasiJam * 60 * 60 * 1000));
@@ -478,7 +480,7 @@
             jumlahInput.value = '';
 
             renderKeranjang();
-            hitungOtomatisTanggalSelesai(); // Update estimasi waktu otomatis
+            hitungOtomatisTanggalSelesai(); 
         }
 
         function hapusItemKeranjang(index) {
