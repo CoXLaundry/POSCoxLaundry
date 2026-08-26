@@ -312,12 +312,11 @@
 
         document.getElementById('tanggalHariIni').innerText = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
         
-        // Set default Tanggal Masuk dengan waktu saat ini
         document.getElementById('inputTglMasuk').value = currentDateTimeString;
 
         let masterLayanan = [];
         let keranjangItem = [];
-        let kategoriAktif = 'Kiloan'; // Default kategori saat modal dibuka adalah Kiloan
+        let kategoriAktif = 'Kiloan'; // Default awal Kiloan
 
         hitungOtomatisTanggalSelesai();
 
@@ -394,21 +393,21 @@
             renderDropdownLayanan();
         }
 
-        // Otomasi Tanggal Selesai Berdasarkan Jenis Layanan (Mendeteksi Reguler/Express dan Kiloan/Satuan)
+        // Otomasi Tanggal Selesai dengan Membaca Kategori & Kata 'Express' pada Keranjang
         function hitungOtomatisTanggalSelesai() {
             const tglMasukVal = document.getElementById('inputTglMasuk').value;
             if (!tglMasukVal) return;
 
             let dateObj = new Date(tglMasukVal);
 
-            // Cek apakah ada layanan yang mengandung kata 'Express' di keranjang atau di dropdown yang sedang dipilih
-            let adaExpress = keranjangItem.some(item => item.nama.toLowerCase().includes('express'));
+            // Cek apakah item di keranjang memiliki kategori Satuan (menggunakan properti .kategori dengan huruf kecil sesuai penyimpanan item keranjang)
             let adaSatuan = keranjangItem.some(item => String(item.kategori).trim().toLowerCase() === 'satuan');
+            let adaExpress = keranjangItem.some(item => item.nama.toLowerCase().includes('express'));
 
-            // Durasi dasar: Kiloan Reguler = 24 jam, Satuan Reguler = 36 jam
+            // Durasi dasar: Kiloan = 24 jam, Satuan = 36 jam
             let durasiJam = adaSatuan ? 36 : 24;
 
-            // Jika ada layanan Express, durasi dipangkas 50% (12 jam untuk kiloan, 18 jam untuk satuan)
+            // Jika ada layanan express, durasi dipangkas 50%
             if (adaExpress) {
                 durasiJam = durasiJam / 2;
             }
@@ -479,7 +478,7 @@
             jumlahInput.value = '';
 
             renderKeranjang();
-            hitungOtomatisTanggalSelesai(); // Update estimasi waktu otomatis sesuai item yang dimasukkan
+            hitungOtomatisTanggalSelesai(); // Update estimasi waktu otomatis
         }
 
         function hapusItemKeranjang(index) {
