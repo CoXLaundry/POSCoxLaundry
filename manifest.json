@@ -1,0 +1,21 @@
+{
+    "name": "Cox Laundry POS App",
+    "short_name": "Cox POS",
+    "description": "Aplikasi Kasir Laundry Berbasis Web Mobile",
+    "start_url": "./index.html",
+    "display": "standalone",
+    "background_color": "#02024D",
+    "theme_color": "#02024D",
+    "icons": [
+      {
+        "src": "https://ui-avatars.com/api/?name=Cox+Laundry&background=00E5FF&color=02024D&size=192",
+        "sizes": "192x192",
+        "type": "image/png"
+      },
+      {
+        "src": "https://ui-avatars.com/api/?name=Cox+Laundry&background=00E5FF&color=02024D&size=512",
+        "sizes": "512x512",
+        "type": "image/png"
+      }
+    ]
+}
