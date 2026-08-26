@@ -210,7 +210,7 @@
                     </div>
                 </div>
 
-                <!-- Layanan (Dinamis dengan Fallback) -->
+                <!-- Layanan -->
                 <div>
                     <label class="block text-xs font-medium text-blue-300 mb-1.5">Pilih Layanan</label>
                     <select id="inputLayanan" onchange="hitungTotal()" class="w-full bg-slate-900 border border-blue-800/80 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:border-cox-cyan appearance-none">
@@ -279,15 +279,14 @@
         document.getElementById('inputTglMasuk').value = todayString;
         document.getElementById('inputTglSelesai').min = todayString;
 
-        // Data Layanan Default (Fallback jika CORS memblokir GET ke Apps Script)
+        // Fallback data layanan jika offline / CORS terbatas
         const defaultLayanan = [
-            { Nama_Layanan: "Cuci Komplit Kiloan", Harga: 7000 },
-            { Nama_Layanan: "Cuci Kering Saja", Harga: 5000 },
-            { Nama_Layanan: "Setrika Saja", Harga: 5000 },
-            { Nama_Layanan: "Selimut/Bedcover", Harga: 25000 }
+            { Nama_Layanan: "Cuci Setrika Reguler", Kategori: "7.000" },
+            { Nama_Layanan: "Cuci Setrika (Express)", Kategori: "14.000" },
+            { Nama_Layanan: "Setrika Reguler", Kategori: "5.000" },
+            { Nama_Layanan: "Bed Cover", Kategori: "25.000" }
         ];
 
-        // Jalankan render awal dengan layanan default agar dropdown langsung terisi tanpa menunggu
         renderLayanan(defaultLayanan);
 
         function switchTab(tab) {
@@ -324,21 +323,19 @@
             syncIcon.classList.add('fa-spin');
 
             try {
-                // Coba ambil layanan dari Sheet
                 const resLayanan = await fetch(`${API_URL}?sheetName=Layanan`);
                 const jsonLayanan = await resLayanan.json();
                 if (jsonLayanan.data && jsonLayanan.data.length > 0) {
                     renderLayanan(jsonLayanan.data);
                 }
 
-                // Ambil transaksi
                 const resTransaksi = await fetch(`${API_URL}?sheetName=Transaksi`);
                 const jsonTransaksi = await resTransaksi.json();
                 
                 kalkulasiDashboard(jsonTransaksi.data || []);
                 renderDaftarPesanan(jsonTransaksi.data || []);
             } catch (error) {
-                console.log("Menggunakan data lokal/fallback karena pembatasan CORS GET.");
+                console.log("Menggunakan data lokal/fallback.");
             } finally {
                 syncIcon.classList.remove('fa-spin');
             }
@@ -348,10 +345,21 @@
             const select = document.getElementById('inputLayanan');
             select.innerHTML = '<option value="" disabled selected>Pilih jenis layanan...</option>';
             dataLayanan.forEach(item => {
+                // Tangkap nilai harga dari item.Harga atau item.Kategori (menyesuaikan struktur spreadsheet)
+                let rawHarga = item.Harga !== undefined && item.Harga !== "" ? item.Harga : item.Kategori;
+                let harga = 0;
+                
+                if (typeof rawHarga === 'string') {
+                    // Hapus titik ribuan (misal "7.000" jadi 7000)
+                    harga = parseInt(rawHarga.replace(/\./g, '')) || 0;
+                } else {
+                    harga = parseInt(rawHarga) || 0;
+                }
+
                 const opt = document.createElement('option');
                 opt.value = item.Nama_Layanan;
-                opt.setAttribute('data-harga', item.Harga);
-                opt.innerText = `${item.Nama_Layanan} - Rp ${parseInt(item.Harga).toLocaleString('id-ID')}`;
+                opt.setAttribute('data-harga', harga);
+                opt.innerText = `${item.Nama_Layanan} - Rp ${harga.toLocaleString('id-ID')}`;
                 select.appendChild(opt);
             });
         }
@@ -485,7 +493,7 @@
             const jumlah = parseFloat(document.getElementById('inputJumlah').value) || 0;
             
             if (layananSelect.selectedIndex > 0) {
-                const hargaPerSatuan = parseFloat(layananSelect.options[layananSelect.selectedIndex].getAttribute('data-harga'));
+                const hargaPerSatuan = parseFloat(layananSelect.options[layananSelect.selectedIndex].getAttribute('data-harga')) || 0;
                 currentTotalHarga = hargaPerSatuan * jumlah;
                 document.getElementById('displayTotalHarga').innerText = 'Rp ' + currentTotalHarga.toLocaleString('id-ID');
             } else {
