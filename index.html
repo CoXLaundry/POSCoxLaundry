@@ -185,9 +185,9 @@
             </button>
         </footer>
 
-        <!-- MODAL BUAT PESANAN -->
+        <!-- MODAL BUAT PESANAN (DENGAN MULTI-PESANAN & FILTER KATEGORI) -->
         <div id="modalPesananOverlay" class="absolute inset-0 bg-black/60 z-40 hidden backdrop-blur-sm transition-opacity opacity-0" onclick="tutupModalPesanan()"></div>
-        <div id="modalPesananContent" class="absolute bottom-0 left-0 right-0 bg-cox-bg rounded-t-3xl z-50 slide-up h-[85%] flex flex-col border-t border-blue-800">
+        <div id="modalPesananContent" class="absolute bottom-0 left-0 right-0 bg-cox-bg rounded-t-3xl z-50 slide-up h-[90%] flex flex-col border-t border-blue-800">
             <div class="w-full flex justify-center py-3" onclick="tutupModalPesanan()">
                 <div class="w-12 h-1.5 bg-blue-800 rounded-full"></div>
             </div>
@@ -197,63 +197,93 @@
                 <span id="noInvoiceDisplay" class="text-xs bg-cox-card text-cox-cyan px-2 py-1 rounded-lg border border-blue-800">INV-...</span>
             </div>
 
-            <div class="flex-1 overflow-y-auto p-6 space-y-5 no-scrollbar">
-                <!-- Nama & No HP -->
-                <div class="grid grid-cols-2 gap-4">
+            <!-- Form Pesanan (Scrollable) -->
+            <div class="flex-1 overflow-y-auto p-6 space-y-4 no-scrollbar">
+                
+                <!-- Data Pelanggan -->
+                <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-medium text-blue-300 mb-1.5">Nama Pelanggan</label>
-                        <input type="text" id="inputNamaPelanggan" class="w-full bg-slate-900 border border-blue-800/80 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:border-cox-cyan">
+                        <label class="block text-[11px] font-medium text-blue-300 mb-1">Nama Pelanggan</label>
+                        <input type="text" id="inputNamaPelanggan" class="w-full bg-slate-900 border border-blue-800/80 rounded-xl py-2.5 px-3 text-xs text-white focus:outline-none focus:border-cox-cyan" placeholder="Nama...">
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-blue-300 mb-1.5">No. WhatsApp</label>
-                        <input type="tel" id="inputNoHP" class="w-full bg-slate-900 border border-blue-800/80 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:border-cox-cyan" placeholder="08...">
+                        <label class="block text-[11px] font-medium text-blue-300 mb-1">No. WhatsApp</label>
+                        <input type="tel" id="inputNoHP" class="w-full bg-slate-900 border border-blue-800/80 rounded-xl py-2.5 px-3 text-xs text-white focus:outline-none focus:border-cox-cyan" placeholder="08...">
                     </div>
                 </div>
 
-                <!-- Layanan -->
+                <!-- Filter Kategori Layanan -->
                 <div>
-                    <label class="block text-xs font-medium text-blue-300 mb-1.5">Pilih Layanan</label>
-                    <select id="inputLayanan" onchange="hitungTotal()" class="w-full bg-slate-900 border border-blue-800/80 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:border-cox-cyan appearance-none">
-                        <option value="" disabled selected>Pilih jenis layanan...</option>
-                    </select>
-                </div>
-
-                <!-- Tanggal Masuk & Keluar -->
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-medium text-blue-300 mb-1.5">Tanggal Masuk</label>
-                        <input type="date" id="inputTglMasuk" class="w-full bg-slate-900 border border-blue-800/80 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:border-cox-cyan [color-scheme:dark]">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-blue-300 mb-1.5">Tanggal Selesai</label>
-                        <input type="date" id="inputTglSelesai" class="w-full bg-slate-900 border border-blue-800/80 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:border-cox-cyan [color-scheme:dark]">
+                    <label class="block text-[11px] font-medium text-blue-300 mb-1">Pilih Kategori Layanan</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button type="button" onclick="filterKategori('Semua', this)" class="btn-kat bg-cox-cyan/20 border border-cox-cyan text-cox-cyan py-1.5 rounded-lg text-xs font-semibold transition">Semua</button>
+                        <button type="button" onclick="filterKategori('Kiloan', this)" class="btn-kat bg-slate-900 border border-blue-800 text-blue-200 py-1.5 rounded-lg text-xs transition">Kiloan</button>
+                        <button type="button" onclick="filterKategori('Satuan', this)" class="btn-kat bg-slate-900 border border-blue-800 text-blue-200 py-1.5 rounded-lg text-xs transition">Satuan</button>
                     </div>
                 </div>
 
-                <!-- Jumlah & Metode Pembayaran -->
-                <div class="grid grid-cols-2 gap-4">
+                <!-- Pilih Layanan & Jumlah (Multi-Item Input) -->
+                <div class="bg-slate-900/60 p-3.5 rounded-2xl border border-blue-800/50 space-y-3">
                     <div>
-                        <label class="block text-xs font-medium text-blue-300 mb-1.5">Jumlah (Kg/Pcs)</label>
-                        <input type="number" id="inputJumlah" oninput="hitungTotal()" min="1" step="0.1" class="w-full bg-slate-900 border border-blue-800/80 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:border-cox-cyan" placeholder="0">
+                        <label class="block text-[11px] font-medium text-blue-300 mb-1">Jenis Layanan</label>
+                        <select id="inputLayanan" class="w-full bg-slate-900 border border-blue-800 rounded-xl py-2.5 px-3 text-xs text-white focus:outline-none focus:border-cox-cyan appearance-none">
+                            <option value="" disabled selected>Pilih layanan...</option>
+                        </select>
                     </div>
-                    <div>
-                        <label class="block text-xs font-medium text-blue-300 mb-1.5">Metode Pembayaran</label>
-                        <div class="grid grid-cols-2 gap-2">
-                            <button type="button" onclick="pilihPembayaran('Tunai', this)" class="btn-bayar bg-cox-card border border-blue-800 text-white py-2.5 rounded-xl text-xs transition hover:border-cox-cyan focus:bg-cox-cyan/20 focus:border-cox-cyan focus:text-cox-cyan">Tunai</button>
-                            <button type="button" onclick="pilihPembayaran('QRIS', this)" class="btn-bayar bg-cox-card border border-blue-800 text-white py-2.5 rounded-xl text-xs transition hover:border-cox-cyan focus:bg-cox-cyan/20 focus:border-cox-cyan focus:text-cox-cyan">QRIS</button>
+
+                    <div class="grid grid-cols-2 gap-3 items-end">
+                        <div>
+                            <label class="block text-[11px] font-medium text-blue-300 mb-1">Jumlah (Kg / Pcs)</label>
+                            <input type="number" id="inputJumlah" min="0.1" step="0.1" class="w-full bg-slate-900 border border-blue-800 rounded-xl py-2.5 px-3 text-xs text-white focus:outline-none focus:border-cox-cyan" placeholder="0">
                         </div>
-                        <input type="hidden" id="inputMetodePembayaran" value="">
+                        <button type="button" onclick="tambahItemKeranjang()" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-md">
+                            <i class="fa-solid fa-cart-plus"></i> Tambah Item
+                        </button>
                     </div>
                 </div>
+
+                <!-- Keranjang Belanja Aktif (List Item yang Ditambahkan) -->
+                <div>
+                    <div class="flex justify-between items-center mb-1.5">
+                        <label class="block text-[11px] font-medium text-blue-300">Daftar Item Terpilih</label>
+                        <span id="badgeJumlahItem" class="text-[10px] bg-blue-900 text-cox-cyan px-2 py-0.5 rounded-full font-bold">0 Item</span>
+                    </div>
+                    <div id="keranjangContainer" class="space-y-2 max-h-36 overflow-y-auto no-scrollbar border border-blue-900/50 rounded-xl p-2 bg-slate-900/40">
+                        <p class="text-[11px] text-blue-400 text-center py-3 italic">Belum ada item ditambahkan ke pesanan.</p>
+                    </div>
+                </div>
+
+                <!-- Tanggal & Pembayaran -->
+                <div class="grid grid-cols-2 gap-3 pt-2 border-t border-blue-900/50">
+                    <div>
+                        <label class="block text-[11px] font-medium text-blue-300 mb-1">Tanggal Masuk</label>
+                        <input type="date" id="inputTglMasuk" class="w-full bg-slate-900 border border-blue-800 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:border-cox-cyan [color-scheme:dark]">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-medium text-blue-300 mb-1">Tanggal Selesai</label>
+                        <input type="date" id="inputTglSelesai" class="w-full bg-slate-900 border border-blue-800 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:border-cox-cyan [color-scheme:dark]">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-medium text-blue-300 mb-1">Metode Pembayaran</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" onclick="pilihPembayaran('Tunai', this)" class="btn-bayar bg-cox-card border border-blue-800 text-white py-2 rounded-xl text-xs transition hover:border-cox-cyan focus:bg-cox-cyan/20 focus:border-cox-cyan focus:text-cox-cyan">Tunai</button>
+                        <button type="button" onclick="pilihPembayaran('QRIS', this)" class="btn-bayar bg-cox-card border border-blue-800 text-white py-2 rounded-xl text-xs transition hover:border-cox-cyan focus:bg-cox-cyan/20 focus:border-cox-cyan focus:text-cox-cyan">QRIS</button>
+                    </div>
+                    <input type="hidden" id="inputMetodePembayaran" value="">
+                </div>
+                
             </div>
 
-            <div class="bg-cox-card p-5 border-t border-blue-900/60 pb-8 rounded-t-2xl shadow-[0_-10px_20px_rgba(0,0,0,0.3)]">
-                <div class="flex justify-between items-center mb-4">
-                    <span class="text-sm text-blue-200">Total Tagihan</span>
-                    <span id="displayTotalHarga" class="text-2xl font-bold text-cox-cyan">Rp 0</span>
+            <!-- Footer Modal (Total & Submit) -->
+            <div class="bg-cox-card p-4 border-t border-blue-900/60 pb-6 rounded-t-2xl shadow-[0_-10px_20px_rgba(0,0,0,0.3)]">
+                <div class="flex justify-between items-center mb-3">
+                    <span class="text-xs text-blue-200">Total Tagihan Keseluruhan</span>
+                    <span id="displayTotalHarga" class="text-xl font-bold text-cox-cyan">Rp 0</span>
                 </div>
-                <button id="btnSimpanPesanan" onclick="simpanPesanan()" class="w-full bg-cox-cyan text-cox-bg font-bold py-3.5 rounded-xl hover:bg-white transition flex justify-center items-center gap-2 shadow-neon">
-                    <i class="fa-solid fa-check"></i> Simpan Transaksi
+                <button id="btnSimpanPesanan" onclick="simpanPesanan()" class="w-full bg-cox-cyan text-cox-bg font-bold py-3 rounded-xl hover:bg-white transition flex justify-center items-center gap-2 shadow-neon text-sm">
+                    <i class="fa-solid fa-check"></i> Simpan Transaksi (& Proses)
                 </button>
             </div>
         </div>
@@ -279,15 +309,21 @@
         document.getElementById('inputTglMasuk').value = todayString;
         document.getElementById('inputTglSelesai').min = todayString;
 
-        // Fallback data layanan
+        // Global master data layanan & keranjang aktif
+        let masterLayanan = [];
+        let keranjangItem = [];
+        let kategoriAktif = 'Semua';
+
+        // Fallback data layanan jika offline / sinkronisasi awal
         const defaultLayanan = [
-            { Nama_Layanan: "Cuci Setrika Reguler", Harga: "7.000" },
-            { Nama_Layanan: "Cuci Setrika (Express)", Harga: "14.000" },
-            { Nama_Layanan: "Setrika Reguler", Harga: "5.000" },
-            { Nama_Layanan: "Bed Cover", Harga: "25.000" }
+            { Nama_Layanan: "Cuci Setrika Reguler", Kategori: "Kiloan", Harga: "7.000" },
+            { Nama_Layanan: "Cuci Setrika (Express)", Kategori: "Kiloan", Harga: "14.000" },
+            { Nama_Layanan: "Setrika Reguler", Kategori: "Kiloan", Harga: "5.000" },
+            { Nama_Layanan: "Bed Cover", Kategori: "Satuan", Harga: "25.000" }
         ];
 
-        renderLayanan(defaultLayanan);
+        masterLayanan = defaultLayanan;
+        renderDropdownLayanan();
         sinkronisasiData();
 
         function switchTab(tab) {
@@ -327,7 +363,8 @@
                 const resLayanan = await fetch(`${API_URL}?sheetName=Layanan`);
                 const jsonLayanan = await resLayanan.json();
                 if (jsonLayanan.data && jsonLayanan.data.length > 0) {
-                    renderLayanan(jsonLayanan.data);
+                    masterLayanan = jsonLayanan.data;
+                    renderDropdownLayanan();
                 }
 
                 const resTransaksi = await fetch(`${API_URL}?sheetName=Transaksi`);
@@ -342,25 +379,112 @@
             }
         }
 
-        function renderLayanan(dataLayanan) {
+        // Filter Kategori (Semua / Kiloan / Satuan)
+        function filterKategori(kategori, element) {
+            kategoriAktif = kategori;
+            document.querySelectorAll('.btn-kat').forEach(b => {
+                b.className = "btn-kat bg-slate-900 border border-blue-800 text-blue-200 py-1.5 rounded-lg text-xs transition";
+            });
+            element.className = "btn-kat bg-cox-cyan/20 border border-cox-cyan text-cox-cyan py-1.5 rounded-lg text-xs font-semibold transition";
+            renderDropdownLayanan();
+        }
+
+        function renderDropdownLayanan() {
             const select = document.getElementById('inputLayanan');
-            select.innerHTML = '<option value="" disabled selected>Pilih jenis layanan...</option>';
-            dataLayanan.forEach(item => {
-                // Sekarang mengambil langsung dari properti 'Harga' sesuai pertukaran kolom spreadsheet Anda
-                let rawHarga = item.Harga !== undefined && item.Harga !== "" ? item.Harga : item.Kategori;
+            select.innerHTML = '<option value="" disabled selected>Pilih layanan...</option>';
+            
+            let filtered = masterLayanan;
+            if (kategoriAktif !== 'Semua') {
+                filtered = masterLayanan.filter(item => String(item.Kategori).trim().toLowerCase() === kategoriAktif.toLowerCase());
+            }
+
+            filtered.forEach(item => {
+                let rawHarga = item.Harga !== undefined && item.Harga !== "" ? item.Harga : "0";
                 let harga = 0;
-                
-                if (rawHarga !== undefined && rawHarga !== null) {
-                    let hargaStr = String(rawHarga).replace(/\./g, '').replace(/,/g, '');
-                    harga = parseInt(hargaStr) || 0;
+                if (typeof rawHarga === 'string') {
+                    harga = parseInt(rawHarga.replace(/\./g, '').replace(/,/g, '')) || 0;
+                } else {
+                    harga = parseInt(rawHarga) || 0;
                 }
 
                 const opt = document.createElement('option');
                 opt.value = item.Nama_Layanan;
                 opt.setAttribute('data-harga', harga);
-                opt.innerText = `${item.Nama_Layanan} - Rp ${harga.toLocaleString('id-ID')}`;
+                opt.innerText = `${item.Nama_Layanan} (${item.Kategori || 'Umum'}) - Rp ${harga.toLocaleString('id-ID')}`;
                 select.appendChild(opt);
             });
+        }
+
+        // FUNGSI KERANJANG / MULTI-ITEM
+        function tambahItemKeranjang() {
+            const select = document.getElementById('inputLayanan');
+            const jumlahInput = document.getElementById('inputJumlah');
+            
+            if (select.selectedIndex <= 0) {
+                alert('Silakan pilih jenis layanan terlebih dahulu!');
+                return;
+            }
+            const qty = parseFloat(jumlahInput.value);
+            if (!qty || qty <= 0) {
+                alert('Masukkan jumlah (Kg/Pcs) dengan benar!');
+                return;
+            }
+
+            const namaLayanan = select.value;
+            const hargaSatuan = parseFloat(select.options[select.selectedIndex].getAttribute('data-harga')) || 0;
+            const subtotal = hargaSatuan * qty;
+
+            // Masukkan ke array keranjang
+            keranjangItem.push({
+                nama: namaLayanan,
+                qty: qty,
+                hargaSatuan: hargaSatuan,
+                subtotal: subtotal
+            });
+
+            // Reset input layanan & jumlah
+            select.selectedIndex = 0;
+            jumlahInput.value = '';
+
+            renderKeranjang();
+        }
+
+        function hapusItemKeranjang(index) {
+            keranjangItem.splice(index, 1);
+            renderKeranjang();
+        }
+
+        function renderKeranjang() {
+            const container = document.getElementById('keranjangContainer');
+            const badge = document.getElementById('badgeJumlahItem');
+            badge.innerText = `${keranjangItem.length} Item`;
+
+            if (keranjangItem.length === 0) {
+                container.innerHTML = `<p class="text-[11px] text-blue-400 text-center py-3 italic">Belum ada item ditambahkan ke pesanan.</p>`;
+                document.getElementById('displayTotalHarga').innerText = 'Rp 0';
+                return;
+            }
+
+            let html = '';
+            let totalKeseluruhan = 0;
+
+            keranjangItem.forEach((item, idx) => {
+                totalKeseluruhan += item.subtotal;
+                html += `
+                <div class="flex justify-between items-center bg-slate-900 border border-blue-800/60 p-2.5 rounded-xl text-xs">
+                    <div class="flex-1 pr-2">
+                        <p class="font-semibold text-white">${item.nama}</p>
+                        <p class="text-[10px] text-blue-300">${item.qty} x Rp ${item.hargaSatuan.toLocaleString('id-ID')}</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="font-bold text-cox-cyan">Rp ${item.subtotal.toLocaleString('id-ID')}</span>
+                        <button type="button" onclick="hapusItemKeranjang(${idx})" class="text-rose-400 hover:text-rose-300 p-1"><i class="fa-solid fa-trash-can"></i></button>
+                    </div>
+                </div>`;
+            });
+
+            container.innerHTML = html;
+            document.getElementById('displayTotalHarga').innerText = 'Rp ' + totalKeseluruhan.toLocaleString('id-ID');
         }
 
         function kalkulasiDashboard(dataTransaksi) {
@@ -407,8 +531,8 @@
                     </div>
                     <div class="flex justify-between items-end mt-1">
                         <div class="text-[11px] text-blue-200">
-                            <p><i class="fa-solid fa-shirt w-4 text-cox-cyan"></i> ${trx.Layanan || ''} (${trx.Jumlah_Kiloan || 0})</p>
-                            <p><i class="fa-regular fa-calendar-check w-4 text-cox-cyan"></i> ${trx.Tanggal_Selesai ? String(trx.Tanggal_Selesai).split('T')[0] : ''}</p>
+                            <p><i class="fa-solid fa-shirt w-4 text-cox-cyan"></i> ${trx.Layanan || ''}</p>
+                            <p><i class="fa-regular fa-calendar-check w-4 text-cox-cyan"></i> Selesai: ${trx.Tanggal_Selesai ? String(trx.Tanggal_Selesai).split('T')[0] : ''}</p>
                         </div>
                         <span class="font-bold text-sm text-cox-cyan">Rp ${parseFloat(trx.Total_Harga || 0).toLocaleString('id-ID')}</span>
                     </div>
@@ -460,19 +584,21 @@
             const content = document.getElementById('modalPesananContent');
             content.classList.remove('active');
             overlay.classList.add('opacity-0');
-            setTimeout(() => { overlay.classList.add('hidden'); resetFormPesanan(); }, 300);
+            setTimeout(() => { 
+                overlay.classList.add('hidden'); 
+                resetFormPesanan(); 
+            }, 300);
         }
 
         function resetFormPesanan() {
             document.getElementById('inputNamaPelanggan').value = '';
             document.getElementById('inputNoHP').value = '';
-            document.getElementById('inputLayanan').selectedIndex = 0;
             document.getElementById('inputJumlah').value = '';
             document.getElementById('inputTglMasuk').value = todayString;
             document.getElementById('inputTglSelesai').value = '';
             document.getElementById('inputMetodePembayaran').value = '';
-            document.getElementById('displayTotalHarga').innerText = 'Rp 0';
-            currentTotalHarga = 0;
+            keranjangItem = [];
+            renderKeranjang();
             document.querySelectorAll('.btn-bayar').forEach(b => {
                 b.classList.remove('bg-cox-cyan/20', 'border-cox-cyan', 'text-cox-cyan');
             });
@@ -486,21 +612,6 @@
             element.classList.add('bg-cox-cyan/20', 'border-cox-cyan', 'text-cox-cyan');
         }
 
-        let currentTotalHarga = 0;
-        function hitungTotal() {
-            const layananSelect = document.getElementById('inputLayanan');
-            const jumlah = parseFloat(document.getElementById('inputJumlah').value) || 0;
-            
-            if (layananSelect.selectedIndex > 0) {
-                const hargaPerSatuan = parseFloat(layananSelect.options[layananSelect.selectedIndex].getAttribute('data-harga')) || 0;
-                currentTotalHarga = hargaPerSatuan * jumlah;
-                document.getElementById('displayTotalHarga').innerText = 'Rp ' + currentTotalHarga.toLocaleString('id-ID');
-            } else {
-                currentTotalHarga = 0;
-                document.getElementById('displayTotalHarga').innerText = 'Rp 0';
-            }
-        }
-
         async function simpanPesanan() {
             if (!API_URL) {
                 alert('URL Apps Script belum diisi!'); return;
@@ -509,15 +620,18 @@
             const noInv = document.getElementById('noInvoiceDisplay').innerText;
             const nama = document.getElementById('inputNamaPelanggan').value;
             const noHp = document.getElementById('inputNoHP').value;
-            const layanan = document.getElementById('inputLayanan').value;
-            const jumlah = document.getElementById('inputJumlah').value;
             const tglMasuk = document.getElementById('inputTglMasuk').value;
             const tglSelesai = document.getElementById('inputTglSelesai').value;
             const metodeBayar = document.getElementById('inputMetodePembayaran').value;
 
-            if (!nama || !layanan || !jumlah || !tglSelesai || !metodeBayar) {
-                alert('Mohon lengkapi semua data pesanan!'); return;
+            if (!nama || keranjangItem.length === 0 || !tglSelesai || !metodeBayar) {
+                alert('Mohon lengkapi nama pelanggan, masukkan minimal 1 item layanan ke keranjang, tentukan tanggal selesai, dan pilih pembayaran!'); 
+                return;
             }
+
+            // Gabungkan semua item keranjang menjadi teks ringkas untuk spreadsheet
+            let gabunganLayanan = keranjangItem.map(item => `${item.nama} (${item.qty})`).join(', ');
+            let totalHargaKeseluruhan = keranjangItem.reduce((sum, item) => sum + item.subtotal, 0);
 
             const btn = document.getElementById('btnSimpanPesanan');
             const originalBtnHtml = btn.innerHTML;
@@ -527,10 +641,16 @@
             const payload = {
                 sheetName: "Transaksi", action: "insert",
                 rowData: {
-                    "No_Invoice": noInv, "Tanggal_Masuk": tglMasuk, "Tanggal_Selesai": tglSelesai,
-                    "Nama_Pelanggan": nama, "No_HP": noHp, "Layanan": layanan,
-                    "Jumlah_Kiloan": jumlah, "Total_Harga": currentTotalHarga,
-                    "Status": "Baru", "Metode_Pembayaran": metodeBayar
+                    "No_Invoice": noInv, 
+                    "Tanggal_Masuk": tglMasuk, 
+                    "Tanggal_Selesai": tglSelesai,
+                    "Nama_Pelanggan": nama, 
+                    "No_HP": noHp, 
+                    "Layanan": gabunganLayanan,
+                    "Jumlah_Kiloan": keranjangItem.length + " Jenis", 
+                    "Total_Harga": totalHargaKeseluruhan,
+                    "Status": "Baru", 
+                    "Metode_Pembayaran": metodeBayar
                 }
             };
 
@@ -541,13 +661,14 @@
                     body: JSON.stringify(payload)
                 });
                 
-                alert(`Transaksi Berhasil Disimpan!`);
+                alert(`Transaksi ${noInv} Berhasil Disimpan!`);
                 tutupModalPesanan();
                 sinkronisasiData();
             } catch (error) {
                 alert('Terjadi kesalahan saat menyimpan data.');
             } finally {
-                btn.innerHTML = originalBtnHtml; btn.disabled = false;
+                btn.innerHTML = originalBtnHtml; 
+                btn.disabled = false;
             }
         }
     </script>
