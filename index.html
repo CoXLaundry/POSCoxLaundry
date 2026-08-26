@@ -185,7 +185,7 @@
             </button>
         </footer>
 
-        <!-- MODAL BUAT PESANAN (DENGAN MULTI-PESANAN & FILTER KATEGORI) -->
+        <!-- MODAL BUAT PESANAN (DENGAN TIPE LAYANAN & BAYAR NANTI) -->
         <div id="modalPesananOverlay" class="absolute inset-0 bg-black/60 z-40 hidden backdrop-blur-sm transition-opacity opacity-0" onclick="tutupModalPesanan()"></div>
         <div id="modalPesananContent" class="absolute bottom-0 left-0 right-0 bg-cox-bg rounded-t-3xl z-50 slide-up h-[90%] flex flex-col border-t border-blue-800">
             <div class="w-full flex justify-center py-3" onclick="tutupModalPesanan()">
@@ -222,7 +222,16 @@
                     </div>
                 </div>
 
-                <!-- Pilih Layanan & Jumlah (Multi-Item Input) -->
+                <!-- Pilihan Tipe Layanan (Reguler / Express) -->
+                <div>
+                    <label class="block text-[11px] font-medium text-blue-300 mb-1">Tipe Pengerjaan</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" onclick="pilihTipePengerjaan('Reguler', this)" class="btn-tipe bg-cox-cyan/20 border border-cox-cyan text-cox-cyan py-1.5 rounded-lg text-xs font-semibold transition">Reguler (24 Jam)</button>
+                        <button type="button" onclick="pilihTipePengerjaan('Express', this)" class="btn-tipe bg-slate-900 border border-blue-800 text-blue-200 py-1.5 rounded-lg text-xs transition">Express (12 Jam)</button>
+                    </div>
+                </div>
+
+                <!-- Pilih Layanan & Jumlah -->
                 <div class="bg-slate-900/60 p-3.5 rounded-2xl border border-blue-800/50 space-y-3">
                     <div>
                         <label class="block text-[11px] font-medium text-blue-300 mb-1">Jenis Layanan</label>
@@ -242,7 +251,7 @@
                     </div>
                 </div>
 
-                <!-- Keranjang Belanja Aktif (List Item yang Ditambahkan) -->
+                <!-- Keranjang Belanja Aktif -->
                 <div>
                     <div class="flex justify-between items-center mb-1.5">
                         <label class="block text-[11px] font-medium text-blue-300">Daftar Item Terpilih</label>
@@ -257,19 +266,20 @@
                 <div class="grid grid-cols-2 gap-3 pt-2 border-t border-blue-900/50">
                     <div>
                         <label class="block text-[11px] font-medium text-blue-300 mb-1">Tanggal Masuk</label>
-                        <input type="date" id="inputTglMasuk" class="w-full bg-slate-900 border border-blue-800 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:border-cox-cyan [color-scheme:dark]">
+                        <input type="date" id="inputTglMasuk" onchange="hitungOtomatisTanggalSelesai()" class="w-full bg-slate-900 border border-blue-800 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:border-cox-cyan [color-scheme:dark]">
                     </div>
                     <div>
-                        <label class="block text-[11px] font-medium text-blue-300 mb-1">Tanggal Selesai</label>
-                        <input type="date" id="inputTglSelesai" class="w-full bg-slate-900 border border-blue-800 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:border-cox-cyan [color-scheme:dark]">
+                        <label class="block text-[11px] font-medium text-blue-300 mb-1">Tanggal Selesai (Estimasi)</label>
+                        <input type="datetime-local" id="inputTglSelesai" class="w-full bg-slate-900 border border-blue-800 rounded-xl py-2 px-3 text-[11px] text-white focus:outline-none focus:border-cox-cyan [color-scheme:dark]">
                     </div>
                 </div>
 
                 <div>
                     <label class="block text-[11px] font-medium text-blue-300 mb-1">Metode Pembayaran</label>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button type="button" onclick="pilihPembayaran('Tunai', this)" class="btn-bayar bg-cox-card border border-blue-800 text-white py-2 rounded-xl text-xs transition hover:border-cox-cyan focus:bg-cox-cyan/20 focus:border-cox-cyan focus:text-cox-cyan">Tunai</button>
-                        <button type="button" onclick="pilihPembayaran('QRIS', this)" class="btn-bayar bg-cox-card border border-blue-800 text-white py-2 rounded-xl text-xs transition hover:border-cox-cyan focus:bg-cox-cyan/20 focus:border-cox-cyan focus:text-cox-cyan">QRIS</button>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button type="button" onclick="pilihPembayaran('Tunai', this)" class="btn-bayar bg-cox-card border border-blue-800 text-white py-2 rounded-xl text-[11px] transition hover:border-cox-cyan focus:bg-cox-cyan/20 focus:border-cox-cyan focus:text-cox-cyan">Tunai</button>
+                        <button type="button" onclick="pilihPembayaran('QRIS', this)" class="btn-bayar bg-cox-card border border-blue-800 text-white py-2 rounded-xl text-[11px] transition hover:border-cox-cyan focus:bg-cox-cyan/20 focus:border-cox-cyan focus:text-cox-cyan">QRIS</button>
+                        <button type="button" onclick="pilihPembayaran('Bayar Nanti', this)" class="btn-bayar bg-cox-card border border-blue-800 text-white py-2 rounded-xl text-[11px] transition hover:border-cox-cyan focus:bg-cox-cyan/20 focus:border-cox-cyan focus:text-cox-cyan">Bayar Nanti</button>
                     </div>
                     <input type="hidden" id="inputMetodePembayaran" value="">
                 </div>
@@ -307,14 +317,16 @@
         document.getElementById('tanggalHariIni').innerText = today.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
         
         document.getElementById('inputTglMasuk').value = todayString;
-        document.getElementById('inputTglSelesai').min = todayString;
 
         // Global master data layanan & keranjang aktif
         let masterLayanan = [];
         let keranjangItem = [];
         let kategoriAktif = 'Semua';
+        let tipePengerjaanAktif = 'Reguler'; // Default Reguler (+24 jam)
 
-        // Fallback data layanan jika offline / sinkronisasi awal
+        // Set otomatis tanggal selesai saat pertama kali load
+        hitungOtomatisTanggalSelesai();
+
         const defaultLayanan = [
             { Nama_Layanan: "Cuci Setrika Reguler", Kategori: "Kiloan", Harga: "7.000" },
             { Nama_Layanan: "Cuci Setrika (Express)", Kategori: "Kiloan", Harga: "14.000" },
@@ -389,6 +401,39 @@
             renderDropdownLayanan();
         }
 
+        // Pilihan Tipe Pengerjaan (Reguler / Express)
+        function pilihTipePengerjaan(tipe, element) {
+            tipePengerjaanAktif = tipe;
+            document.querySelectorAll('.btn-tipe').forEach(b => {
+                b.className = "btn-tipe bg-slate-900 border border-blue-800 text-blue-200 py-1.5 rounded-lg text-xs transition";
+            });
+            element.className = "btn-tipe bg-cox-cyan/20 border border-cox-cyan text-cox-cyan py-1.5 rounded-lg text-xs font-semibold transition";
+            hitungOtomatisTanggalSelesai();
+        }
+
+        // Otomasi Tanggal Selesai (+24 jam untuk Reguler, +12 jam untuk Express)
+        function hitungOtomatisTanggalSelesai() {
+            const tglMasukVal = document.getElementById('inputTglMasuk').value;
+            if (!tglMasukVal) return;
+
+            let dateObj = new Date(tglMasukVal);
+            
+            if (tipePengerjaanAktif === 'Reguler') {
+                dateObj.setHours(dateObj.getHours() + 24); // Tambah 24 Jam
+            } else {
+                dateObj.setHours(dateObj.getHours() + 12); // Tambah 12 Jam
+            }
+
+            // Format ke YYYY-MM-DDTHH:mm untuk input datetime-local
+            const year = dateObj.getFullYear();
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            const hours = String(dateObj.getHours()).padStart(2, '0');
+            const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+
+            document.getElementById('inputTglSelesai').value = `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
+
         function renderDropdownLayanan() {
             const select = document.getElementById('inputLayanan');
             select.innerHTML = '<option value="" disabled selected>Pilih layanan...</option>';
@@ -434,7 +479,6 @@
             const hargaSatuan = parseFloat(select.options[select.selectedIndex].getAttribute('data-harga')) || 0;
             const subtotal = hargaSatuan * qty;
 
-            // Masukkan ke array keranjang
             keranjangItem.push({
                 nama: namaLayanan,
                 qty: qty,
@@ -442,7 +486,6 @@
                 subtotal: subtotal
             });
 
-            // Reset input layanan & jumlah
             select.selectedIndex = 0;
             jumlahInput.value = '';
 
@@ -532,7 +575,7 @@
                     <div class="flex justify-between items-end mt-1">
                         <div class="text-[11px] text-blue-200">
                             <p><i class="fa-solid fa-shirt w-4 text-cox-cyan"></i> ${trx.Layanan || ''}</p>
-                            <p><i class="fa-regular fa-calendar-check w-4 text-cox-cyan"></i> Selesai: ${trx.Tanggal_Selesai ? String(trx.Tanggal_Selesai).split('T')[0] : ''}</p>
+                            <p><i class="fa-regular fa-calendar-check w-4 text-cox-cyan"></i> Selesai: ${trx.Tanggal_Selesai ? String(trx.Tanggal_Selesai).replace('T', ' ') : ''}</p>
                         </div>
                         <span class="font-bold text-sm text-cox-cyan">Rp ${parseFloat(trx.Total_Harga || 0).toLocaleString('id-ID')}</span>
                     </div>
@@ -595,7 +638,7 @@
             document.getElementById('inputNoHP').value = '';
             document.getElementById('inputJumlah').value = '';
             document.getElementById('inputTglMasuk').value = todayString;
-            document.getElementById('inputTglSelesai').value = '';
+            hitungOtomatisTanggalSelesai();
             document.getElementById('inputMetodePembayaran').value = '';
             keranjangItem = [];
             renderKeranjang();
@@ -629,8 +672,7 @@
                 return;
             }
 
-            // Gabungkan semua item keranjang menjadi teks ringkas untuk spreadsheet
-            let gabunganLayanan = keranjangItem.map(item => `${item.nama} (${item.qty})`).join(', ');
+            let gabunganLayanan = `[${tipePengerjaanAktif}] ` + keranjangItem.map(item => `${item.nama} (${item.qty})`).join(', ');
             let totalHargaKeseluruhan = keranjangItem.reduce((sum, item) => sum + item.subtotal, 0);
 
             const btn = document.getElementById('btnSimpanPesanan');
