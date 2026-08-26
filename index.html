@@ -279,15 +279,16 @@
         document.getElementById('inputTglMasuk').value = todayString;
         document.getElementById('inputTglSelesai').min = todayString;
 
-        // Fallback data layanan jika offline / CORS terbatas
+        // Fallback data layanan
         const defaultLayanan = [
-            { Nama_Layanan: "Cuci Setrika Reguler", Kategori: "7.000" },
-            { Nama_Layanan: "Cuci Setrika (Express)", Kategori: "14.000" },
-            { Nama_Layanan: "Setrika Reguler", Kategori: "5.000" },
-            { Nama_Layanan: "Bed Cover", Kategori: "25.000" }
+            { Nama_Layanan: "Cuci Setrika Reguler", Harga: "7.000" },
+            { Nama_Layanan: "Cuci Setrika (Express)", Harga: "14.000" },
+            { Nama_Layanan: "Setrika Reguler", Harga: "5.000" },
+            { Nama_Layanan: "Bed Cover", Harga: "25.000" }
         ];
 
         renderLayanan(defaultLayanan);
+        sinkronisasiData();
 
         function switchTab(tab) {
             const vBeranda = document.getElementById('viewBeranda');
@@ -345,15 +346,13 @@
             const select = document.getElementById('inputLayanan');
             select.innerHTML = '<option value="" disabled selected>Pilih jenis layanan...</option>';
             dataLayanan.forEach(item => {
-                // Tangkap nilai harga dari item.Harga atau item.Kategori (menyesuaikan struktur spreadsheet)
+                // Sekarang mengambil langsung dari properti 'Harga' sesuai pertukaran kolom spreadsheet Anda
                 let rawHarga = item.Harga !== undefined && item.Harga !== "" ? item.Harga : item.Kategori;
                 let harga = 0;
                 
-                if (typeof rawHarga === 'string') {
-                    // Hapus titik ribuan (misal "7.000" jadi 7000)
-                    harga = parseInt(rawHarga.replace(/\./g, '')) || 0;
-                } else {
-                    harga = parseInt(rawHarga) || 0;
+                if (rawHarga !== undefined && rawHarga !== null) {
+                    let hargaStr = String(rawHarga).replace(/\./g, '').replace(/,/g, '');
+                    harga = parseInt(hargaStr) || 0;
                 }
 
                 const opt = document.createElement('option');
