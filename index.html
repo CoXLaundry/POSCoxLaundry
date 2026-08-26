@@ -67,10 +67,14 @@
                     <label class="block text-[11px] text-cox-text mb-1.5 ml-1">Password</label>
                     <div class="relative">
                         <i class="fa-solid fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-blue-400 text-sm"></i>
-                        <input type="password" id="password" required class="w-full bg-cox-bg border border-blue-800/50 rounded-xl py-3 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-cox-cyan transition" placeholder="Masukkan password">
+                        <input type="password" id="password" required class="w-full bg-cox-bg border border-blue-800/50 rounded-xl py-3 pl-10 pr-10 text-sm text-white focus:outline-none focus:border-cox-cyan transition" placeholder="Masukkan password">
+                        <!-- Tombol Mata (Show/Hide Password) -->
+                        <button type="button" onclick="togglePassword()" class="absolute right-4 top-1/2 -translate-y-1/2 text-blue-400 hover:text-white transition">
+                            <i id="eyeIcon" class="fa-solid fa-eye text-sm"></i>
+                        </button>
                     </div>
                 </div>
-                <button type="submit" class="w-full bg-cox-cyan text-cox-bg font-bold py-3.5 rounded-xl mt-4 hover:bg-white transition flex justify-center items-center gap-2 shadow-neon">
+                <button type="submit" id="btnLogin" class="w-full bg-cox-cyan text-cox-bg font-bold py-3.5 rounded-xl mt-4 hover:bg-white transition flex justify-center items-center gap-2 shadow-neon">
                     <i class="fa-solid fa-right-to-bracket"></i> Masuk Sistem
                 </button>
             </form>
@@ -212,7 +216,7 @@
                     </div>
                 </div>
 
-                <!-- Filter Kategori Layanan (Hanya Kiloan & Satuan) -->
+                <!-- Filter Kategori Layanan -->
                 <div>
                     <label class="block text-[11px] font-medium text-blue-300 mb-1">Pilih Kategori Layanan</label>
                     <div class="grid grid-cols-2 gap-2">
@@ -298,7 +302,7 @@
         }
     </script>
 
-    <!-- LOGIKA UTAMA APLIKASI -->
+    <!-- LOGIKA UTAMA APLIKASI & KEAMANAN -->
     <script>
         const API_URL = 'https://script.google.com/macros/s/AKfycbxq3pGfjN4bLTZ9X-ZxoDdZNkI2goBWGC_3pkP6w0HdImBi5JVB0JnbvAEwm7-MIzZd/exec'; 
 
@@ -311,12 +315,12 @@
         const currentDateTimeString = `${year}-${month}-${day}T${hours}:${minutes}`;
 
         document.getElementById('tanggalHariIni').innerText = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-        
         document.getElementById('inputTglMasuk').value = currentDateTimeString;
 
         let masterLayanan = [];
         let keranjangItem = [];
         let kategoriAktif = 'Kiloan';
+        let percobaanLogin = 0;
 
         hitungOtomatisTanggalSelesai();
 
@@ -329,7 +333,34 @@
 
         masterLayanan = defaultLayanan;
         renderDropdownLayanan();
-        sinkronisasiData();
+
+        // Cek Sesi Login saat halaman dimuat (Menggunakan sessionStorage agar aman dan tidak reset saat refresh)
+        window.addEventListener('DOMContentLoaded', () => {
+            const sesiAktif = sessionStorage.getItem('cox_logged_in');
+            const namaKasirSesi = sessionStorage.getItem('cox_kasir');
+            
+            if (sesiAktif === 'true' && namaKasirSesi) {
+                document.getElementById('loginScreen').classList.add('hidden');
+                const app = document.getElementById('appContainer');
+                app.classList.remove('hidden');
+                app.classList.remove('opacity-0');
+                document.getElementById('namaKasir').innerText = namaKasirSesi;
+                sinkronisasiData();
+            }
+        });
+
+        // Fitur Toggle Mata Password
+        function togglePassword() {
+            const passInput = document.getElementById('password');
+            const eyeIcon = document.getElementById('eyeIcon');
+            if (passInput.type === 'password') {
+                passInput.type = 'text';
+                eyeIcon.className = 'fa-solid fa-eye-slash text-sm';
+            } else {
+                passInput.type = 'password';
+                eyeIcon.className = 'fa-solid fa-eye text-sm';
+            }
+        }
 
         function switchTab(tab) {
             const vBeranda = document.getElementById('viewBeranda');
@@ -393,10 +424,6 @@
             renderDropdownLayanan();
         }
 
-        // Otomasi Tanggal Selesai: 
-        // - Kiloan Reguler = 24 jam
-        // - Kiloan Express = 12 jam
-        // - Satuan (Semua Satuan) = 72 jam (3 hari)
         function hitungOtomatisTanggalSelesai() {
             const tglMasukVal = document.getElementById('inputTglMasuk').value;
             if (!tglMasukVal) return;
@@ -576,28 +603,68 @@
             container.innerHTML = html;
         }
 
+        // Proses Login dengan Proteksi Brute-Force / Burst Password (Anti Asal-Asalan)
         function prosesLogin(e) {
             e.preventDefault();
             const user = document.getElementById('username').value;
-            const btn = e.target.querySelector('button');
+            const pass = document.getElementById('password').value;
+            const btn = document.getElementById('btnLogin');
+            
+            if (btn.disabled) return;
+
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memverifikasi...';
+            btn.disabled = true;
             
             setTimeout(() => {
-                document.getElementById('namaKasir').innerText = user;
-                document.getElementById('loginScreen').classList.add('opacity-0');
-                
-                setTimeout(() => {
-                    document.getElementById('loginScreen').classList.add('hidden');
-                    const app = document.getElementById('appContainer');
-                    app.classList.remove('hidden');
-                    setTimeout(() => app.classList.remove('opacity-0'), 50);
-                    sinkronisasiData();
-                }, 500);
+                // Di sini Anda bisa menyesuaikan validasi kredensial (sementara dibebaskan asal terisi, atau sesuaikan dengan rule Anda)
+                if (user.trim() !== "" && pass.trim() !== "") {
+                    // Simpan sesi ke sessionStorage (otomatis terhapus jika tab ditutup)
+                    sessionStorage.setItem('cox_logged_in', 'true');
+                    sessionStorage.setItem('cox_kasir', user);
+
+                    document.getElementById('namaKasir').innerText = user;
+                    document.getElementById('loginScreen').classList.add('opacity-0');
+                    
+                    setTimeout(() => {
+                        document.getElementById('loginScreen').classList.add('hidden');
+                        const app = document.getElementById('appContainer');
+                        app.classList.remove('hidden');
+                        setTimeout(() => app.classList.remove('opacity-0'), 50);
+                        sinkronisasiData();
+                    }, 500);
+                } else {
+                    handleGagalLogin(btn);
+                }
             }, 1000);
         }
 
+        function handleGagalLogin(btn) {
+            percobaanLogin++;
+            if (percobaanLogin >= 3) {
+                let detik = 30;
+                btn.disabled = true;
+                let timer = setInterval(() => {
+                    btn.innerHTML = `Terkunci (${detik}s)`;
+                    detik--;
+                    if (detik < 0) {
+                        clearInterval(timer);
+                        btn.disabled = false;
+                        btn.innerHTML = `<i class="fa-solid fa-right-to-bracket"></i> Masuk Sistem`;
+                        percobaanLogin = 0;
+                    }
+                }, 1000);
+            } else {
+                alert('Login gagal! Periksa kembali username dan password Anda.');
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-right-to-bracket"></i> Masuk Sistem`;
+            }
+        }
+
         function logout() {
-            if(confirm('Apakah Anda yakin ingin keluar?')) location.reload();
+            if(confirm('Apakah Anda yakin ingin keluar?')) {
+                sessionStorage.clear();
+                location.reload();
+            }
         }
 
         function buatNoInvoice() {
