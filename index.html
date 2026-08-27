@@ -68,7 +68,6 @@
                     <div class="relative">
                         <i class="fa-solid fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-blue-400 text-sm"></i>
                         <input type="password" id="password" required class="w-full bg-cox-bg border border-blue-800/50 rounded-xl py-3 pl-10 pr-10 text-sm text-white focus:outline-none focus:border-cox-cyan transition" placeholder="Masukkan password">
-                        <!-- Tombol Mata (Show/Hide Password) -->
                         <button type="button" onclick="togglePassword()" class="absolute right-4 top-1/2 -translate-y-1/2 text-blue-400 hover:text-white transition">
                             <i id="eyeIcon" class="fa-solid fa-eye text-sm"></i>
                         </button>
@@ -162,8 +161,41 @@
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-sm font-semibold text-blue-200">Riwayat Transaksi Aktif</h3>
                 </div>
-                <div id="listPesananContainer" class="space-y-3">
+                <div id="listPesananContainer" class="space-y-4 pb-10">
                     <p class="text-xs text-blue-300 text-center italic mt-5">Belum ada transaksi.</p>
+                </div>
+            </div>
+
+            <!-- VIEW PENGATURAN (FITUR BARU) -->
+            <div id="viewPengaturan" class="hidden fade-in px-5 pb-10">
+                <div class="bg-cox-card p-5 rounded-2xl border border-blue-800 shadow-lg space-y-4">
+                    <div>
+                        <h3 class="text-sm font-bold text-white"><i class="fa-solid fa-print text-cox-cyan"></i> Template & Pengaturan</h3>
+                        <p class="text-[10px] text-blue-300 mt-1">Sesuaikan teks untuk Nota dan Pesan WhatsApp.</p>
+                    </div>
+                    
+                    <div class="space-y-3 pt-3 border-t border-blue-900">
+                        <div>
+                            <label class="block text-[11px] font-medium text-blue-300 mb-1">Nama Toko (Untuk Nota)</label>
+                            <input type="text" id="setToko" class="w-full bg-slate-900 border border-blue-800 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:border-cox-cyan" value="COX LAUNDRY">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-medium text-blue-300 mb-1">Alamat (Untuk Nota)</label>
+                            <input type="text" id="setAlamat" class="w-full bg-slate-900 border border-blue-800 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:border-cox-cyan" value="Jl. Contoh Alamat No. 123">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-medium text-blue-300 mb-1">Pesan Penutup (Untuk Nota)</label>
+                            <input type="text" id="setPenutup" class="w-full bg-slate-900 border border-blue-800 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:border-cox-cyan" value="Terima Kasih Telah Mempercayakan Cucian Anda">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-medium text-blue-300 mb-1">Template WhatsApp</label>
+                            <p class="text-[9px] text-blue-400 mb-1">Gunakan kode: [NAMA], [NOTA], [TOTAL]</p>
+                            <textarea id="setWA" rows="5" class="w-full bg-slate-900 border border-blue-800 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:border-cox-cyan">Halo *[NAMA]*, pesanan laundry Anda dengan No. Nota *[NOTA]* sudah selesai dan siap diambil. Total tagihan: *[TOTAL]*. Terima kasih!</textarea>
+                        </div>
+                        <button type="button" onclick="simpanPengaturanLokal()" class="w-full bg-cox-cyan text-cox-bg font-bold py-2.5 rounded-xl hover:bg-white transition flex justify-center items-center gap-2 shadow-neon text-sm mt-2">
+                            <i class="fa-solid fa-floppy-disk"></i> Simpan Pengaturan
+                        </button>
+                    </div>
                 </div>
             </div>
             
@@ -183,7 +215,7 @@
                 <i class="fa-solid fa-chart-simple text-xl group-active:scale-90 transition-transform"></i>
                 <span class="text-[10px] font-medium tracking-wide">Laporan</span>
             </button>
-            <button class="flex flex-col items-center gap-1.5 text-blue-400 hover:text-cox-cyan transition group opacity-50">
+            <button onclick="switchTab('pengaturan')" id="navPengaturan" class="flex flex-col items-center gap-1.5 text-blue-400 hover:text-cox-cyan transition group">
                 <i class="fa-solid fa-gear text-xl group-active:scale-90 transition-transform"></i>
                 <span class="text-[10px] font-medium tracking-wide">Pengaturan</span>
             </button>
@@ -201,19 +233,16 @@
                 <span id="noInvoiceDisplay" class="text-xs bg-cox-card text-cox-cyan px-2 py-1 rounded-lg border border-blue-800">INV-...</span>
             </div>
 
-            <!-- Form Pesanan (Scrollable) -->
+            <!-- Form Pesanan -->
             <div class="flex-1 overflow-y-auto p-6 space-y-4 no-scrollbar">
                 
-                <!-- MENU DROPDOWN PILIH PELANGGAN (FITUR BARU) -->
                 <div>
                     <label class="block text-[11px] font-medium text-blue-300 mb-1"><i class="fa-solid fa-address-book text-cox-cyan"></i> Pilih Pelanggan Tersimpan (Opsional)</label>
                     <select id="pilihPelangganDropdown" onchange="pilihPelangganDariDropdown()" class="w-full bg-slate-900 border border-blue-800 rounded-xl py-2.5 px-3 text-xs text-white focus:outline-none focus:border-cox-cyan appearance-none shadow-sm">
                         <option value="" disabled selected>+ Ketik Pelanggan Baru / Pilih dari daftar...</option>
-                        <!-- Daftar Pelanggan akan muncul di sini otomatis -->
                     </select>
                 </div>
 
-                <!-- Data Pelanggan Manual -->
                 <div class="grid grid-cols-2 gap-3 pt-2">
                     <div>
                         <label class="block text-[11px] font-medium text-blue-300 mb-1">No. WhatsApp</label>
@@ -225,7 +254,6 @@
                     </div>
                 </div>
 
-                <!-- Filter Kategori Layanan -->
                 <div>
                     <label class="block text-[11px] font-medium text-blue-300 mb-1">Pilih Kategori Layanan</label>
                     <div class="grid grid-cols-2 gap-2">
@@ -234,7 +262,6 @@
                     </div>
                 </div>
 
-                <!-- Pilih Layanan & Jumlah -->
                 <div class="bg-slate-900/60 p-3.5 rounded-2xl border border-blue-800/50 space-y-3">
                     <div>
                         <label class="block text-[11px] font-medium text-blue-300 mb-1">Jenis Layanan</label>
@@ -254,7 +281,6 @@
                     </div>
                 </div>
 
-                <!-- Keranjang Belanja Aktif -->
                 <div>
                     <div class="flex justify-between items-center mb-1.5">
                         <label class="block text-[11px] font-medium text-blue-300">Daftar Item Terpilih</label>
@@ -265,7 +291,6 @@
                     </div>
                 </div>
 
-                <!-- Tanggal Masuk & Selesai -->
                 <div class="grid grid-cols-2 gap-3 pt-2 border-t border-blue-900/50">
                     <div>
                         <label class="block text-[11px] font-medium text-blue-300 mb-1">Tanggal Masuk</label>
@@ -311,7 +336,7 @@
         }
     </script>
 
-    <!-- LOGIKA UTAMA APLIKASI & DATABASE PELANGGAN -->
+    <!-- LOGIKA UTAMA APLIKASI -->
     <script>
         const API_URL = 'https://script.google.com/macros/s/AKfycbxq3pGfjN4bLTZ9X-ZxoDdZNkI2goBWGC_3pkP6w0HdImBi5JVB0JnbvAEwm7-MIzZd/exec'; 
 
@@ -332,6 +357,12 @@
         let kategoriAktif = 'Kiloan';
         let percobaanLogin = 0;
 
+        // Muat Pengaturan Lokal (Template)
+        document.getElementById('setToko').value = localStorage.getItem('toko_nama') || "COX LAUNDRY";
+        document.getElementById('setAlamat').value = localStorage.getItem('toko_alamat') || "Jl. Contoh Alamat No. 123";
+        document.getElementById('setPenutup').value = localStorage.getItem('toko_pesan') || "Terima Kasih Telah Mempercayakan Cucian Anda";
+        document.getElementById('setWA').value = localStorage.getItem('template_wa') || "Halo *[NAMA]*, pesanan laundry Anda dengan No. Nota *[NOTA]* sudah selesai dan siap diambil. Total tagihan: *[TOTAL]*. Terima kasih!";
+
         hitungOtomatisTanggalSelesai();
 
         const defaultLayanan = [
@@ -344,7 +375,6 @@
         masterLayanan = defaultLayanan;
         renderDropdownLayanan();
 
-        // Cek Sesi Login
         window.addEventListener('DOMContentLoaded', () => {
             const sesiAktif = sessionStorage.getItem('cox_logged_in');
             const namaKasirSesi = sessionStorage.getItem('cox_kasir');
@@ -359,11 +389,9 @@
             }
         });
 
-        // FUNGSI BARU: Mengubah format waktu ISO mentah menjadi waktu Indonesia
         function formatWaktuIndo(tglStr) {
             if (!tglStr) return '-';
             try {
-                // Hilangkan T dan .000Z yang berpotensi merusak zona waktu saat parsing manual
                 let raw = String(tglStr).replace('T', ' ').replace('.000Z', '').replace('Z', '');
                 let parts = raw.split(' ');
                 let datePart = parts[0];
@@ -394,32 +422,40 @@
             }
         }
 
+        // FUNGSI UPDATE TABS (Menambahkan Tab Pengaturan)
         function switchTab(tab) {
-            const vBeranda = document.getElementById('viewBeranda');
-            const vPesanan = document.getElementById('viewPesanan');
-            const navBeranda = document.getElementById('navBeranda');
-            const navPesanan = document.getElementById('navPesanan');
-            const headerTitle = document.getElementById('headerTitle');
+            const views = ['viewBeranda', 'viewPesanan', 'viewPengaturan'];
+            const navs = ['navBeranda', 'navPesanan', 'navPengaturan'];
+            const titles = { beranda: "Beranda", pesanan: "Daftar Pesanan", pengaturan: "Pengaturan & Alat" };
+            
+            document.getElementById('headerTitle').innerText = titles[tab];
 
-            if (tab === 'beranda') {
-                vBeranda.classList.remove('hidden');
-                vPesanan.classList.add('hidden');
-                headerTitle.innerText = "Beranda";
-                
-                navBeranda.classList.replace('text-blue-400', 'text-cox-cyan');
-                navBeranda.classList.remove('hover:text-cox-cyan');
-                navPesanan.classList.replace('text-cox-cyan', 'text-blue-400');
-                navPesanan.classList.add('hover:text-cox-cyan');
-            } else {
-                vBeranda.classList.add('hidden');
-                vPesanan.classList.remove('hidden');
-                headerTitle.innerText = "Daftar Pesanan";
+            views.forEach(v => document.getElementById(v).classList.add('hidden'));
+            navs.forEach(n => {
+                const el = document.getElementById(n);
+                if(el) {
+                    el.classList.replace('text-cox-cyan', 'text-blue-400');
+                    el.classList.add('hover:text-cox-cyan');
+                }
+            });
 
-                navPesanan.classList.replace('text-blue-400', 'text-cox-cyan');
-                navPesanan.classList.remove('hover:text-cox-cyan');
-                navBeranda.classList.replace('text-cox-cyan', 'text-blue-400');
-                navBeranda.classList.add('hover:text-cox-cyan');
+            let viewId = 'view' + tab.charAt(0).toUpperCase() + tab.slice(1);
+            let navId = 'nav' + tab.charAt(0).toUpperCase() + tab.slice(1);
+
+            document.getElementById(viewId).classList.remove('hidden');
+            let navActive = document.getElementById(navId);
+            if(navActive) {
+                navActive.classList.replace('text-blue-400', 'text-cox-cyan');
+                navActive.classList.remove('hover:text-cox-cyan');
             }
+        }
+
+        function simpanPengaturanLokal() {
+            localStorage.setItem('toko_nama', document.getElementById('setToko').value);
+            localStorage.setItem('toko_alamat', document.getElementById('setAlamat').value);
+            localStorage.setItem('toko_pesan', document.getElementById('setPenutup').value);
+            localStorage.setItem('template_wa', document.getElementById('setWA').value);
+            alert("Pengaturan Template Berhasil Disimpan!");
         }
 
         async function sinkronisasiData() {
@@ -428,7 +464,6 @@
             syncIcon.classList.add('fa-spin');
 
             try {
-                // Fetch Layanan
                 const resLayanan = await fetch(`${API_URL}?sheetName=Layanan`);
                 const jsonLayanan = await resLayanan.json();
                 if (jsonLayanan.data && jsonLayanan.data.length > 0) {
@@ -436,7 +471,6 @@
                     renderDropdownLayanan();
                 }
 
-                // Fetch Pelanggan
                 const resPelanggan = await fetch(`${API_URL}?sheetName=Pelanggan`);
                 const jsonPelanggan = await resPelanggan.json();
                 if (jsonPelanggan.data && jsonPelanggan.data.length > 0) {
@@ -444,7 +478,6 @@
                     renderDropdownPelangganMenu(); 
                 }
 
-                // Fetch Transaksi
                 const resTransaksi = await fetch(`${API_URL}?sheetName=Transaksi`);
                 const jsonTransaksi = await resTransaksi.json();
                 
@@ -495,46 +528,25 @@
         function hitungOtomatisTanggalSelesai() {
             const tglMasukVal = document.getElementById('inputTglMasuk').value;
             if (!tglMasukVal) return;
-
             let dateObj = new Date(tglMasukVal);
-
             let adaSatuan = keranjangItem.some(item => String(item.kategori).trim().toLowerCase() === 'satuan');
             let adaExpress = keranjangItem.some(item => item.nama.toLowerCase().includes('express'));
-
             let durasiJam = 24; 
-
-            if (adaSatuan) {
-                durasiJam = 72; 
-            } else if (adaExpress) {
-                durasiJam = 12; 
-            }
-
+            if (adaSatuan) { durasiJam = 72; } else if (adaExpress) { durasiJam = 12; }
             dateObj.setTime(dateObj.getTime() + (durasiJam * 60 * 60 * 1000));
-
-            const year = dateObj.getFullYear();
-            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-            const day = String(dateObj.getDate()).padStart(2, '0');
-            const hours = String(dateObj.getHours()).padStart(2, '0');
-            const minutes = String(dateObj.getMinutes()).padStart(2, '0');
-
-            document.getElementById('inputTglSelesai').value = `${year}-${month}-${day}T${hours}:${minutes}`;
+            const y = dateObj.getFullYear(), m = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const d = String(dateObj.getDate()).padStart(2, '0'), h = String(dateObj.getHours()).padStart(2, '0');
+            const min = String(dateObj.getMinutes()).padStart(2, '0');
+            document.getElementById('inputTglSelesai').value = `${y}-${m}-${d}T${h}:${min}`;
         }
 
         function renderDropdownLayanan() {
             const select = document.getElementById('inputLayanan');
             select.innerHTML = '<option value="" disabled selected>Pilih layanan...</option>';
-            
             let filtered = masterLayanan.filter(item => String(item.Kategori).trim().toLowerCase() === kategoriAktif.toLowerCase());
-
             filtered.forEach(item => {
                 let rawHarga = item.Harga !== undefined && item.Harga !== "" ? item.Harga : "0";
-                let harga = 0;
-                if (typeof rawHarga === 'string') {
-                    harga = parseInt(rawHarga.replace(/\./g, '').replace(/,/g, '')) || 0;
-                } else {
-                    harga = parseInt(rawHarga) || 0;
-                }
-
+                let harga = typeof rawHarga === 'string' ? parseInt(rawHarga.replace(/\./g, '').replace(/,/g, '')) || 0 : parseInt(rawHarga) || 0;
                 const opt = document.createElement('option');
                 opt.value = item.Nama_Layanan;
                 opt.setAttribute('data-harga', harga);
@@ -545,96 +557,149 @@
         }
 
         function tambahItemKeranjang() {
-            const select = document.getElementById('inputLayanan');
-            const jumlahInput = document.getElementById('inputJumlah');
-            
-            if (select.selectedIndex <= 0) {
-                alert('Silakan pilih jenis layanan terlebih dahulu!');
-                return;
-            }
+            const select = document.getElementById('inputLayanan'), jumlahInput = document.getElementById('inputJumlah');
+            if (select.selectedIndex <= 0) { alert('Silakan pilih jenis layanan terlebih dahulu!'); return; }
             const qty = parseFloat(jumlahInput.value);
-            if (!qty || qty <= 0) {
-                alert('Masukkan jumlah (Kg/Pcs) dengan benar!');
-                return;
-            }
-
-            const namaLayanan = select.value;
-            const hargaSatuan = parseFloat(select.options[select.selectedIndex].getAttribute('data-harga')) || 0;
+            if (!qty || qty <= 0) { alert('Masukkan jumlah (Kg/Pcs) dengan benar!'); return; }
+            const namaLayanan = select.value, hargaSatuan = parseFloat(select.options[select.selectedIndex].getAttribute('data-harga')) || 0;
             const kategoriItem = select.options[select.selectedIndex].getAttribute('data-kategori') || 'Kiloan';
-            const subtotal = hargaSatuan * qty;
-
-            keranjangItem.push({
-                nama: namaLayanan,
-                kategori: kategoriItem,
-                qty: qty,
-                hargaSatuan: hargaSatuan,
-                subtotal: subtotal
-            });
-
-            select.selectedIndex = 0;
-            jumlahInput.value = '';
-
-            renderKeranjang();
-            hitungOtomatisTanggalSelesai(); 
+            keranjangItem.push({ nama: namaLayanan, kategori: kategoriItem, qty: qty, hargaSatuan: hargaSatuan, subtotal: hargaSatuan * qty });
+            select.selectedIndex = 0; jumlahInput.value = '';
+            renderKeranjang(); hitungOtomatisTanggalSelesai(); 
         }
 
         function hapusItemKeranjang(index) {
             keranjangItem.splice(index, 1);
-            renderKeranjang();
-            hitungOtomatisTanggalSelesai();
+            renderKeranjang(); hitungOtomatisTanggalSelesai();
         }
 
         function renderKeranjang() {
-            const container = document.getElementById('keranjangContainer');
-            const badge = document.getElementById('badgeJumlahItem');
+            const container = document.getElementById('keranjangContainer'), badge = document.getElementById('badgeJumlahItem');
             badge.innerText = `${keranjangItem.length} Item`;
-
             if (keranjangItem.length === 0) {
                 container.innerHTML = `<p class="text-[11px] text-blue-400 text-center py-3 italic">Belum ada item ditambahkan ke pesanan.</p>`;
                 document.getElementById('displayTotalHarga').innerText = 'Rp 0';
                 return;
             }
-
-            let html = '';
-            let totalKeseluruhan = 0;
-
+            let html = '', totalKeseluruhan = 0;
             keranjangItem.forEach((item, idx) => {
                 totalKeseluruhan += item.subtotal;
                 html += `
                 <div class="flex justify-between items-center bg-slate-900 border border-blue-800/60 p-2.5 rounded-xl text-xs">
-                    <div class="flex-1 pr-2">
-                        <p class="font-semibold text-white">${item.nama} <span class="text-[10px] text-cox-cyan">(${item.kategori})</span></p>
-                        <p class="text-[10px] text-blue-300">${item.qty} x Rp ${item.hargaSatuan.toLocaleString('id-ID')}</p>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <span class="font-bold text-cox-cyan">Rp ${item.subtotal.toLocaleString('id-ID')}</span>
-                        <button type="button" onclick="hapusItemKeranjang(${idx})" class="text-rose-400 hover:text-rose-300 p-1"><i class="fa-solid fa-trash-can"></i></button>
-                    </div>
+                    <div class="flex-1 pr-2"><p class="font-semibold text-white">${item.nama} <span class="text-[10px] text-cox-cyan">(${item.kategori})</span></p><p class="text-[10px] text-blue-300">${item.qty} x Rp ${item.hargaSatuan.toLocaleString('id-ID')}</p></div>
+                    <div class="flex items-center gap-3"><span class="font-bold text-cox-cyan">Rp ${item.subtotal.toLocaleString('id-ID')}</span><button type="button" onclick="hapusItemKeranjang(${idx})" class="text-rose-400 hover:text-rose-300 p-1"><i class="fa-solid fa-trash-can"></i></button></div>
                 </div>`;
             });
-
             container.innerHTML = html;
             document.getElementById('displayTotalHarga').innerText = 'Rp ' + totalKeseluruhan.toLocaleString('id-ID');
         }
 
         function kalkulasiDashboard(dataTransaksi) {
-            let pendapatan = 0;
-            let antrean = 0;
-
+            let pendapatan = 0, antrean = 0;
             dataTransaksi.forEach(trx => {
-                if (trx.Tanggal_Masuk && String(trx.Tanggal_Masuk).includes(currentDateTimeString.split('T')[0])) {
-                    pendapatan += parseFloat(trx.Total_Harga) || 0;
-                }
-                if (trx.Status && trx.Status.toLowerCase() !== 'selesai' && trx.Status.toLowerCase() !== 'diambil') {
-                    antrean++;
-                }
+                if (trx.Tanggal_Masuk && String(trx.Tanggal_Masuk).includes(currentDateTimeString.split('T')[0])) { pendapatan += parseFloat(trx.Total_Harga) || 0; }
+                if (trx.Status && trx.Status.toLowerCase() !== 'selesai' && trx.Status.toLowerCase() !== 'diambil') { antrean++; }
             });
-
             document.getElementById('displayPendapatan').innerHTML = `Rp ${pendapatan.toLocaleString('id-ID')}`;
             document.getElementById('displayAntrean').innerHTML = `${antrean} Nota`;
         }
 
-        // BAGIAN PEMBARUAN: renderDaftarPesanan menggunakan fungsi formatWaktuIndo
+        // FUNGSI BARU: Kirim Pesan WA
+        function kirimWA(encodedData) {
+            const trx = JSON.parse(decodeURIComponent(encodedData));
+            let noHp = trx.No_HP || '';
+            if(noHp.startsWith('0')) noHp = '62' + noHp.substring(1);
+            
+            let template = localStorage.getItem('template_wa') || "Halo *[NAMA]*, pesanan laundry Anda dengan No. Nota *[NOTA]* sudah selesai. Total: *[TOTAL]*. Terima kasih!";
+            let teks = template
+                .replace(/\[NAMA\]/g, trx.Nama_Pelanggan)
+                .replace(/\[NOTA\]/g, trx.No_Invoice)
+                .replace(/\[TOTAL\]/g, "Rp " + parseFloat(trx.Total_Harga || 0).toLocaleString('id-ID'));
+                
+            window.open(`https://wa.me/${noHp}?text=${encodeURIComponent(teks)}`, '_blank');
+        }
+
+        // FUNGSI BARU: Cetak Nota Struk
+        function cetakNota(encodedData) {
+            const trx = JSON.parse(decodeURIComponent(encodedData));
+            const toko = localStorage.getItem('toko_nama') || "COX LAUNDRY";
+            const alamat = localStorage.getItem('toko_alamat') || "Jl. Contoh Alamat";
+            const penutup = localStorage.getItem('toko_pesan') || "Terima Kasih";
+            const layanans = (trx.Layanan || "").split(',').map(s => `<div>- ${s.trim()}</div>`).join('');
+
+            const printWindow = window.open('', '_blank', 'width=350,height=600');
+            const html = `
+                <html>
+                <head>
+                    <title>Nota - ${trx.No_Invoice}</title>
+                    <style>
+                        body { font-family: monospace; font-size: 12px; color: #000; margin: 0; padding: 15px; width: 280px; }
+                        .text-center { text-align: center; }
+                        .fw-bold { font-weight: bold; }
+                        .border-bottom { border-bottom: 1px dashed #000; margin: 10px 0; }
+                        .flex-between { display: flex; justify-content: space-between; }
+                    </style>
+                </head>
+                <body>
+                    <div class="text-center fw-bold" style="font-size: 16px;">${toko}</div>
+                    <div class="text-center">${alamat}</div>
+                    <div class="border-bottom"></div>
+                    <div>Inv  : ${trx.No_Invoice}</div>
+                    <div>Nama : ${trx.Nama_Pelanggan}</div>
+                    <div>Masuk: ${formatWaktuIndo(trx.Tanggal_Masuk)}</div>
+                    <div>Selesai (Est): ${formatWaktuIndo(trx.Tanggal_Selesai)}</div>
+                    <div class="border-bottom"></div>
+                    <div class="fw-bold">Layanan:</div>
+                    ${layanans}
+                    <div class="border-bottom"></div>
+                    <div class="flex-between fw-bold" style="font-size: 14px;">
+                        <span>TOTAL:</span>
+                        <span>Rp ${parseFloat(trx.Total_Harga || 0).toLocaleString('id-ID')}</span>
+                    </div>
+                    <div>Bayar: ${trx.Metode_Pembayaran || '-'}</div>
+                    <div class="border-bottom"></div>
+                    <div class="text-center italic">${penutup}</div>
+                    <script>
+                        window.onload = function() { window.print(); window.onafterprint = function(){ window.close(); } };
+                    <\/script>
+                </body>
+                </html>
+            `;
+            printWindow.document.write(html);
+            printWindow.document.close();
+        }
+
+        // FUNGSI BARU: Update Status ke Selesai
+        async function updateStatus(invoice) {
+            if(!confirm(`Ubah pesanan ${invoice} menjadi SELESAI?`)) return;
+            if(!API_URL) return;
+
+            const btnId = `btn-status-${invoice}`;
+            const btnEl = document.getElementById(btnId);
+            if(btnEl) btnEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+            const payload = {
+                sheetName: "Transaksi", 
+                action: "update", 
+                id: invoice, 
+                updateData: { "Status": "Selesai" }
+            };
+
+            try {
+                // Pastikan Google Apps Script Anda (Code.gs) telah diperbarui untuk menerima "action": "update"
+                await fetch(API_URL, {
+                    method: 'POST', mode: 'no-cors', cache: 'no-cache',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                alert(`Pesanan ${invoice} ditandai selesai!`);
+                sinkronisasiData();
+            } catch (error) {
+                alert('Gagal merubah status.');
+            }
+        }
+
+        // UPDATE RENDER PESANAN (Menambahkan Tanggal Masuk & Tombol Aksi)
         function renderDaftarPesanan(dataTransaksi) {
             const container = document.getElementById('listPesananContainer');
             if (!dataTransaksi || dataTransaksi.length === 0) {
@@ -647,12 +712,24 @@
 
             reversedData.forEach(trx => {
                 let colorClass = 'bg-slate-600 text-white';
+                let isSelesai = false;
                 if(trx.Status && trx.Status.toLowerCase() === 'baru') colorClass = 'bg-cox-blue text-white';
                 if(trx.Status && trx.Status.toLowerCase() === 'proses') colorClass = 'bg-amber-500 text-white';
-                if(trx.Status && (trx.Status.toLowerCase() === 'selesai' || trx.Status.toLowerCase() === 'diambil')) colorClass = 'bg-emerald-500 text-white';
+                if(trx.Status && (trx.Status.toLowerCase() === 'selesai' || trx.Status.toLowerCase() === 'diambil')) {
+                    colorClass = 'bg-emerald-500 text-white';
+                    isSelesai = true;
+                }
+
+                // Siapkan data untuk dikirim ke fungsi onclick
+                let trxDataString = encodeURIComponent(JSON.stringify(trx));
+
+                let btnSelesaiHtml = '';
+                if(!isSelesai) {
+                    btnSelesaiHtml = `<button id="btn-status-${trx.No_Invoice}" onclick="updateStatus('${trx.No_Invoice}')" class="bg-emerald-500/20 text-emerald-400 border border-emerald-500 hover:bg-emerald-500 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold transition flex items-center gap-1"><i class="fa-solid fa-check-double"></i> Selesai</button>`;
+                }
 
                 html += `
-                <div class="bg-cox-card p-4 rounded-2xl border border-blue-800 shadow-sm flex flex-col gap-2">
+                <div class="bg-cox-card p-4 rounded-2xl border border-blue-800 shadow-sm flex flex-col gap-2 relative">
                     <div class="flex justify-between items-start">
                         <div>
                             <span class="text-[10px] text-blue-300 font-mono">${trx.No_Invoice || ''}</span>
@@ -660,12 +737,25 @@
                         </div>
                         <span class="text-[10px] ${colorClass} px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">${trx.Status || 'Baru'}</span>
                     </div>
-                    <div class="flex justify-between items-end mt-1">
-                        <div class="text-[11px] text-blue-200">
+                    
+                    <div class="flex justify-between items-end mt-1 pb-3 border-b border-blue-900/50">
+                        <div class="text-[11px] text-blue-200 space-y-1">
                             <p><i class="fa-solid fa-shirt w-4 text-cox-cyan"></i> ${trx.Layanan || ''}</p>
-                            <p><i class="fa-regular fa-calendar-check w-4 text-cox-cyan"></i> Selesai: ${formatWaktuIndo(trx.Tanggal_Selesai)}</p>
+                            <p><i class="fa-regular fa-clock w-4 text-cox-cyan"></i> Masuk: ${formatWaktuIndo(trx.Tanggal_Masuk)}</p>
+                            <p><i class="fa-regular fa-calendar-check w-4 text-cox-cyan"></i> Est. Selesai: ${formatWaktuIndo(trx.Tanggal_Selesai)}</p>
                         </div>
                         <span class="font-bold text-sm text-cox-cyan">Rp ${parseFloat(trx.Total_Harga || 0).toLocaleString('id-ID')}</span>
+                    </div>
+
+                    <!-- Tombol Aksi Bawah -->
+                    <div class="flex justify-between items-center pt-1">
+                        <div class="flex gap-2">
+                            ${btnSelesaiHtml}
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="kirimWA('${trxDataString}')" class="bg-slate-800 text-blue-300 border border-blue-800 hover:text-emerald-400 hover:border-emerald-500 px-3 py-1.5 rounded-lg text-[10px] font-bold transition flex items-center gap-1"><i class="fa-brands fa-whatsapp text-sm"></i> WA</button>
+                            <button onclick="cetakNota('${trxDataString}')" class="bg-slate-800 text-blue-300 border border-blue-800 hover:text-cox-cyan hover:border-cox-cyan px-3 py-1.5 rounded-lg text-[10px] font-bold transition flex items-center gap-1"><i class="fa-solid fa-print text-sm"></i> Nota</button>
+                        </div>
                     </div>
                 </div>`;
             });
@@ -677,20 +767,15 @@
             const user = document.getElementById('username').value;
             const pass = document.getElementById('password').value;
             const btn = document.getElementById('btnLogin');
-            
             if (btn.disabled) return;
-
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memverifikasi...';
             btn.disabled = true;
-            
             setTimeout(() => {
                 if (user.trim() !== "" && pass.trim() !== "") {
                     sessionStorage.setItem('cox_logged_in', 'true');
                     sessionStorage.setItem('cox_kasir', user);
-
                     document.getElementById('namaKasir').innerText = user;
                     document.getElementById('loginScreen').classList.add('opacity-0');
-                    
                     setTimeout(() => {
                         document.getElementById('loginScreen').classList.add('hidden');
                         const app = document.getElementById('appContainer');
@@ -698,65 +783,28 @@
                         setTimeout(() => app.classList.remove('opacity-0'), 50);
                         sinkronisasiData();
                     }, 500);
-                } else {
-                    handleGagalLogin(btn);
-                }
+                } else { handleGagalLogin(btn); }
             }, 1000);
         }
 
         function handleGagalLogin(btn) {
             percobaanLogin++;
             if (percobaanLogin >= 3) {
-                let detik = 30;
-                btn.disabled = true;
+                let detik = 30; btn.disabled = true;
                 let timer = setInterval(() => {
-                    btn.innerHTML = `Terkunci (${detik}s)`;
-                    detik--;
-                    if (detik < 0) {
-                        clearInterval(timer);
-                        btn.disabled = false;
-                        btn.innerHTML = `<i class="fa-solid fa-right-to-bracket"></i> Masuk Sistem`;
-                        percobaanLogin = 0;
-                    }
+                    btn.innerHTML = `Terkunci (${detik}s)`; detik--;
+                    if (detik < 0) { clearInterval(timer); btn.disabled = false; btn.innerHTML = `<i class="fa-solid fa-right-to-bracket"></i> Masuk Sistem`; percobaanLogin = 0; }
                 }, 1000);
             } else {
                 alert('Login gagal! Periksa kembali username dan password Anda.');
-                btn.disabled = false;
-                btn.innerHTML = `<i class="fa-solid fa-right-to-bracket"></i> Masuk Sistem`;
+                btn.disabled = false; btn.innerHTML = `<i class="fa-solid fa-right-to-bracket"></i> Masuk Sistem`;
             }
         }
 
-        function logout() {
-            if(confirm('Apakah Anda yakin ingin keluar?')) {
-                sessionStorage.clear();
-                location.reload();
-            }
-        }
-
-        function buatNoInvoice() {
-            const dateStr = new Date().toISOString().slice(2,10).replace(/-/g, '');
-            const randomNum = Math.floor(1000 + Math.random() * 9000);
-            return `INV${dateStr}${randomNum}`;
-        }
-
-        function bukaModalPesanan() {
-            document.getElementById('noInvoiceDisplay').innerText = buatNoInvoice();
-            const overlay = document.getElementById('modalPesananOverlay');
-            const content = document.getElementById('modalPesananContent');
-            overlay.classList.remove('hidden');
-            setTimeout(() => { overlay.classList.remove('opacity-0'); content.classList.add('active'); }, 10);
-        }
-
-        function tutupModalPesanan() {
-            const overlay = document.getElementById('modalPesananOverlay');
-            const content = document.getElementById('modalPesananContent');
-            content.classList.remove('active');
-            overlay.classList.add('opacity-0');
-            setTimeout(() => { 
-                overlay.classList.add('hidden'); 
-                resetFormPesanan(); 
-            }, 300);
-        }
+        function logout() { if(confirm('Apakah Anda yakin ingin keluar?')) { sessionStorage.clear(); location.reload(); } }
+        function buatNoInvoice() { const dateStr = new Date().toISOString().slice(2,10).replace(/-/g, ''); const randomNum = Math.floor(1000 + Math.random() * 9000); return `INV${dateStr}${randomNum}`; }
+        function bukaModalPesanan() { document.getElementById('noInvoiceDisplay').innerText = buatNoInvoice(); const overlay = document.getElementById('modalPesananOverlay'), content = document.getElementById('modalPesananContent'); overlay.classList.remove('hidden'); setTimeout(() => { overlay.classList.remove('opacity-0'); content.classList.add('active'); }, 10); }
+        function tutupModalPesanan() { const overlay = document.getElementById('modalPesananOverlay'), content = document.getElementById('modalPesananContent'); content.classList.remove('active'); overlay.classList.add('opacity-0'); setTimeout(() => { overlay.classList.add('hidden'); resetFormPesanan(); }, 300); }
 
         function resetFormPesanan() {
             document.getElementById('pilihPelangganDropdown').selectedIndex = 0; 
@@ -766,60 +814,30 @@
             document.getElementById('inputTglMasuk').value = currentDateTimeString;
             hitungOtomatisTanggalSelesai();
             document.getElementById('inputMetodePembayaran').value = '';
-            keranjangItem = [];
-            renderKeranjang();
-            document.querySelectorAll('.btn-bayar').forEach(b => {
-                b.classList.remove('bg-cox-cyan/20', 'border-cox-cyan', 'text-cox-cyan');
-            });
+            keranjangItem = []; renderKeranjang();
+            document.querySelectorAll('.btn-bayar').forEach(b => b.classList.remove('bg-cox-cyan/20', 'border-cox-cyan', 'text-cox-cyan'));
         }
 
         function pilihPembayaran(metode, element) {
             document.getElementById('inputMetodePembayaran').value = metode;
-            document.querySelectorAll('.btn-bayar').forEach(b => {
-                b.classList.remove('bg-cox-cyan/20', 'border-cox-cyan', 'text-cox-cyan');
-            });
+            document.querySelectorAll('.btn-bayar').forEach(b => b.classList.remove('bg-cox-cyan/20', 'border-cox-cyan', 'text-cox-cyan'));
             element.classList.add('bg-cox-cyan/20', 'border-cox-cyan', 'text-cox-cyan');
         }
 
         async function simpanPesanan() {
-            if (!API_URL) {
-                alert('URL Apps Script belum diisi!'); return;
-            }
-
-            const noInv = document.getElementById('noInvoiceDisplay').innerText;
-            const nama = document.getElementById('inputNamaPelanggan').value.trim();
-            const noHp = document.getElementById('inputNoHP').value.trim();
-            const tglMasuk = document.getElementById('inputTglMasuk').value;
-            const tglSelesai = document.getElementById('inputTglSelesai').value;
-            const metodeBayar = document.getElementById('inputMetodePembayaran').value;
-
-            if (!nama || !noHp || keranjangItem.length === 0 || !tglSelesai || !metodeBayar) {
-                alert('Mohon lengkapi No. WhatsApp, Nama pelanggan, masukkan minimal 1 item layanan, tanggal selesai, dan metode pembayaran!'); 
-                return;
-            }
-
+            if (!API_URL) { alert('URL Apps Script belum diisi!'); return; }
+            const noInv = document.getElementById('noInvoiceDisplay').innerText, nama = document.getElementById('inputNamaPelanggan').value.trim();
+            const noHp = document.getElementById('inputNoHP').value.trim(), tglMasuk = document.getElementById('inputTglMasuk').value;
+            const tglSelesai = document.getElementById('inputTglSelesai').value, metodeBayar = document.getElementById('inputMetodePembayaran').value;
+            if (!nama || !noHp || keranjangItem.length === 0 || !tglSelesai || !metodeBayar) { alert('Mohon lengkapi seluruh data!'); return; }
             let gabunganLayanan = keranjangItem.map(item => `${item.nama} (${item.qty})`).join(', ');
             let totalHargaKeseluruhan = keranjangItem.reduce((sum, item) => sum + item.subtotal, 0);
-
-            const btn = document.getElementById('btnSimpanPesanan');
-            const originalBtnHtml = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
-            btn.disabled = true;
+            const btn = document.getElementById('btnSimpanPesanan'), originalBtnHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...'; btn.disabled = true;
 
             const payloadTransaksi = {
                 sheetName: "Transaksi", action: "insert",
-                rowData: {
-                    "No_Invoice": noInv, 
-                    "Tanggal_Masuk": tglMasuk, 
-                    "Tanggal_Selesai": tglSelesai,
-                    "Nama_Pelanggan": nama, 
-                    "No_HP": noHp, 
-                    "Layanan": gabunganLayanan,
-                    "Jumlah_Kiloan": keranjangItem.length + " Jenis", 
-                    "Total_Harga": totalHargaKeseluruhan,
-                    "Status": "Baru", 
-                    "Metode_Pembayaran": metodeBayar
-                }
+                rowData: { "No_Invoice": noInv, "Tanggal_Masuk": tglMasuk, "Tanggal_Selesai": tglSelesai, "Nama_Pelanggan": nama, "No_HP": noHp, "Layanan": gabunganLayanan, "Jumlah_Kiloan": keranjangItem.length + " Jenis", "Total_Harga": totalHargaKeseluruhan, "Status": "Baru", "Metode_Pembayaran": metodeBayar }
             };
 
             let existingPelanggan = masterPelanggan.find(p => String(p.No_HP).trim() === noHp);
@@ -828,36 +846,15 @@
 
             const payloadPelanggan = {
                 sheetName: "Pelanggan", action: "insert",
-                rowData: {
-                    "ID_Pelanggan": idPelanggan,
-                    "Nama": nama,
-                    "No_HP": noHp,
-                    "Total_Order": totalOrderBaru
-                }
+                rowData: { "ID_Pelanggan": idPelanggan, "Nama": nama, "No_HP": noHp, "Total_Order": totalOrderBaru }
             };
 
             try {
-                await fetch(API_URL, {
-                    method: 'POST', mode: 'no-cors', cache: 'no-cache',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payloadTransaksi)
-                });
-                
-                await fetch(API_URL, {
-                    method: 'POST', mode: 'no-cors', cache: 'no-cache',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payloadPelanggan)
-                });
-
+                await fetch(API_URL, { method: 'POST', mode: 'no-cors', cache: 'no-cache', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payloadTransaksi) });
+                await fetch(API_URL, { method: 'POST', mode: 'no-cors', cache: 'no-cache', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payloadPelanggan) });
                 alert(`Transaksi ${noInv} Berhasil Disimpan & Pelanggan Tercatat!`);
-                tutupModalPesanan();
-                sinkronisasiData();
-            } catch (error) {
-                alert('Terjadi kesalahan saat menyimpan data.');
-            } finally {
-                btn.innerHTML = originalBtnHtml; 
-                btn.disabled = false;
-            }
+                tutupModalPesanan(); sinkronisasiData();
+            } catch (error) { alert('Terjadi kesalahan saat menyimpan data.'); } finally { btn.innerHTML = originalBtnHtml; btn.disabled = false; }
         }
     </script>
 </body>
