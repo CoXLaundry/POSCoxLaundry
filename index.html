@@ -68,7 +68,6 @@
                     <div class="relative">
                         <i class="fa-solid fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-blue-400 text-sm"></i>
                         <input type="password" id="password" required class="w-full bg-cox-bg border border-blue-800/50 rounded-xl py-3 pl-10 pr-10 text-sm text-white focus:outline-none focus:border-cox-cyan transition" placeholder="Masukkan password">
-                        <!-- Tombol Mata (Show/Hide Password) -->
                         <button type="button" onclick="togglePassword()" class="absolute right-4 top-1/2 -translate-y-1/2 text-blue-400 hover:text-white transition">
                             <i id="eyeIcon" class="fa-solid fa-eye text-sm"></i>
                         </button>
@@ -204,11 +203,20 @@
             <!-- Form Pesanan (Scrollable) -->
             <div class="flex-1 overflow-y-auto p-6 space-y-4 no-scrollbar">
                 
-                <!-- Data Pelanggan -->
-                <div class="grid grid-cols-2 gap-3">
+                <!-- MENU DROPDOWN PILIH PELANGGAN (FITUR BARU) -->
+                <div>
+                    <label class="block text-[11px] font-medium text-blue-300 mb-1"><i class="fa-solid fa-address-book text-cox-cyan"></i> Pilih Pelanggan Tersimpan (Opsional)</label>
+                    <select id="pilihPelangganDropdown" onchange="pilihPelangganDariDropdown()" class="w-full bg-slate-900 border border-blue-800 rounded-xl py-2.5 px-3 text-xs text-white focus:outline-none focus:border-cox-cyan appearance-none shadow-sm">
+                        <option value="" disabled selected>+ Ketik Pelanggan Baru / Pilih dari daftar...</option>
+                        <!-- Daftar Pelanggan akan muncul di sini otomatis -->
+                    </select>
+                </div>
+
+                <!-- Data Pelanggan Manual (Otomatis terisi jika pilih dari dropdown) -->
+                <div class="grid grid-cols-2 gap-3 pt-2">
                     <div>
                         <label class="block text-[11px] font-medium text-blue-300 mb-1">No. WhatsApp</label>
-                        <input type="tel" id="inputNoHP" oninput="cekPelangganByHP()" class="w-full bg-slate-900 border border-blue-800/80 rounded-xl py-2.5 px-3 text-xs text-white focus:outline-none focus:border-cox-cyan" placeholder="08...">
+                        <input type="tel" id="inputNoHP" class="w-full bg-slate-900 border border-blue-800/80 rounded-xl py-2.5 px-3 text-xs text-white focus:outline-none focus:border-cox-cyan" placeholder="08...">
                     </div>
                     <div>
                         <label class="block text-[11px] font-medium text-blue-300 mb-1">Nama Pelanggan</label>
@@ -335,7 +343,7 @@
         masterLayanan = defaultLayanan;
         renderDropdownLayanan();
 
-        // Cek Sesi Login saat halaman dimuat
+        // Cek Sesi Login
         window.addEventListener('DOMContentLoaded', () => {
             const sesiAktif = sessionStorage.getItem('cox_logged_in');
             const namaKasirSesi = sessionStorage.getItem('cox_kasir');
@@ -350,7 +358,6 @@
             }
         });
 
-        // Fitur Toggle Mata Password
         function togglePassword() {
             const passInput = document.getElementById('password');
             const eyeIcon = document.getElementById('eyeIcon');
@@ -397,7 +404,7 @@
             syncIcon.classList.add('fa-spin');
 
             try {
-                // Ambil Data Layanan
+                // Fetch Layanan
                 const resLayanan = await fetch(`${API_URL}?sheetName=Layanan`);
                 const jsonLayanan = await resLayanan.json();
                 if (jsonLayanan.data && jsonLayanan.data.length > 0) {
@@ -405,14 +412,15 @@
                     renderDropdownLayanan();
                 }
 
-                // Ambil Data Pelanggan untuk Auto-Complete
+                // Fetch Pelanggan
                 const resPelanggan = await fetch(`${API_URL}?sheetName=Pelanggan`);
                 const jsonPelanggan = await resPelanggan.json();
-                if (jsonPelanggan.data) {
+                if (jsonPelanggan.data && jsonPelanggan.data.length > 0) {
                     masterPelanggan = jsonPelanggan.data;
+                    renderDropdownPelangganMenu(); // Populate the new Dropdown!
                 }
 
-                // Ambil Data Transaksi
+                // Fetch Transaksi
                 const resTransaksi = await fetch(`${API_URL}?sheetName=Transaksi`);
                 const jsonTransaksi = await resTransaksi.json();
                 
@@ -425,16 +433,31 @@
             }
         }
 
-        // Fungsi Auto-Complete: Cek Pelanggan Berdasarkan No HP
-        function cekPelangganByHP() {
-            const noHpInput = document.getElementById('inputNoHP').value.trim();
-            const namaInput = document.getElementById('inputNamaPelanggan');
+        // FUNGSI BARU: Render Menu Pilihan Pelanggan
+        function renderDropdownPelangganMenu() {
+            const select = document.getElementById('pilihPelangganDropdown');
+            select.innerHTML = '<option value="" disabled selected>+ Ketik Pelanggan Baru / Pilih dari daftar...</option>';
+            
+            masterPelanggan.forEach(p => {
+                if(p.Nama && p.No_HP) {
+                    const opt = document.createElement('option');
+                    opt.value = p.No_HP; // Menggunakan HP sebagai value utama
+                    opt.setAttribute('data-nama', p.Nama);
+                    opt.innerText = `${p.Nama} (${p.No_HP})`;
+                    select.appendChild(opt);
+                }
+            });
+        }
 
-            if (noHpInput.length < 3) return;
-
-            const found = masterPelanggan.find(p => String(p.No_HP).trim() === noHpInput);
-            if (found && found.Nama) {
-                namaInput.value = found.Nama;
+        // FUNGSI BARU: Auto-fill jika Pelanggan dipilih dari Dropdown
+        function pilihPelangganDariDropdown() {
+            const select = document.getElementById('pilihPelangganDropdown');
+            if (select.selectedIndex > 0) {
+                const noHp = select.value;
+                const nama = select.options[select.selectedIndex].getAttribute('data-nama');
+                
+                document.getElementById('inputNamaPelanggan').value = nama;
+                document.getElementById('inputNoHP').value = noHp;
             }
         }
 
@@ -456,12 +479,12 @@
             let adaSatuan = keranjangItem.some(item => String(item.kategori).trim().toLowerCase() === 'satuan');
             let adaExpress = keranjangItem.some(item => item.nama.toLowerCase().includes('express'));
 
-            let durasiJam = 24; // Default Kiloan Reguler
+            let durasiJam = 24; 
 
             if (adaSatuan) {
-                durasiJam = 72; // Satuan selalu 72 jam (3 hari)
+                durasiJam = 72; 
             } else if (adaExpress) {
-                durasiJam = 12; // Kiloan Express
+                durasiJam = 12; 
             }
 
             dateObj.setTime(dateObj.getTime() + (durasiJam * 60 * 60 * 1000));
@@ -649,7 +672,7 @@
                         document.getElementById('loginScreen').classList.add('hidden');
                         const app = document.getElementById('appContainer');
                         app.classList.remove('hidden');
-                        app.classList.remove('opacity-0'), 50;
+                        setTimeout(() => app.classList.remove('opacity-0'), 50);
                         sinkronisasiData();
                     }, 500);
                 } else {
@@ -713,6 +736,7 @@
         }
 
         function resetFormPesanan() {
+            document.getElementById('pilihPelangganDropdown').selectedIndex = 0; // Reset Dropdown
             document.getElementById('inputNamaPelanggan').value = '';
             document.getElementById('inputNoHP').value = '';
             document.getElementById('inputJumlah').value = '';
@@ -759,7 +783,7 @@
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
             btn.disabled = true;
 
-            // 1. Simpan Transaksi ke Spreadsheet
+            // Simpan Transaksi ke Spreadsheet
             const payloadTransaksi = {
                 sheetName: "Transaksi", action: "insert",
                 rowData: {
@@ -776,7 +800,7 @@
                 }
             };
 
-            // 2. Cek dan Simpan/Update Pelanggan Otomatis ke Sheet Pelanggan
+            // Opsional: Cek dan Simpan Pelanggan ke Sheet Pelanggan
             let existingPelanggan = masterPelanggan.find(p => String(p.No_HP).trim() === noHp);
             let totalOrderBaru = existingPelanggan ? (parseInt(existingPelanggan.Total_Order || 0) + 1) : 1;
             let idPelanggan = existingPelanggan ? existingPelanggan.ID_Pelanggan : "CUST" + Date.now().toString().slice(-6);
@@ -792,14 +816,12 @@
             };
 
             try {
-                // Kirim transaksi
                 await fetch(API_URL, {
                     method: 'POST', mode: 'no-cors', cache: 'no-cache',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payloadTransaksi)
                 });
                 
-                // Kirim / perbarui data pelanggan secara background
                 await fetch(API_URL, {
                     method: 'POST', mode: 'no-cors', cache: 'no-cache',
                     headers: { 'Content-Type': 'application/json' },
