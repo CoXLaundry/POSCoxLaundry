@@ -1227,23 +1227,32 @@
             syncIcon.classList.add('fa-spin');
 
             try {
-                const jsonPengguna = await apiGet('Pengguna');
+                // Ambil SEMUA sheet secara PARALEL, bukan satu per satu
+                // berurutan. Setiap panggilan ke Google Apps Script punya
+                // latensi tersendiri (termasuk "cold start" yang bisa 1-3
+                // detik) -- memanggilnya berurutan berarti total waktu tunggu
+                // adalah JUMLAH semua latensi itu. Dengan Promise.all, total
+                // waktu tunggu cuma sebesar request yang PALING LAMBAT, bukan
+                // jumlah semuanya -- ini yang paling berdampak ke kecepatan
+                // sinkronisasi awal (login/refresh).
+                const [jsonPengguna, jsonLayanan, jsonPelanggan, jsonTransaksi, jsonPengeluaran, jsonPresensi] = await Promise.all([
+                    apiGet('Pengguna'),
+                    apiGet('Layanan'),
+                    apiGet('Pelanggan'),
+                    apiGet('Transaksi'),
+                    apiGet('Pengeluaran'),
+                    apiGet('Presensi')
+                ]);
+
                 if (jsonPengguna.data) { masterPengguna = jsonPengguna.data; renderDaftarPegawai(); }
-
-                const jsonLayanan = await apiGet('Layanan');
                 if (jsonLayanan.data && jsonLayanan.data.length > 0) { masterLayanan = jsonLayanan.data; renderDropdownLayanan(); renderDaftarLayanan(); }
-
-                const jsonPelanggan = await apiGet('Pelanggan');
                 if (jsonPelanggan.data && jsonPelanggan.data.length > 0) { masterPelanggan = jsonPelanggan.data; renderDropdownPelangganMenu(); }
 
-                const jsonTransaksi = await apiGet('Transaksi');
                 masterTransaksi = jsonTransaksi.data || [];
                 kalkulasiDashboard(masterTransaksi); renderDaftarPesanan(masterTransaksi);
 
-                const jsonPengeluaran = await apiGet('Pengeluaran');
                 masterPengeluaran = jsonPengeluaran.data || [];
 
-                const jsonPresensi = await apiGet('Presensi');
                 masterPresensi = jsonPresensi.data || [];
                 renderStatusPresensiHariIni();
                 renderDaftarPresensiSemua();
@@ -2218,7 +2227,13 @@
             const payload = { sheetName: "Transaksi", action: "update", id: invoice, updateData: { "Status": "Selesai" } };
             try {
                 await kirimKeApiScript(payload);
-                await sinkronisasiData();
+                // Update lokal langsung (bukan sinkronisasi ulang ke 6 sheet)
+                // -- kita sudah tahu persis perubahannya, tidak perlu
+                // menunggu round-trip tambahan ke server.
+                const trxLokal = masterTransaksi.find(t => String(t.No_Invoice) === String(invoice));
+                if (trxLokal) trxLokal.Status = 'Selesai';
+                kalkulasiDashboard(masterTransaksi);
+                renderDaftarPesanan(masterTransaksi);
                 // Tawarkan kirim notifikasi WA langsung, supaya kasir tidak
                 // perlu klik tombol WA terpisah setiap kali menandai selesai.
                 if (confirm(`Pesanan ${invoice} ditandai selesai! Kirim notifikasi WhatsApp ke pelanggan sekarang?`)) {
@@ -2430,18 +2445,30 @@
             try {
                 // Simpan transaksi dulu -- ini yang paling penting.
                 await kirimKeApiScript(payloadTransaksi);
+                // Update lokal langsung (bukan sinkronisasi ulang ke 6 sheet)
+                // supaya daftar pesanan & dashboard langsung ke-update tanpa
+                // menunggu round-trip tambahan ke server -- jauh lebih cepat,
+                // dan tetap akurat karena kita sudah tahu persis data barunya.
+                masterTransaksi.push({
+                    No_Invoice: noInv, Tanggal_Masuk: tglMasuk.replace('T', ' '), Tanggal_Selesai: tglSelesai.replace('T', ' '),
+                    Nama_Pelanggan: nama, No_HP: noHp, Layanan: gabunganLayanan, Jumlah_Kiloan: totalJumlahKiloan,
+                    Total_Harga: totalHargaKeseluruhan, Status: "Baru", Metode_Pembayaran: metodeBayar
+                });
 
                 try {
                     // Update data pelanggan. Kalau ini gagal, transaksi TETAP
                     // sudah tersimpan -- jangan buat kasir mengira transaksinya
                     // hilang, cukup beri tahu bagian mana yang perlu dicek manual.
                     await kirimKeApiScript(payloadPelanggan);
+                    if (existingPelanggan) { existingPelanggan.Total_Order = totalOrderBaru; }
+                    else { masterPelanggan.push({ ID_Pelanggan: idPelanggan, Nama: nama, No_HP: noHp, Total_Order: totalOrderBaru }); }
                     alert(`Transaksi ${noInv} berhasil disimpan & data pelanggan tercatat!`);
                 } catch (errPelanggan) {
                     alert(`Transaksi ${noInv} berhasil disimpan, tapi data pelanggan gagal diperbarui (${errPelanggan.message}). Mohon cek data pelanggan secara manual.`);
                 }
 
-                tutupModalPesanan(); sinkronisasiData();
+                kalkulasiDashboard(masterTransaksi); renderDaftarPesanan(masterTransaksi);
+                tutupModalPesanan();
             } catch (error) {
                 alert(`Gagal menyimpan transaksi ${noInv}: ${error.message}. Silakan coba lagi.`);
             } finally {
