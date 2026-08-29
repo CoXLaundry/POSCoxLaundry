@@ -647,6 +647,24 @@
         const TOKEN = '5ea2a27c-c70a-4afd-9969-5e6a29e5d694';
 
         // ==========================================
+        // KEAMANAN: escape HTML sebelum ditulis ke innerHTML
+        // ==========================================
+        // Data yang berasal dari input pengguna (nama pelanggan, keterangan
+        // pengeluaran, nama layanan, username, dll) TIDAK PERNAH langsung
+        // dimasukkan ke innerHTML tanpa lewat fungsi ini -- supaya kalau ada
+        // yang mengetik tag HTML/script di salah satu field itu, ia tampil
+        // sebagai teks biasa, bukan dieksekusi sebagai kode (mencegah XSS).
+        function escapeHtml(val) {
+            if (val === undefined || val === null) return '';
+            return String(val)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        // ==========================================
         // HELPER: komunikasi ke Google Apps Script
         // ==========================================
         // Content-Type: text/plain (bukan application/json) supaya browser
@@ -654,9 +672,18 @@
         // secara default) -> respons JSON dari server bisa dibaca oleh JS,
         // tidak lagi "fire-and-forget" seperti sebelumnya (mode:'no-cors').
         //
+        // sessionToken & actor dilampirkan otomatis di sini (bukan di tiap
+        // pemanggil) supaya konsisten: sessionToken dipakai server untuk
+        // membuktikan role Admin pada aksi sensitif (lihat ADMIN_ONLY_ACTIONS
+        // di code.gs), dan actor dipakai untuk catatan Log_Aktivitas.
+        //
         // Kontrak respons backend: { "result": "success" | "error", "message"?: "..." }
         async function kirimKeApiScript(payload) {
-            const payloadDenganToken = Object.assign({ token: TOKEN }, payload);
+            const payloadDenganToken = Object.assign({
+                token: TOKEN,
+                sessionToken: sessionStorage.getItem('cox_session') || '',
+                actor: sessionStorage.getItem('cox_kasir') || 'Sistem'
+            }, payload);
             const res = await fetch(API_URL, {
                 method: 'POST',
                 cache: 'no-cache',
@@ -747,6 +774,7 @@
         let kategoriAktif = 'Kiloan';
         let percobaanLogin = 0;
         let periodeLaporanAktif = 'harian';
+        let waktuTerakhirAktif = Date.now();
 
         document.getElementById('setToko').value = localStorage.getItem('toko_nama') || "COX LAUNDRY";
         document.getElementById('setAlamat').value = localStorage.getItem('toko_alamat') || "Jl. Contoh Alamat No. 123";
@@ -764,6 +792,25 @@
 
         masterLayanan = defaultLayanan;
         renderDropdownLayanan();
+
+        // ==========================================
+        // AUTO-LOGOUT KARENA TIDAK AKTIF
+        // ==========================================
+        // Mitigasi untuk perangkat yang lupa di-logout manual (misal HP kasir
+        // ditinggal di meja kasir dalam keadaan terbuka). Ganti BATAS_IDLE_MENIT
+        // sesuai kenyamanan toko Anda.
+        const BATAS_IDLE_MENIT = 30;
+        ['click', 'keydown', 'touchstart', 'mousemove'].forEach(evt => {
+            document.addEventListener(evt, () => { waktuTerakhirAktif = Date.now(); }, { passive: true });
+        });
+        setInterval(() => {
+            const sesiAktifSekarang = sessionStorage.getItem('cox_logged_in') === 'true';
+            if (sesiAktifSekarang && (Date.now() - waktuTerakhirAktif) > BATAS_IDLE_MENIT * 60 * 1000) {
+                sessionStorage.clear();
+                alert(`Sesi berakhir karena tidak ada aktivitas selama ${BATAS_IDLE_MENIT} menit. Silakan login kembali.`);
+                location.reload();
+            }
+        }, 60 * 1000);
 
         window.addEventListener('DOMContentLoaded', async () => {
             const sesiAktif = sessionStorage.getItem('cox_logged_in');
@@ -890,11 +937,11 @@
                             <i class="fa-solid fa-user"></i>
                         </div>
                         <div>
-                            <p class="font-bold text-white">${uname || 'Tanpa Nama'}</p>
+                            <p class="font-bold text-white">${escapeHtml(uname) || 'Tanpa Nama'}</p>
                             <p class="text-[9px] text-blue-400 mt-0.5">Pass: ${'*'.repeat(String(p.Password || p.password || '').length) || '***'}</p>
                         </div>
                     </div>
-                    <span class="px-2.5 py-1 border rounded-lg text-[10px] font-bold ${roleColor}">${roleName}</span>
+                    <span class="px-2.5 py-1 border rounded-lg text-[10px] font-bold ${roleColor}">${escapeHtml(roleName)}</span>
                 </div>
                 `;
             });
@@ -953,8 +1000,8 @@
                 html += `
                 <div class="flex justify-between items-center bg-slate-900 border border-blue-800 p-3 rounded-xl text-xs">
                     <div>
-                        <p class="font-bold text-white">${nama}</p>
-                        <p class="text-[9px] text-blue-400 mt-0.5">${kategori} &middot; Rp ${harga.toLocaleString('id-ID')}</p>
+                        <p class="font-bold text-white">${escapeHtml(nama)}</p>
+                        <p class="text-[9px] text-blue-400 mt-0.5">${escapeHtml(kategori)} &middot; Rp ${harga.toLocaleString('id-ID')}</p>
                     </div>
                     <div class="flex gap-2">
                         <button onclick="mulaiEditLayanan(${idx})" class="w-8 h-8 rounded-full bg-blue-900/50 text-blue-300 hover:bg-cox-cyan hover:text-cox-bg flex items-center justify-center transition"><i class="fa-solid fa-pen text-[10px]"></i></button>
@@ -1225,7 +1272,7 @@
             }
             let html = '';
             keranjangItem.forEach((item, idx) => {
-                html += `<div class="flex justify-between items-center bg-slate-900 border border-blue-800/60 p-2.5 rounded-xl text-xs"><div class="flex-1 pr-2"><p class="font-semibold text-white">${item.nama} <span class="text-[10px] text-cox-cyan">(${item.kategori})</span></p><p class="text-[10px] text-blue-300">${item.qty} x Rp ${item.hargaSatuan.toLocaleString('id-ID')}</p></div><div class="flex items-center gap-3"><span class="font-bold text-cox-cyan">Rp ${item.subtotal.toLocaleString('id-ID')}</span><button type="button" onclick="hapusItemKeranjang(${idx})" class="text-rose-400 hover:text-rose-300 p-1"><i class="fa-solid fa-trash-can"></i></button></div></div>`;
+                html += `<div class="flex justify-between items-center bg-slate-900 border border-blue-800/60 p-2.5 rounded-xl text-xs"><div class="flex-1 pr-2"><p class="font-semibold text-white">${escapeHtml(item.nama)} <span class="text-[10px] text-cox-cyan">(${escapeHtml(item.kategori)})</span></p><p class="text-[10px] text-blue-300">${item.qty} x Rp ${item.hargaSatuan.toLocaleString('id-ID')}</p></div><div class="flex items-center gap-3"><span class="font-bold text-cox-cyan">Rp ${item.subtotal.toLocaleString('id-ID')}</span><button type="button" onclick="hapusItemKeranjang(${idx})" class="text-rose-400 hover:text-rose-300 p-1"><i class="fa-solid fa-trash-can"></i></button></div></div>`;
             });
             container.innerHTML = html; hitungTotalAkhir();
         }
@@ -1322,7 +1369,7 @@
             } else {
                 rincianEl.innerHTML = entriMetode.map(([m, v]) => `
                     <div class="flex justify-between items-center bg-slate-900/60 px-3 py-2 rounded-lg">
-                        <span class="text-blue-200">${m}</span>
+                        <span class="text-blue-200">${escapeHtml(m)}</span>
                         <span class="font-bold text-cox-cyan">Rp ${v.toLocaleString('id-ID')}</span>
                     </div>`).join('');
             }
@@ -1426,8 +1473,8 @@
                 let idxAsli = masterPengeluaran.indexOf(p);
                 return `<div class="flex justify-between items-center bg-slate-900 border border-blue-800/60 p-2.5 rounded-xl text-xs">
                     <div class="flex-1 pr-2">
-                        <p class="font-semibold text-white">${p.Keterangan || '-'}</p>
-                        <p class="text-[10px] text-blue-300">${p.Kategori || '-'}</p>
+                        <p class="font-semibold text-white">${escapeHtml(p.Keterangan) || '-'}</p>
+                        <p class="text-[10px] text-blue-300">${escapeHtml(p.Kategori) || '-'}</p>
                     </div>
                     <div class="flex items-center gap-2">
                         <span class="font-bold text-rose-400">Rp ${(parseFloat(p.Nominal) || 0).toLocaleString('id-ID')}</span>
@@ -1518,11 +1565,11 @@
                 if (btnMasuk) btnMasuk.disabled = false;
                 if (btnPulang) btnPulang.disabled = true;
             } else if (rec.Jam_Masuk && !rec.Jam_Pulang) {
-                statusEl.innerHTML = `<p class="text-xs text-emerald-400 font-semibold"><i class="fa-solid fa-circle-check"></i> Masuk pukul ${rec.Jam_Masuk}</p><p class="text-[10px] text-blue-300 mt-1">Jangan lupa absen pulang setelah shift selesai.</p>`;
+                statusEl.innerHTML = `<p class="text-xs text-emerald-400 font-semibold"><i class="fa-solid fa-circle-check"></i> Masuk pukul ${escapeHtml(rec.Jam_Masuk)}</p><p class="text-[10px] text-blue-300 mt-1">Jangan lupa absen pulang setelah shift selesai.</p>`;
                 if (btnMasuk) btnMasuk.disabled = true;
                 if (btnPulang) btnPulang.disabled = false;
             } else {
-                statusEl.innerHTML = `<p class="text-xs text-cox-cyan font-semibold"><i class="fa-solid fa-circle-check"></i> Masuk: ${rec.Jam_Masuk} &nbsp;|&nbsp; Pulang: ${rec.Jam_Pulang}</p><p class="text-[10px] text-blue-300 mt-1">Presensi hari ini sudah lengkap. Sampai jumpa besok!</p>`;
+                statusEl.innerHTML = `<p class="text-xs text-cox-cyan font-semibold"><i class="fa-solid fa-circle-check"></i> Masuk: ${escapeHtml(rec.Jam_Masuk)} &nbsp;|&nbsp; Pulang: ${escapeHtml(rec.Jam_Pulang)}</p><p class="text-[10px] text-blue-300 mt-1">Presensi hari ini sudah lengkap. Sampai jumpa besok!</p>`;
                 if (btnMasuk) btnMasuk.disabled = true;
                 if (btnPulang) btnPulang.disabled = true;
             }
@@ -1540,8 +1587,8 @@
             }
             container.innerHTML = listHariIni.map(p => `
                 <div class="flex justify-between items-center bg-slate-900 border border-blue-800/60 p-2.5 rounded-xl text-xs">
-                    <span class="font-semibold text-white">${p.Username || '-'}</span>
-                    <span class="text-[10px] text-blue-300">Masuk ${p.Jam_Masuk || '-'} &middot; Pulang ${p.Jam_Pulang || '-'}</span>
+                    <span class="font-semibold text-white">${escapeHtml(p.Username) || '-'}</span>
+                    <span class="text-[10px] text-blue-300">Masuk ${escapeHtml(p.Jam_Masuk) || '-'} &middot; Pulang ${escapeHtml(p.Jam_Pulang) || '-'}</span>
                 </div>`).join('');
         }
 
@@ -1596,21 +1643,27 @@
             }
         }
 
-        function kirimWA(encodedData) {
-            const trx = JSON.parse(decodeURIComponent(encodedData));
+        function kirimWA(noInvoice) {
+            const trx = masterTransaksi.find(t => String(t.No_Invoice) === String(noInvoice));
+            if (!trx) { alert('Data transaksi tidak ditemukan. Coba sinkronisasi ulang.'); return; }
             let noHp = trx.No_HP || ''; if(noHp.startsWith('0')) noHp = '62' + noHp.substring(1);
             let template = localStorage.getItem('template_wa') || "Halo *[NAMA]*, pesanan laundry Anda dengan No. Nota *[NOTA]* sudah selesai. Total: *[TOTAL]*. Terima kasih!";
             let teks = template.replace(/\[NAMA\]/g, trx.Nama_Pelanggan).replace(/\[NOTA\]/g, trx.No_Invoice).replace(/\[TOTAL\]/g, "Rp " + parseFloat(trx.Total_Harga || 0).toLocaleString('id-ID'));
             window.open(`https://wa.me/${noHp}?text=${encodeURIComponent(teks)}`, '_blank');
         }
 
-        function cetakNota(encodedData) {
-            const trx = JSON.parse(decodeURIComponent(encodedData));
-            const toko = localStorage.getItem('toko_nama') || "COX LAUNDRY", alamat = localStorage.getItem('toko_alamat') || "Jl. Contoh Alamat", penutup = localStorage.getItem('toko_pesan') || "Terima Kasih";
-            const layanans = (trx.Layanan || "").split(',').map(s => `<div>- ${s.trim()}</div>`).join('');
+        function cetakNota(noInvoice) {
+            const trx = masterTransaksi.find(t => String(t.No_Invoice) === String(noInvoice));
+            if (!trx) { alert('Data transaksi tidak ditemukan. Coba sinkronisasi ulang.'); return; }
+            const toko = escapeHtml(localStorage.getItem('toko_nama') || "COX LAUNDRY");
+            const alamat = escapeHtml(localStorage.getItem('toko_alamat') || "Jl. Contoh Alamat");
+            const penutup = escapeHtml(localStorage.getItem('toko_pesan') || "Terima Kasih");
+            const layanans = (trx.Layanan || "").split(',').map(s => `<div>- ${escapeHtml(s.trim())}</div>`).join('');
             const printWindow = window.open('', '_blank', 'width=350,height=600');
-            const metodeBayarVal = trx.Metode_Pembayaran || trx.Metode || trx.Pembayaran || '-';
-            const html = `<html><head><title>Nota - ${trx.No_Invoice}</title><style>body { font-family: monospace; font-size: 12px; color: #000; margin: 0; padding: 15px; width: 280px; } .text-center { text-align: center; } .fw-bold { font-weight: bold; } .border-bottom { border-bottom: 1px dashed #000; margin: 10px 0; } .flex-between { display: flex; justify-content: space-between; }</style></head><body><div class="text-center fw-bold" style="font-size: 16px;">${toko}</div><div class="text-center">${alamat}</div><div class="border-bottom"></div><div>Inv  : ${trx.No_Invoice}</div><div>Nama : ${trx.Nama_Pelanggan}</div><div>Masuk: ${formatWaktuIndo(trx.Tanggal_Masuk)}</div><div>Selesai (Est): ${formatWaktuIndo(trx.Tanggal_Selesai)}</div><div class="border-bottom"></div><div class="fw-bold">Layanan:</div>${layanans}<div class="border-bottom"></div><div class="flex-between fw-bold" style="font-size: 14px;"><span>TOTAL:</span><span>Rp ${parseFloat(trx.Total_Harga || 0).toLocaleString('id-ID')}</span></div><div>Bayar: ${metodeBayarVal}</div><div class="border-bottom"></div><div class="text-center italic">${penutup}</div><script>window.onload = function() { window.print(); window.onafterprint = function(){ window.close(); } };<\/script></body></html>`;
+            const metodeBayarVal = escapeHtml(trx.Metode_Pembayaran || trx.Metode || trx.Pembayaran || '-');
+            const noInvoiceAman = escapeHtml(trx.No_Invoice);
+            const namaAman = escapeHtml(trx.Nama_Pelanggan);
+            const html = `<html><head><title>Nota - ${noInvoiceAman}</title><style>body { font-family: monospace; font-size: 12px; color: #000; margin: 0; padding: 15px; width: 280px; } .text-center { text-align: center; } .fw-bold { font-weight: bold; } .border-bottom { border-bottom: 1px dashed #000; margin: 10px 0; } .flex-between { display: flex; justify-content: space-between; }</style></head><body><div class="text-center fw-bold" style="font-size: 16px;">${toko}</div><div class="text-center">${alamat}</div><div class="border-bottom"></div><div>Inv  : ${noInvoiceAman}</div><div>Nama : ${namaAman}</div><div>Masuk: ${escapeHtml(formatWaktuIndo(trx.Tanggal_Masuk))}</div><div>Selesai (Est): ${escapeHtml(formatWaktuIndo(trx.Tanggal_Selesai))}</div><div class="border-bottom"></div><div class="fw-bold">Layanan:</div>${layanans}<div class="border-bottom"></div><div class="flex-between fw-bold" style="font-size: 14px;"><span>TOTAL:</span><span>Rp ${parseFloat(trx.Total_Harga || 0).toLocaleString('id-ID')}</span></div><div>Bayar: ${metodeBayarVal}</div><div class="border-bottom"></div><div class="text-center italic">${penutup}</div><script>window.onload = function() { window.print(); window.onafterprint = function(){ window.close(); } };<\/script></body></html>`;
             printWindow.document.write(html); printWindow.document.close();
         }
 
@@ -1639,7 +1692,6 @@
                 if(trx.Status && trx.Status.toLowerCase() === 'baru') colorClass = 'bg-cox-blue text-white';
                 if(trx.Status && trx.Status.toLowerCase() === 'proses') colorClass = 'bg-amber-500 text-white';
                 if(trx.Status && (trx.Status.toLowerCase() === 'selesai' || trx.Status.toLowerCase() === 'diambil')) { colorClass = 'bg-emerald-500 text-white'; isSelesai = true; }
-                let trxDataString = encodeURIComponent(JSON.stringify(trx));
                 let btnSelesaiHtml = !isSelesai ? `<button id="btn-status-${trx.No_Invoice}" onclick="updateStatus('${trx.No_Invoice}')" class="bg-emerald-500/20 text-emerald-400 border border-emerald-500 hover:bg-emerald-500 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold transition flex items-center gap-1"><i class="fa-solid fa-check-double"></i> Selesai</button>` : '';
                 
                 let metodeBayar = trx.Metode_Pembayaran || trx.Metode || trx.Pembayaran || '-';
@@ -1648,18 +1700,18 @@
                 <div class="bg-cox-card p-4 rounded-2xl border border-blue-800 shadow-sm flex flex-col gap-2 relative">
                     <div class="flex justify-between items-start">
                         <div>
-                            <span class="text-[10px] text-blue-300 font-mono">${trx.No_Invoice || ''}</span>
-                            <h4 class="font-bold text-sm text-white">${trx.Nama_Pelanggan || ''}</h4>
+                            <span class="text-[10px] text-blue-300 font-mono">${escapeHtml(trx.No_Invoice) || ''}</span>
+                            <h4 class="font-bold text-sm text-white">${escapeHtml(trx.Nama_Pelanggan) || ''}</h4>
                         </div>
-                        <span class="text-[10px] ${colorClass} px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">${trx.Status || 'Baru'}</span>
+                        <span class="text-[10px] ${colorClass} px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">${escapeHtml(trx.Status) || 'Baru'}</span>
                     </div>
                     
                     <div class="flex justify-between items-end mt-1 pb-3 border-b border-blue-900/50">
                         <div class="text-[11px] text-blue-200 space-y-1">
-                            <p><i class="fa-solid fa-shirt w-4 text-cox-cyan"></i> ${trx.Layanan || ''}</p>
-                            <p><i class="fa-regular fa-clock w-4 text-cox-cyan"></i> Masuk: ${formatWaktuIndo(trx.Tanggal_Masuk)}</p>
-                            <p><i class="fa-regular fa-calendar-check w-4 text-cox-cyan"></i> Est. Selesai: ${formatWaktuIndo(trx.Tanggal_Selesai)}</p>
-                            <p><i class="fa-solid fa-wallet w-4 text-cox-cyan"></i> Pembayaran: <span class="text-white font-medium">${metodeBayar}</span></p>
+                            <p><i class="fa-solid fa-shirt w-4 text-cox-cyan"></i> ${escapeHtml(trx.Layanan) || ''}</p>
+                            <p><i class="fa-regular fa-clock w-4 text-cox-cyan"></i> Masuk: ${escapeHtml(formatWaktuIndo(trx.Tanggal_Masuk))}</p>
+                            <p><i class="fa-regular fa-calendar-check w-4 text-cox-cyan"></i> Est. Selesai: ${escapeHtml(formatWaktuIndo(trx.Tanggal_Selesai))}</p>
+                            <p><i class="fa-solid fa-wallet w-4 text-cox-cyan"></i> Pembayaran: <span class="text-white font-medium">${escapeHtml(metodeBayar)}</span></p>
                         </div>
                         <span class="font-bold text-sm text-cox-cyan">Rp ${parseFloat(trx.Total_Harga || 0).toLocaleString('id-ID')}</span>
                     </div>
@@ -1669,8 +1721,8 @@
                             ${btnSelesaiHtml}
                         </div>
                         <div class="flex gap-2">
-                            <button onclick="kirimWA('${trxDataString}')" class="bg-slate-800 text-blue-300 border border-blue-800 hover:text-emerald-400 hover:border-emerald-500 px-3 py-1.5 rounded-lg text-[10px] font-bold transition flex items-center gap-1"><i class="fa-brands fa-whatsapp text-sm"></i> WA</button>
-                            <button onclick="cetakNota('${trxDataString}')" class="bg-slate-800 text-blue-300 border border-blue-800 hover:text-cox-cyan hover:border-cox-cyan px-3 py-1.5 rounded-lg text-[10px] font-bold transition flex items-center gap-1"><i class="fa-solid fa-print text-sm"></i> Nota</button>
+                            <button onclick="kirimWA('${trx.No_Invoice}')" class="bg-slate-800 text-blue-300 border border-blue-800 hover:text-emerald-400 hover:border-emerald-500 px-3 py-1.5 rounded-lg text-[10px] font-bold transition flex items-center gap-1"><i class="fa-brands fa-whatsapp text-sm"></i> WA</button>
+                            <button onclick="cetakNota('${trx.No_Invoice}')" class="bg-slate-800 text-blue-300 border border-blue-800 hover:text-cox-cyan hover:border-cox-cyan px-3 py-1.5 rounded-lg text-[10px] font-bold transition flex items-center gap-1"><i class="fa-solid fa-print text-sm"></i> Nota</button>
                         </div>
                     </div>
                 </div>`;
@@ -1704,6 +1756,14 @@
                 sessionStorage.setItem('cox_logged_in', 'true');
                 sessionStorage.setItem('cox_kasir', user);
                 sessionStorage.setItem('cox_role', userRole);
+                // sessionToken dipakai server untuk membuktikan role Admin pada
+                // aksi sensitif (Kelola Layanan, hapus Pengeluaran, tambah
+                // pegawai) -- lihat ADMIN_ONLY_ACTIONS di code.gs. Berbeda dari
+                // cox_role di atas, ini TIDAK bisa dipalsukan lewat DevTools
+                // karena server memverifikasinya lewat CacheService, bukan
+                // dari nilai yang diklaim client.
+                sessionStorage.setItem('cox_session', hasil.sessionToken || '');
+                waktuTerakhirAktif = Date.now();
 
                 document.getElementById('namaKasir').innerText = user;
                 document.getElementById('badgeRoleKasir').innerText = userRole;
@@ -1720,7 +1780,11 @@
                 }, 500);
             } catch (err) {
                 // Baik kredensial salah maupun gangguan jaringan/server sama-sama
-                // dianggap percobaan gagal, supaya lockout brute-force tetap jalan.
+                // dianggap percobaan gagal. Lockout visual di tombol ini cuma
+                // kosmetik/UX -- pembatasan yang sesungguhnya sudah dijaga di
+                // server (lihat cekRateLimitLogin_ di code.gs), jadi tetap
+                // efektif walau halaman ini di-refresh atau diserang lewat API
+                // langsung.
                 handleGagalLogin(btn);
             }
         }
