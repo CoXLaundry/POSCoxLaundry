@@ -334,6 +334,17 @@
                         <button type="button" onclick="simpanPengaturanLokal()" class="w-full bg-cox-cyan text-cox-bg font-bold py-2.5 rounded-xl hover:bg-white transition flex justify-center items-center gap-2 shadow-neon text-sm mt-2">
                             <i class="fa-solid fa-floppy-disk"></i> Simpan Pengaturan
                         </button>
+
+                        <div class="pt-4 mt-2 border-t border-blue-900 border-dashed space-y-2">
+                            <h4 class="text-xs font-bold text-cox-cyan mb-1"><i class="fa-brands fa-bluetooth-b"></i> Printer Bluetooth (Opsional)</h4>
+                            <p class="text-[9px] text-blue-400 leading-relaxed">
+                                Cuma bekerja dengan printer Bluetooth Low Energy (BLE). Kalau saat "Sambungkan" nama printer Anda TIDAK muncul di daftar perangkat, printer Anda kemungkinan pakai Bluetooth Classic (SPP) dan tidak bisa dipakai lewat browser -- gunakan tombol "Nota" biasa sebagai gantinya.
+                            </p>
+                            <div id="statusPrinterBT" class="text-xs text-blue-300 py-1"><i class="fa-solid fa-circle-xmark text-blue-400"></i> Belum tersambung</div>
+                            <button type="button" onclick="sambungkanPrinterBT()" class="w-full bg-cox-card border border-cox-cyan text-cox-cyan font-semibold py-2.5 rounded-xl hover:bg-cox-cyan hover:text-cox-bg transition flex justify-center items-center gap-2 text-xs">
+                                <i class="fa-brands fa-bluetooth-b"></i> Sambungkan Printer Bluetooth
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -1871,6 +1882,133 @@
             window.open(`https://wa.me/${noHp}?text=${encodeURIComponent(teks)}`, '_blank');
         }
 
+        // ==========================================
+        // CETAK VIA BLUETOOTH (ESC/POS, printer thermal BLE)
+        // ==========================================
+        // PENTING -- baca ini kalau printer tidak mau tersambung:
+        // Web Bluetooth di browser HANYA bisa bicara dengan printer
+        // Bluetooth Low Energy (BLE). Banyak printer thermal murah justru
+        // pakai Bluetooth Classic (SPP) -- itu TIDAK BISA disambungkan lewat
+        // browser sama sekali, ini keterbatasan Web Bluetooth API, bukan
+        // bug di kode ini. Tandanya: kalau nama printer Anda tidak muncul
+        // sama sekali di jendela pemilihan perangkat saat klik "Sambungkan",
+        // printer Anda kemungkinan Classic SPP -- gunakan tombol "Nota"
+        // (cetak lewat dialog print biasa) sebagai gantinya.
+        //
+        // UUID di bawah adalah pola paling umum dipakai printer thermal BLE
+        // generic/tanpa merek. Kalau printer BISA tersambung tapi tidak ada
+        // yang tercetak, kemungkinan printer Anda pakai UUID custom -- lihat
+        // manual printer atau tanyakan ke penjual, lalu ganti nilainya di
+        // sini.
+        const BT_PRINTER_SERVICE_UUID = 0x18f0;
+        const BT_PRINTER_CHARACTERISTIC_UUID = 0x2af1;
+
+        let btPrinterDevice = null;
+        let btPrinterCharacteristic = null;
+
+        async function sambungkanPrinterBT() {
+            if (!navigator.bluetooth) {
+                alert('Browser ini tidak mendukung Web Bluetooth. Gunakan Chrome/Edge terbaru di Android atau desktop (bukan Safari/iOS).');
+                return;
+            }
+            try {
+                btPrinterDevice = await navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true,
+                    optionalServices: [BT_PRINTER_SERVICE_UUID]
+                });
+                const server = await btPrinterDevice.gatt.connect();
+                const service = await server.getPrimaryService(BT_PRINTER_SERVICE_UUID);
+                btPrinterCharacteristic = await service.getCharacteristic(BT_PRINTER_CHARACTERISTIC_UUID);
+                btPrinterDevice.addEventListener('gattserverdisconnected', () => {
+                    btPrinterCharacteristic = null;
+                    perbaruiStatusPrinterBT();
+                });
+                alert(`Berhasil tersambung ke printer: ${btPrinterDevice.name || 'printer'}`);
+                perbaruiStatusPrinterBT();
+            } catch (err) {
+                if (err.name === 'NotFoundError') return; // Pengguna membatalkan pemilihan, tidak perlu dianggap error.
+                alert(`Gagal tersambung ke printer: ${err.message}\n\nKemungkinan printer Anda pakai Bluetooth Classic (SPP), bukan BLE -- lihat catatan di panel Pengaturan.`);
+                perbaruiStatusPrinterBT();
+            }
+        }
+
+        function perbaruiStatusPrinterBT() {
+            const statusEl = document.getElementById('statusPrinterBT');
+            if (!statusEl) return;
+            if (btPrinterDevice && btPrinterDevice.gatt && btPrinterDevice.gatt.connected) {
+                statusEl.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i> Tersambung: ${escapeHtml(btPrinterDevice.name || 'Printer')}`;
+            } else {
+                statusEl.innerHTML = `<i class="fa-solid fa-circle-xmark text-blue-400"></i> Belum tersambung`;
+            }
+        }
+
+        // Susun perintah ESC/POS mentah untuk satu nota (setara isi cetakNota,
+        // tapi berbentuk byte, bukan HTML).
+        function buatPerintahEscPosNota(trx) {
+            const ESC = 0x1B;
+            let bytes = [];
+            const teks = (s) => Array.from(new TextEncoder().encode(String(s)));
+            const tambah = (arr) => { bytes = bytes.concat(arr); };
+
+            const toko = localStorage.getItem('toko_nama') || "COX LAUNDRY";
+            const alamat = localStorage.getItem('toko_alamat') || "Jl. Contoh Alamat";
+            const penutup = localStorage.getItem('toko_pesan') || "Terima Kasih";
+            const metodeBayarVal = trx.Metode_Pembayaran || trx.Metode || trx.Pembayaran || '-';
+
+            tambah([ESC, 0x40]); // Inisialisasi printer
+
+            tambah([ESC, 0x61, 0x01]); // Rata tengah
+            tambah([ESC, 0x45, 0x01]); tambah(teks(toko + '\n')); tambah([ESC, 0x45, 0x00]); // Bold nama toko
+            tambah(teks(alamat + '\n'));
+            tambah(teks('--------------------------------\n'));
+
+            tambah([ESC, 0x61, 0x00]); // Rata kiri
+            tambah(teks(`Inv  : ${trx.No_Invoice}\n`));
+            tambah(teks(`Nama : ${trx.Nama_Pelanggan}\n`));
+            tambah(teks(`Masuk: ${formatWaktuIndo(trx.Tanggal_Masuk)}\n`));
+            tambah(teks(`Selesai (Est): ${formatWaktuIndo(trx.Tanggal_Selesai)}\n`));
+            tambah(teks('--------------------------------\n'));
+
+            tambah([ESC, 0x45, 0x01]); tambah(teks('Layanan:\n')); tambah([ESC, 0x45, 0x00]);
+            (trx.Layanan || '').split(',').forEach(s => { if (s.trim()) tambah(teks(`- ${s.trim()}\n`)); });
+            tambah(teks('--------------------------------\n'));
+
+            tambah([ESC, 0x45, 0x01]);
+            tambah(teks(`TOTAL: Rp ${parseFloat(trx.Total_Harga || 0).toLocaleString('id-ID')}\n`));
+            tambah([ESC, 0x45, 0x00]);
+            tambah(teks(`Bayar: ${metodeBayarVal}\n`));
+            tambah(teks('--------------------------------\n'));
+
+            tambah([ESC, 0x61, 0x01]); // Rata tengah
+            tambah(teks(penutup + '\n\n\n'));
+
+            return new Uint8Array(bytes);
+        }
+
+        async function cetakNotaBluetooth(noInvoice) {
+            const trx = masterTransaksi.find(t => String(t.No_Invoice) === String(noInvoice));
+            if (!trx) { alert('Data transaksi tidak ditemukan. Coba sinkronisasi ulang.'); return; }
+
+            if (!btPrinterCharacteristic || !btPrinterDevice || !btPrinterDevice.gatt.connected) {
+                alert('Printer Bluetooth belum tersambung. Buka Pengaturan > "Sambungkan Printer Bluetooth" dulu, atau gunakan tombol "Nota" biasa.');
+                return;
+            }
+
+            try {
+                const data = buatPerintahEscPosNota(trx);
+                // BLE punya batas ukuran per pengiriman -- kirim per potongan
+                // kecil dengan jeda supaya buffer printer tidak kebanjiran.
+                const UKURAN_POTONGAN = 100;
+                for (let i = 0; i < data.length; i += UKURAN_POTONGAN) {
+                    const potongan = data.slice(i, i + UKURAN_POTONGAN);
+                    await btPrinterCharacteristic.writeValue(potongan);
+                    await new Promise(r => setTimeout(r, 30));
+                }
+            } catch (err) {
+                alert(`Gagal mencetak lewat Bluetooth: ${err.message}\n\nCoba sambungkan ulang printer dari Pengaturan, atau gunakan tombol "Nota" biasa sebagai cadangan.`);
+            }
+        }
+
         function cetakNota(noInvoice) {
             const trx = masterTransaksi.find(t => String(t.No_Invoice) === String(noInvoice));
             if (!trx) { alert('Data transaksi tidak ditemukan. Coba sinkronisasi ulang.'); return; }
@@ -1957,6 +2095,7 @@
                         <div class="flex gap-2">
                             <button onclick="kirimWA('${trx.No_Invoice}')" class="bg-slate-800 text-blue-300 border border-blue-800 hover:text-emerald-400 hover:border-emerald-500 px-3 py-1.5 rounded-lg text-[10px] font-bold transition flex items-center gap-1"><i class="fa-brands fa-whatsapp text-sm"></i> WA</button>
                             <button onclick="cetakNota('${trx.No_Invoice}')" class="bg-slate-800 text-blue-300 border border-blue-800 hover:text-cox-cyan hover:border-cox-cyan px-3 py-1.5 rounded-lg text-[10px] font-bold transition flex items-center gap-1"><i class="fa-solid fa-print text-sm"></i> Nota</button>
+                            <button onclick="cetakNotaBluetooth('${trx.No_Invoice}')" title="Cetak langsung ke printer Bluetooth (kalau sudah tersambung)" class="bg-slate-800 text-blue-300 border border-blue-800 hover:text-cox-cyan hover:border-cox-cyan px-3 py-1.5 rounded-lg text-[10px] font-bold transition flex items-center gap-1"><i class="fa-brands fa-bluetooth-b text-sm"></i></button>
                         </div>
                     </div>
                 </div>`;
