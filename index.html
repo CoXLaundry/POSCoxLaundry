@@ -99,7 +99,6 @@
             
             <!-- VIEW BERANDA -->
             <div id="viewBeranda" class="fade-in">
-                <!-- Profile Card -->
                 <div class="mx-5 bg-cox-card rounded-2xl p-4 shadow-lg border border-blue-800/50 relative overflow-hidden">
                     <div class="absolute -top-10 -right-10 w-32 h-32 bg-cox-blue rounded-full blur-[50px] opacity-40"></div>
                     <div class="flex gap-4 items-center relative z-10">
@@ -120,7 +119,6 @@
                     </div>
                 </div>
 
-                <!-- Dashboard Stats Card -->
                 <div class="mx-5 mt-4 bg-cox-card rounded-2xl p-4 shadow-lg border border-blue-800/50 flex items-center justify-between relative z-10">
                     <div class="flex-1">
                         <p class="text-[10px] text-blue-300 opacity-70">Pendapatan Hari Ini</p>
@@ -169,10 +167,7 @@
             <!-- VIEW PENGATURAN -->
             <div id="viewPengaturan" class="hidden fade-in px-5 pb-10">
                 
-                <!-- MENU LIST PENGATURAN -->
                 <div id="menuPengaturanList" class="space-y-3">
-                    
-                    <!-- Menu 1: Template Nota & WA -->
                     <button onclick="bukaFormTemplate()" class="w-full bg-cox-card border border-blue-800 hover:border-cox-cyan p-4 rounded-2xl flex items-center justify-between group transition">
                         <div class="flex items-center gap-4">
                             <div class="w-11 h-11 rounded-full bg-cox-cyan/10 text-cox-cyan flex items-center justify-center text-xl group-hover:bg-cox-cyan group-hover:text-cox-bg transition shadow-neon">
@@ -186,7 +181,6 @@
                         <i class="fa-solid fa-chevron-right text-blue-400 group-hover:text-cox-cyan transition"></i>
                     </button>
 
-                    <!-- Menu 2: Akses Role & Pegawai (Dummy) -->
                     <button class="w-full bg-slate-800/50 border border-blue-900/50 p-4 rounded-2xl flex items-center justify-between group opacity-60 cursor-not-allowed">
                         <div class="flex items-center gap-4">
                             <div class="w-11 h-11 rounded-full bg-rose-500/10 text-rose-400 flex items-center justify-center text-xl">
@@ -200,7 +194,6 @@
                         <i class="fa-solid fa-lock text-slate-500"></i>
                     </button>
 
-                    <!-- Menu 3: Sinkronisasi Force (Opsional Tambahan) -->
                     <button onclick="sinkronisasiData()" class="w-full bg-cox-card border border-blue-800 hover:border-cox-cyan p-4 rounded-2xl flex items-center justify-between group transition mt-6">
                         <div class="flex items-center gap-4">
                             <div class="w-11 h-11 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-xl">
@@ -214,7 +207,6 @@
                     </button>
                 </div>
 
-                <!-- FORM TEMPLATE NOTA & WA (Tersembunyi secara default) -->
                 <div id="formTemplatePengaturan" class="hidden bg-cox-card p-5 rounded-2xl border border-blue-800 shadow-lg space-y-4">
                     <div class="flex items-center gap-3 mb-2">
                         <button onclick="tutupFormTemplate()" class="w-8 h-8 rounded-full bg-blue-900/50 flex items-center justify-center text-blue-300 hover:text-white hover:bg-rose-500 transition">
@@ -248,7 +240,6 @@
                         </button>
                     </div>
                 </div>
-
             </div>
             
         </main>
@@ -343,6 +334,19 @@
                     </div>
                 </div>
 
+                <!-- FITUR DISKON (BARU) -->
+                <div class="pt-2 border-t border-blue-900/50">
+                    <label class="block text-[11px] font-medium text-blue-300 mb-1.5"><i class="fa-solid fa-tag text-cox-cyan"></i> Potongan Harga / Diskon (Opsional)</label>
+                    <div class="flex gap-2 items-center">
+                        <div class="flex bg-slate-900 border border-blue-800 rounded-xl overflow-hidden p-1 w-1/3">
+                            <button type="button" onclick="ubahTipeDiskon('Rp', this)" class="btn-tipe-diskon w-1/2 bg-cox-cyan/20 text-cox-cyan text-xs py-1.5 rounded-lg font-semibold transition">Rp</button>
+                            <button type="button" onclick="ubahTipeDiskon('%', this)" class="btn-tipe-diskon w-1/2 text-blue-400 text-xs py-1.5 rounded-lg hover:text-white transition">%</button>
+                        </div>
+                        <input type="number" id="inputDiskon" oninput="hitungTotalAkhir()" class="w-2/3 bg-slate-900 border border-blue-800 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:border-cox-cyan" placeholder="Nominal / Persen...">
+                        <input type="hidden" id="tipeDiskonVal" value="Rp">
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-2 gap-3 pt-2 border-t border-blue-900/50">
                     <div>
                         <label class="block text-[11px] font-medium text-blue-300 mb-1">Tanggal Masuk</label>
@@ -370,7 +374,7 @@
             <div class="bg-cox-card p-4 border-t border-blue-900/60 pb-6 rounded-t-2xl shadow-[0_-10px_20px_rgba(0,0,0,0.3)]">
                 <div class="flex justify-between items-center mb-3">
                     <span class="text-xs text-blue-200">Total Tagihan Keseluruhan</span>
-                    <span id="displayTotalHarga" class="text-xl font-bold text-cox-cyan">Rp 0</span>
+                    <span id="displayTotalHarga" data-total="0" class="text-xl font-bold text-cox-cyan">Rp 0</span>
                 </div>
                 <button id="btnSimpanPesanan" onclick="simpanPesanan()" class="w-full bg-cox-cyan text-cox-bg font-bold py-3 rounded-xl hover:bg-white transition flex justify-center items-center gap-2 shadow-neon text-sm">
                     <i class="fa-solid fa-check"></i> Simpan Transaksi (& Proses)
@@ -409,7 +413,6 @@
         let kategoriAktif = 'Kiloan';
         let percobaanLogin = 0;
 
-        // Muat Pengaturan Lokal (Template)
         document.getElementById('setToko').value = localStorage.getItem('toko_nama') || "COX LAUNDRY";
         document.getElementById('setAlamat').value = localStorage.getItem('toko_alamat') || "Jl. Contoh Alamat No. 123";
         document.getElementById('setPenutup').value = localStorage.getItem('toko_pesan') || "Terima Kasih Telah Mempercayakan Cucian Anda";
@@ -441,7 +444,6 @@
             }
         });
 
-        // FUNGSI NAVIGASI MENU PENGATURAN
         function bukaFormTemplate() {
             document.getElementById('menuPengaturanList').classList.add('hidden');
             const form = document.getElementById('formTemplatePengaturan');
@@ -462,7 +464,7 @@
             localStorage.setItem('toko_pesan', document.getElementById('setPenutup').value);
             localStorage.setItem('template_wa', document.getElementById('setWA').value);
             alert("Pengaturan Template Berhasil Disimpan!");
-            tutupFormTemplate(); // Kembali ke menu setelah simpan
+            tutupFormTemplate(); 
         }
 
         function formatWaktuIndo(tglStr) {
@@ -505,7 +507,6 @@
             
             document.getElementById('headerTitle').innerText = titles[tab];
 
-            // Reset menu pengaturan agar jika berpindah tab, menu tertutup
             if (tab !== 'pengaturan') {
                 document.getElementById('formTemplatePengaturan').classList.add('hidden');
                 document.getElementById('menuPengaturanList').classList.remove('hidden');
@@ -646,17 +647,26 @@
             renderKeranjang(); hitungOtomatisTanggalSelesai();
         }
 
+        // FUNGSI DISKON & KALKULASI TOTAL AKHIR
+        function ubahTipeDiskon(tipe, element) {
+            document.getElementById('tipeDiskonVal').value = tipe;
+            document.querySelectorAll('.btn-tipe-diskon').forEach(b => {
+                b.className = "btn-tipe-diskon w-1/2 text-blue-400 text-xs py-1.5 rounded-lg hover:text-white transition";
+            });
+            element.className = "btn-tipe-diskon w-1/2 bg-cox-cyan/20 text-cox-cyan text-xs py-1.5 rounded-lg font-semibold transition";
+            hitungTotalAkhir();
+        }
+
         function renderKeranjang() {
             const container = document.getElementById('keranjangContainer'), badge = document.getElementById('badgeJumlahItem');
             badge.innerText = `${keranjangItem.length} Item`;
             if (keranjangItem.length === 0) {
                 container.innerHTML = `<p class="text-[11px] text-blue-400 text-center py-3 italic">Belum ada item ditambahkan ke pesanan.</p>`;
-                document.getElementById('displayTotalHarga').innerText = 'Rp 0';
+                hitungTotalAkhir();
                 return;
             }
-            let html = '', totalKeseluruhan = 0;
+            let html = '';
             keranjangItem.forEach((item, idx) => {
-                totalKeseluruhan += item.subtotal;
                 html += `
                 <div class="flex justify-between items-center bg-slate-900 border border-blue-800/60 p-2.5 rounded-xl text-xs">
                     <div class="flex-1 pr-2"><p class="font-semibold text-white">${item.nama} <span class="text-[10px] text-cox-cyan">(${item.kategori})</span></p><p class="text-[10px] text-blue-300">${item.qty} x Rp ${item.hargaSatuan.toLocaleString('id-ID')}</p></div>
@@ -664,7 +674,34 @@
                 </div>`;
             });
             container.innerHTML = html;
-            document.getElementById('displayTotalHarga').innerText = 'Rp ' + totalKeseluruhan.toLocaleString('id-ID');
+            hitungTotalAkhir();
+        }
+
+        function hitungTotalAkhir() {
+            let subtotal = keranjangItem.reduce((sum, item) => sum + item.subtotal, 0);
+            let valDiskon = parseFloat(document.getElementById('inputDiskon').value) || 0;
+            let tipe = document.getElementById('tipeDiskonVal').value;
+            let potongan = 0;
+
+            if (valDiskon > 0) {
+                if (tipe === '%') {
+                    potongan = subtotal * (valDiskon / 100);
+                } else {
+                    potongan = valDiskon;
+                }
+            }
+
+            let totalAkhir = subtotal - potongan;
+            if (totalAkhir < 0) totalAkhir = 0;
+
+            let displayEl = document.getElementById('displayTotalHarga');
+            if (potongan > 0) {
+                displayEl.innerHTML = `<div class="flex flex-col items-end"><span class="text-[10px] text-rose-400 line-through mb-[-4px]">Rp ${subtotal.toLocaleString('id-ID')}</span><span class="text-xl font-bold text-cox-cyan">Rp ${totalAkhir.toLocaleString('id-ID')}</span></div>`;
+            } else {
+                displayEl.innerHTML = `Rp ${subtotal.toLocaleString('id-ID')}`;
+            }
+            
+            displayEl.setAttribute('data-total', totalAkhir);
         }
 
         function kalkulasiDashboard(dataTransaksi) {
@@ -877,7 +914,13 @@
             document.getElementById('inputNamaPelanggan').value = '';
             document.getElementById('inputNoHP').value = '';
             document.getElementById('inputJumlah').value = '';
+            document.getElementById('inputDiskon').value = ''; 
             document.getElementById('inputTglMasuk').value = currentDateTimeString;
+            
+            // Reset tipe diskon ke Rupiah
+            const btnTipes = document.querySelectorAll('.btn-tipe-diskon');
+            if(btnTipes.length > 0) ubahTipeDiskon('Rp', btnTipes[0]);
+
             hitungOtomatisTanggalSelesai();
             document.getElementById('inputMetodePembayaran').value = '';
             keranjangItem = []; renderKeranjang();
@@ -896,8 +939,20 @@
             const noHp = document.getElementById('inputNoHP').value.trim(), tglMasuk = document.getElementById('inputTglMasuk').value;
             const tglSelesai = document.getElementById('inputTglSelesai').value, metodeBayar = document.getElementById('inputMetodePembayaran').value;
             if (!nama || !noHp || keranjangItem.length === 0 || !tglSelesai || !metodeBayar) { alert('Mohon lengkapi seluruh data!'); return; }
+            
+            // Gabungkan teks layanan dengan info diskon jika ada
+            let valDiskon = parseFloat(document.getElementById('inputDiskon').value) || 0;
+            let tipeDiskon = document.getElementById('tipeDiskonVal').value;
             let gabunganLayanan = keranjangItem.map(item => `${item.nama} (${item.qty})`).join(', ');
-            let totalHargaKeseluruhan = keranjangItem.reduce((sum, item) => sum + item.subtotal, 0);
+            
+            if (valDiskon > 0) {
+                let teksDiskon = tipeDiskon === '%' ? `[Diskon ${valDiskon}%]` : `[Diskon Rp ${valDiskon.toLocaleString('id-ID')}]`;
+                gabunganLayanan += ` ${teksDiskon}`;
+            }
+
+            // Ambil total harga yang sudah didiskon dari atribut html data-total
+            let totalHargaKeseluruhan = parseFloat(document.getElementById('displayTotalHarga').getAttribute('data-total')) || 0;
+            
             const btn = document.getElementById('btnSimpanPesanan'), originalBtnHtml = btn.innerHTML;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...'; btn.disabled = true;
 
