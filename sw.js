@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cox-pos-v5'; // Naikkan versi setiap kali ada perubahan file
+const CACHE_NAME = 'cox-pos-v6'; // Naikkan versi setiap kali ada perubahan file
 
 // Aset inti (wajib ada agar app shell tetap tampil saat offline)
 const urlsToCache = [

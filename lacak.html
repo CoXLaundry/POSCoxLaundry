@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lacak Pesanan - Cox Laundry</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'cox-bg': '#02024D',
+                        'cox-card': '#0A0C75',
+                        'cox-cyan': '#00E5FF',
+                        'cox-blue': '#0055FF',
+                        'cox-text': '#E0E7FF'
+                    },
+                    boxShadow: { 'neon': '0 0 10px rgba(0, 229, 255, 0.3)' }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body class="bg-slate-900 font-sans antialiased text-white flex justify-center items-center min-h-screen p-4">
+
+    <div class="w-full max-w-sm bg-cox-bg rounded-3xl shadow-2xl border border-blue-900 overflow-hidden relative">
+        <div class="p-6 text-center relative overflow-hidden">
+            <div class="absolute -top-10 -right-10 w-32 h-32 bg-cox-blue rounded-full blur-[50px] opacity-40"></div>
+            <div class="bg-white p-3 rounded-2xl h-16 w-16 mx-auto flex items-center justify-center shadow-inner mb-3 relative z-10">
+                <span class="text-cox-bg font-extrabold text-2xl italic tracking-tighter">Co<span class="text-cox-cyan">X</span></span>
+            </div>
+            <h1 class="text-lg font-bold relative z-10">Lacak Status Pesanan</h1>
+            <p class="text-[11px] text-blue-300 mt-1 relative z-10">Cox Laundry</p>
+        </div>
+
+        <div id="formLacak" class="px-6 pb-6 space-y-4">
+            <div>
+                <label class="block text-[11px] text-cox-text mb-1.5 ml-1">Nomor Invoice</label>
+                <input type="text" id="inputInvoiceLacak" placeholder="Cth: INV2608295105" class="w-full bg-cox-card border border-blue-800/50 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:border-cox-cyan transition uppercase">
+            </div>
+            <div>
+                <label class="block text-[11px] text-cox-text mb-1.5 ml-1">4 Digit Terakhir No. HP</label>
+                <input type="text" id="inputHpLacak" placeholder="Cth: 1589" maxlength="4" inputmode="numeric" class="w-full bg-cox-card border border-blue-800/50 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:border-cox-cyan transition">
+            </div>
+            <button id="btnLacak" onclick="lacakPesanan()" class="w-full bg-cox-cyan text-cox-bg font-bold py-3.5 rounded-xl hover:bg-white transition flex justify-center items-center gap-2 shadow-neon">
+                <i class="fa-solid fa-magnifying-glass"></i> Cek Status
+            </button>
+            <p id="pesanErrorLacak" class="text-rose-400 text-xs text-center hidden"></p>
+            <p class="text-[10px] text-blue-400 text-center leading-relaxed">Nomor invoice bisa dilihat di nota fisik yang Anda terima saat menitipkan cucian.</p>
+        </div>
+
+        <div id="hasilLacak" class="hidden px-6 pb-6 space-y-4 fade-in"></div>
+    </div>
+
+    <script>
+        // GANTI dengan API_URL Apps Script yang SAMA PERSIS dengan yang ada
+        // di index.html aplikasi kasir Anda.
+        const API_URL = 'https://script.google.com/macros/s/AKfycbxq3pGfjN4bLTZ9X-ZxoDdZNkI2goBWGC_3pkP6w0HdImBi5JVB0JnbvAEwm7-MIzZd/exec';
+
+        function escapeHtml(val) {
+            if (val === undefined || val === null) return '';
+            return String(val)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function formatWaktuIndo(tglStr) {
+            if (!tglStr) return '-';
+            try {
+                let cleanStr = String(tglStr).replace('T', ' ').replace('.000Z', '').replace('Z', '');
+                let parts = cleanStr.split(' ');
+                let datePart = parts[0];
+                let timePart = parts[1] || '00:00';
+                if (datePart && datePart.includes('-')) {
+                    let [y, m, d] = datePart.split('-');
+                    const namaBulan = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+                    let bln = namaBulan[parseInt(m, 10) - 1];
+                    let timeFormatted = timePart ? `, ${timePart.substring(0, 5)} WIB` : '';
+                    return `${d} ${bln} ${y}${timeFormatted}`;
+                }
+                return cleanStr;
+            } catch (e) { return String(tglStr); }
+        }
+
+        async function lacakPesanan() {
+            const invoice = document.getElementById('inputInvoiceLacak').value.trim();
+            const hp = document.getElementById('inputHpLacak').value.trim();
+            const errEl = document.getElementById('pesanErrorLacak');
+            errEl.classList.add('hidden');
+
+            if (!invoice || hp.length !== 4 || !/^\d{4}$/.test(hp)) {
+                errEl.innerText = 'Isi nomor invoice dan 4 digit terakhir No. HP dengan benar.';
+                errEl.classList.remove('hidden');
+                return;
+            }
+
+            const btn = document.getElementById('btnLacak');
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mencari...';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch(`${API_URL}?action=lacak&invoice=${encodeURIComponent(invoice)}&hp=${encodeURIComponent(hp)}`);
+                if (!res.ok) throw new Error(`Server merespons status ${res.status}`);
+                const hasil = await res.json();
+                if (!hasil || hasil.result === 'error') {
+                    throw new Error((hasil && hasil.message) || 'Pesanan tidak ditemukan.');
+                }
+                tampilkanHasilLacak(hasil.data);
+            } catch (err) {
+                errEl.innerText = err.message;
+                errEl.classList.remove('hidden');
+            } finally {
+                btn.innerHTML = originalHtml;
+                btn.disabled = false;
+            }
+        }
+
+        function tampilkanHasilLacak(trx) {
+            document.getElementById('formLacak').classList.add('hidden');
+            const container = document.getElementById('hasilLacak');
+            container.classList.remove('hidden');
+
+            const statusLower = String(trx.Status || '').toLowerCase();
+            const tahapan = ['baru', 'proses', 'selesai'];
+            let tahapAktif = tahapan.indexOf(statusLower);
+            if (statusLower === 'diambil') tahapAktif = 2;
+            if (tahapAktif === -1) tahapAktif = 0;
+
+            const labelTahap = ['Diterima', 'Diproses', 'Selesai'];
+            let timelineHtml = tahapan.map((t, i) => {
+                const aktif = i <= tahapAktif;
+                return `
+                    <div class="flex-1 flex flex-col items-center relative">
+                        ${i > 0 ? `<div class="absolute top-3 right-1/2 w-full h-0.5 ${i <= tahapAktif ? 'bg-cox-cyan' : 'bg-blue-900'}"></div>` : ''}
+                        <div class="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold relative z-10 ${aktif ? 'bg-cox-cyan text-cox-bg' : 'bg-blue-900 text-blue-400'}">
+                            ${aktif ? '<i class="fa-solid fa-check"></i>' : (i + 1)}
+                        </div>
+                        <span class="text-[9px] mt-1.5 ${aktif ? 'text-cox-cyan font-semibold' : 'text-blue-400'}">${labelTahap[i]}</span>
+                    </div>`;
+            }).join('');
+
+            container.innerHTML = `
+                <div class="flex justify-between items-center px-1">
+                    <span class="text-[10px] text-blue-300 font-mono">${escapeHtml(trx.No_Invoice)}</span>
+                    <span class="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase bg-cox-cyan/20 text-cox-cyan">${escapeHtml(trx.Status)}</span>
+                </div>
+                <div class="flex items-start pt-2 pb-1">${timelineHtml}</div>
+                <div class="bg-cox-card rounded-2xl p-4 border border-blue-800/50 space-y-2 text-xs">
+                    <p><i class="fa-solid fa-user w-4 text-cox-cyan"></i> ${escapeHtml(trx.Nama_Pelanggan)}</p>
+                    <p><i class="fa-solid fa-shirt w-4 text-cox-cyan"></i> ${escapeHtml(trx.Layanan)}</p>
+                    <p><i class="fa-regular fa-clock w-4 text-cox-cyan"></i> Masuk: ${escapeHtml(formatWaktuIndo(trx.Tanggal_Masuk))}</p>
+                    <p><i class="fa-regular fa-calendar-check w-4 text-cox-cyan"></i> Estimasi Selesai: ${escapeHtml(formatWaktuIndo(trx.Tanggal_Selesai))}</p>
+                    <p><i class="fa-solid fa-wallet w-4 text-cox-cyan"></i> Pembayaran: ${escapeHtml(trx.Metode_Pembayaran || '-')}</p>
+                    <div class="pt-2 mt-2 border-t border-blue-900/50 flex justify-between items-center">
+                        <span class="text-blue-300">Total Tagihan</span>
+                        <span class="font-bold text-cox-cyan text-sm">Rp ${parseFloat(trx.Total_Harga || 0).toLocaleString('id-ID')}</span>
+                    </div>
+                </div>
+                <button onclick="location.reload()" class="w-full bg-cox-card border border-blue-800 text-blue-300 font-semibold py-2.5 rounded-xl hover:text-white hover:border-cox-cyan transition text-xs">
+                    <i class="fa-solid fa-arrow-left"></i> Cek Pesanan Lain
+                </button>
+            `;
+        }
+
+        // Kalau halaman ini dibuka lewat QR di nota, invoice sudah terisi
+        // otomatis dari URL (?invoice=INV...) -- pelanggan tinggal isi 4
+        // digit No. HP saja.
+        (function () {
+            const params = new URLSearchParams(window.location.search);
+            const invoiceDariUrl = params.get('invoice');
+            if (invoiceDariUrl) {
+                document.getElementById('inputInvoiceLacak').value = invoiceDariUrl;
+                document.getElementById('inputHpLacak').focus();
+            }
+        })();
+    </script>
+</body>
+</html>
