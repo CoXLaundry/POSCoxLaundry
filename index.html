@@ -120,7 +120,8 @@
                     </div>
                 </div>
 
-                <div class="mx-5 mt-4 bg-cox-card rounded-2xl p-4 shadow-lg border border-blue-800/50 flex items-center justify-between relative z-10">
+                <!-- Kartu Laporan Dashboard (Dibatasi Aksesnya) -->
+                <div data-feature="dashboard_pendapatan" class="mx-5 mt-4 bg-cox-card rounded-2xl p-4 shadow-lg border border-blue-800/50 flex items-center justify-between relative z-10">
                     <div class="flex-1">
                         <p class="text-[10px] text-blue-300 opacity-70">Pendapatan Hari Ini</p>
                         <p id="displayPendapatan" class="text-[15px] font-bold mt-1 text-emerald-400 tracking-wide">
@@ -167,9 +168,10 @@
             <!-- VIEW PENGATURAN -->
             <div id="viewPengaturan" class="hidden fade-in px-5 pb-10">
                 
-                <!-- MENU LIST -->
                 <div id="menuPengaturanList" class="space-y-3">
-                    <button onclick="bukaFormTemplate()" class="w-full bg-cox-card border border-blue-800 hover:border-cox-cyan p-4 rounded-2xl flex items-center justify-between group transition">
+                    
+                    <!-- Fitur Template Nota dibatasi untuk Kasir -->
+                    <button data-feature="template_nota" onclick="bukaFormTemplate()" class="w-full bg-cox-card border border-blue-800 hover:border-cox-cyan p-4 rounded-2xl flex items-center justify-between group transition">
                         <div class="flex items-center gap-4">
                             <div class="w-11 h-11 rounded-full bg-cox-cyan/10 text-cox-cyan flex items-center justify-center text-xl group-hover:bg-cox-cyan group-hover:text-cox-bg transition shadow-neon">
                                 <i class="fa-solid fa-print"></i>
@@ -182,8 +184,8 @@
                         <i class="fa-solid fa-chevron-right text-blue-400 group-hover:text-cox-cyan transition"></i>
                     </button>
 
-                    <!-- TOMBOL PEGAWAI SEKARANG AKTIF -->
-                    <button onclick="bukaFormPegawai()" class="w-full bg-cox-card border border-blue-800 hover:border-rose-400 p-4 rounded-2xl flex items-center justify-between group transition">
+                    <!-- Fitur Manajemen Pegawai dibatasi untuk Kasir -->
+                    <button data-feature="manajemen_pegawai" onclick="bukaFormPegawai()" class="w-full bg-cox-card border border-blue-800 hover:border-rose-400 p-4 rounded-2xl flex items-center justify-between group transition">
                         <div class="flex items-center gap-4">
                             <div class="w-11 h-11 rounded-full bg-rose-500/10 text-rose-400 flex items-center justify-center text-xl group-hover:bg-rose-500 group-hover:text-white transition shadow-[0_0_10px_rgba(244,63,94,0.3)]">
                                 <i class="fa-solid fa-users-gear"></i>
@@ -209,7 +211,6 @@
                     </button>
                 </div>
 
-                <!-- FORM TEMPLATE NOTA (Hidden) -->
                 <div id="formTemplatePengaturan" class="hidden bg-cox-card p-5 rounded-2xl border border-blue-800 shadow-lg space-y-4 relative">
                     <div class="flex items-center gap-3 mb-2">
                         <button onclick="tutupFormTemplate()" class="w-8 h-8 rounded-full bg-blue-900/50 flex items-center justify-center text-blue-300 hover:text-white hover:bg-rose-500 transition">
@@ -244,7 +245,6 @@
                     </div>
                 </div>
 
-                <!-- FORM PEGAWAI & ROLE (BARU - Hidden) -->
                 <div id="formPegawaiPengaturan" class="hidden bg-cox-card p-5 rounded-2xl border border-blue-800 shadow-lg space-y-4 relative">
                     <div class="flex items-center gap-3 mb-2">
                         <button onclick="tutupFormPegawai()" class="w-8 h-8 rounded-full bg-blue-900/50 flex items-center justify-center text-blue-300 hover:text-white hover:bg-rose-500 transition">
@@ -256,12 +256,10 @@
                         </div>
                     </div>
 
-                    <!-- List Pegawai -->
                     <div class="space-y-2 pt-2 border-t border-blue-900" id="listPegawaiContainer">
                         <p class="text-[11px] text-blue-400 text-center italic py-2">Memuat data pegawai...</p>
                     </div>
 
-                    <!-- Form Tambah Baru -->
                     <div class="mt-4 pt-4 border-t border-blue-900 border-dashed space-y-3">
                         <h4 class="text-xs font-bold text-cox-cyan mb-2"><i class="fa-solid fa-user-plus"></i> Tambah Pegawai Baru</h4>
                         <div class="grid grid-cols-2 gap-3">
@@ -301,10 +299,13 @@
                 <i class="fa-regular fa-rectangle-list text-xl group-active:scale-90 transition-transform"></i>
                 <span class="text-[10px] font-medium tracking-wide">Pesanan</span>
             </button>
-            <button class="flex flex-col items-center gap-1.5 text-blue-400 hover:text-cox-cyan transition group opacity-50">
+            
+            <!-- Menu Laporan dibatasi untuk Kasir -->
+            <button data-feature="laporan" class="flex flex-col items-center gap-1.5 text-blue-400 hover:text-cox-cyan transition group opacity-50 cursor-not-allowed">
                 <i class="fa-solid fa-chart-simple text-xl group-active:scale-90 transition-transform"></i>
                 <span class="text-[10px] font-medium tracking-wide">Laporan</span>
             </button>
+            
             <button onclick="switchTab('pengaturan')" id="navPengaturan" class="flex flex-col items-center gap-1.5 text-blue-400 hover:text-cox-cyan transition group">
                 <i class="fa-solid fa-gear text-xl group-active:scale-90 transition-transform"></i>
                 <span class="text-[10px] font-medium tracking-wide">Pengaturan</span>
@@ -417,7 +418,6 @@
         </div>
     </div>
 
-    <!-- PWA Service Worker -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -429,6 +429,41 @@
     <!-- LOGIKA UTAMA APLIKASI -->
     <script>
         const API_URL = 'https://script.google.com/macros/s/AKfycbxq3pGfjN4bLTZ9X-ZxoDdZNkI2goBWGC_3pkP6w0HdImBi5JVB0JnbvAEwm7-MIzZd/exec'; 
+
+        // ==========================================
+        // KONFIGURASI HAK AKSES (FLEXIBLE RBAC)
+        // ==========================================
+        const ROLE_PERMISSIONS = {
+            'Admin': ['*'], // Admin punya akses ke semua fitur (*)
+            // Daftar fitur 'data-feature' yang BOLEH dilihat oleh Kasir:
+            'Kasir': [
+                'buat_pesanan', 
+                'lihat_pesanan', 
+                'sinkronisasi'
+                // Fitur 'laporan', 'manajemen_pegawai', 'template_nota', 'dashboard_pendapatan' sengaja tidak dimasukkan agar tersembunyi
+            ] 
+        };
+
+        function terapkanHakAksesRole() {
+            const currentRole = sessionStorage.getItem('cox_role') || 'Kasir';
+            const restrictedElements = document.querySelectorAll('[data-feature]');
+            
+            restrictedElements.forEach(el => {
+                const featureName = el.getAttribute('data-feature');
+                let hasAccess = false;
+                
+                if (currentRole === 'Admin' || (ROLE_PERMISSIONS[currentRole] && ROLE_PERMISSIONS[currentRole].includes(featureName))) {
+                    hasAccess = true;
+                }
+                
+                if (!hasAccess) {
+                    el.classList.add('hidden'); // Sembunyikan elemen
+                } else {
+                    el.classList.remove('hidden'); // Tampilkan elemen
+                }
+            });
+        }
+        // ==========================================
 
         const now = new Date();
         const year = now.getFullYear();
@@ -443,7 +478,7 @@
 
         let masterLayanan = [];
         let masterPelanggan = [];
-        let masterPengguna = []; // Data untuk Role & Pegawai
+        let masterPengguna = []; 
         let keranjangItem = [];
         let kategoriAktif = 'Kiloan';
         let percobaanLogin = 0;
@@ -470,7 +505,6 @@
             const namaKasirSesi = sessionStorage.getItem('cox_kasir');
             const roleKasirSesi = sessionStorage.getItem('cox_role') || 'Kasir';
             
-            // Diam-diam memuat data pengguna di latar belakang agar login lebih cepat divalidasi
             if (API_URL) {
                 try {
                     const res = await fetch(`${API_URL}?sheetName=Pengguna`);
@@ -491,11 +525,11 @@
                 document.getElementById('namaKasir').innerText = namaKasirSesi;
                 document.getElementById('badgeRoleKasir').innerText = roleKasirSesi;
                 
+                terapkanHakAksesRole(); // Panggil saat app terbuka
                 sinkronisasiData();
             }
         });
 
-        // FUNGSI NAVIGASI MENU PENGATURAN
         function bukaFormTemplate() {
             document.getElementById('menuPengaturanList').classList.add('hidden');
             document.getElementById('formPegawaiPengaturan').classList.add('hidden');
@@ -510,7 +544,6 @@
         }
 
         function bukaFormPegawai() {
-            // Memastikan data pegawai terbaru sudah dimuat sebelum dibuka
             renderDaftarPegawai();
             document.getElementById('menuPengaturanList').classList.add('hidden');
             document.getElementById('formTemplatePengaturan').classList.add('hidden');
@@ -533,7 +566,6 @@
             tutupFormTemplate(); 
         }
 
-        // FUNGSI MANAJEMEN PEGAWAI (BARU)
         function renderDaftarPegawai() {
             const container = document.getElementById('listPegawaiContainer');
             if (masterPengguna.length === 0) {
@@ -564,22 +596,14 @@
 
         async function simpanPegawaiBaru() {
             if (!API_URL) { alert('URL Apps Script belum diisi!'); return; }
-            
             const user = document.getElementById('inputNewUser').value.trim();
             const pass = document.getElementById('inputNewPass').value.trim();
             const role = document.getElementById('inputNewRole').value;
 
-            if (!user || !pass) {
-                alert("Username dan Password tidak boleh kosong!");
-                return;
-            }
+            if (!user || !pass) { alert("Username dan Password tidak boleh kosong!"); return; }
 
-            // Cek apakah username sudah ada
             let exists = masterPengguna.some(p => String(p.Username).toLowerCase() === user.toLowerCase());
-            if(exists) {
-                alert("Username tersebut sudah digunakan, pilih nama lain.");
-                return;
-            }
+            if(exists) { alert("Username tersebut sudah digunakan, pilih nama lain."); return; }
 
             const btn = document.getElementById('btnSimpanPegawai');
             const originalText = btn.innerHTML;
@@ -587,13 +611,8 @@
             btn.disabled = true;
 
             const payload = {
-                sheetName: "Pengguna",
-                action: "insert",
-                rowData: {
-                    "Username": user,
-                    "Password": pass,
-                    "Role": role
-                }
+                sheetName: "Pengguna", action: "insert",
+                rowData: { "Username": user, "Password": pass, "Role": role }
             };
 
             try {
@@ -604,30 +623,23 @@
                 });
                 
                 alert(`Akun pegawai ${user} berhasil ditambahkan!`);
-                
-                // Tambahkan langsung ke memori lokal tanpa harus refresh total
                 masterPengguna.push({"Username": user, "Password": pass, "Role": role});
-                
                 document.getElementById('inputNewUser').value = '';
                 document.getElementById('inputNewPass').value = '';
-                
                 renderDaftarPegawai();
             } catch (err) {
                 alert("Terjadi kesalahan jaringan.");
             } finally {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
+                btn.innerHTML = originalText; btn.disabled = false;
             }
         }
 
-        // FUNGSI UTILITAS
         function formatWaktuIndo(tglStr) {
             if (!tglStr) return '-';
             try {
                 let raw = String(tglStr).replace('T', ' ').replace('.000Z', '').replace('Z', '');
                 let parts = raw.split(' ');
-                let datePart = parts[0];
-                let timePart = parts[1] || '';
+                let datePart = parts[0]; let timePart = parts[1] || '';
 
                 if (datePart.includes('-')) {
                     let [y, m, d] = datePart.split('-');
@@ -637,19 +649,13 @@
                     return `${d} ${bln} ${y}${timeFormatted}`;
                 }
                 return raw;
-            } catch(e) {
-                return String(tglStr);
-            }
+            } catch(e) { return String(tglStr); }
         }
 
         function togglePassword() {
-            const passInput = document.getElementById('password');
-            const eyeIcon = document.getElementById('eyeIcon');
-            if (passInput.type === 'password') {
-                passInput.type = 'text'; eyeIcon.className = 'fa-solid fa-eye-slash text-sm';
-            } else {
-                passInput.type = 'password'; eyeIcon.className = 'fa-solid fa-eye text-sm';
-            }
+            const passInput = document.getElementById('password'); const eyeIcon = document.getElementById('eyeIcon');
+            if (passInput.type === 'password') { passInput.type = 'text'; eyeIcon.className = 'fa-solid fa-eye-slash text-sm';
+            } else { passInput.type = 'password'; eyeIcon.className = 'fa-solid fa-eye text-sm'; }
         }
 
         function switchTab(tab) {
@@ -685,32 +691,21 @@
             syncIcon.classList.add('fa-spin');
 
             try {
-                // Fetch Pengguna (jika sewaktu-waktu ada perubahan akun di spreadsheet)
                 const resPengguna = await fetch(`${API_URL}?sheetName=Pengguna`);
                 const jsonPengguna = await resPengguna.json();
-                if (jsonPengguna.data) {
-                    masterPengguna = jsonPengguna.data;
-                    renderDaftarPegawai(); 
-                }
+                if (jsonPengguna.data) { masterPengguna = jsonPengguna.data; renderDaftarPegawai(); }
 
                 const resLayanan = await fetch(`${API_URL}?sheetName=Layanan`);
                 const jsonLayanan = await resLayanan.json();
-                if (jsonLayanan.data && jsonLayanan.data.length > 0) {
-                    masterLayanan = jsonLayanan.data;
-                    renderDropdownLayanan();
-                }
+                if (jsonLayanan.data && jsonLayanan.data.length > 0) { masterLayanan = jsonLayanan.data; renderDropdownLayanan(); }
 
                 const resPelanggan = await fetch(`${API_URL}?sheetName=Pelanggan`);
                 const jsonPelanggan = await resPelanggan.json();
-                if (jsonPelanggan.data && jsonPelanggan.data.length > 0) {
-                    masterPelanggan = jsonPelanggan.data;
-                    renderDropdownPelangganMenu(); 
-                }
+                if (jsonPelanggan.data && jsonPelanggan.data.length > 0) { masterPelanggan = jsonPelanggan.data; renderDropdownPelangganMenu(); }
 
                 const resTransaksi = await fetch(`${API_URL}?sheetName=Transaksi`);
                 const jsonTransaksi = await resTransaksi.json();
-                kalkulasiDashboard(jsonTransaksi.data || []);
-                renderDaftarPesanan(jsonTransaksi.data || []);
+                kalkulasiDashboard(jsonTransaksi.data || []); renderDaftarPesanan(jsonTransaksi.data || []);
             } catch (error) {
                 console.log("Menggunakan data lokal/fallback.");
             } finally {
@@ -718,15 +713,12 @@
             }
         }
 
-        // FUNGSI TRANSAKSI & LAINNYA
         function renderDropdownPelangganMenu() {
             const select = document.getElementById('pilihPelangganDropdown');
             select.innerHTML = '<option value="" disabled selected>+ Ketik Pelanggan Baru / Pilih dari daftar...</option>';
             masterPelanggan.forEach(p => {
                 if(p.Nama && p.No_HP) {
-                    const opt = document.createElement('option');
-                    opt.value = p.No_HP; opt.setAttribute('data-nama', p.Nama); opt.innerText = `${p.Nama} (${p.No_HP})`;
-                    select.appendChild(opt);
+                    const opt = document.createElement('option'); opt.value = p.No_HP; opt.setAttribute('data-nama', p.Nama); opt.innerText = `${p.Nama} (${p.No_HP})`; select.appendChild(opt);
                 }
             });
         }
@@ -754,7 +746,6 @@
             let adaExpress = keranjangItem.some(item => item.nama.toLowerCase().includes('express'));
             let durasiJam = adaSatuan ? 72 : (adaExpress ? 12 : 24);
             dateObj.setTime(dateObj.getTime() + (durasiJam * 60 * 60 * 1000));
-            
             const y = dateObj.getFullYear(), m = String(dateObj.getMonth() + 1).padStart(2, '0'), d = String(dateObj.getDate()).padStart(2, '0');
             const h = String(dateObj.getHours()).padStart(2, '0'), min = String(dateObj.getMinutes()).padStart(2, '0');
             document.getElementById('inputTglSelesai').value = `${y}-${m}-${d}T${h}:${min}`;
@@ -767,8 +758,7 @@
             filtered.forEach(item => {
                 let rawHarga = item.Harga !== undefined && item.Harga !== "" ? item.Harga : "0";
                 let harga = typeof rawHarga === 'string' ? parseInt(rawHarga.replace(/\./g, '').replace(/,/g, '')) || 0 : parseInt(rawHarga) || 0;
-                const opt = document.createElement('option');
-                opt.value = item.Nama_Layanan; opt.setAttribute('data-harga', harga); opt.setAttribute('data-kategori', item.Kategori || 'Kiloan');
+                const opt = document.createElement('option'); opt.value = item.Nama_Layanan; opt.setAttribute('data-harga', harga); opt.setAttribute('data-kategori', item.Kategori || 'Kiloan');
                 opt.innerText = `${item.Nama_Layanan} - Rp ${harga.toLocaleString('id-ID')}`;
                 select.appendChild(opt);
             });
@@ -804,11 +794,7 @@
             }
             let html = '';
             keranjangItem.forEach((item, idx) => {
-                html += `
-                <div class="flex justify-between items-center bg-slate-900 border border-blue-800/60 p-2.5 rounded-xl text-xs">
-                    <div class="flex-1 pr-2"><p class="font-semibold text-white">${item.nama} <span class="text-[10px] text-cox-cyan">(${item.kategori})</span></p><p class="text-[10px] text-blue-300">${item.qty} x Rp ${item.hargaSatuan.toLocaleString('id-ID')}</p></div>
-                    <div class="flex items-center gap-3"><span class="font-bold text-cox-cyan">Rp ${item.subtotal.toLocaleString('id-ID')}</span><button type="button" onclick="hapusItemKeranjang(${idx})" class="text-rose-400 hover:text-rose-300 p-1"><i class="fa-solid fa-trash-can"></i></button></div>
-                </div>`;
+                html += `<div class="flex justify-between items-center bg-slate-900 border border-blue-800/60 p-2.5 rounded-xl text-xs"><div class="flex-1 pr-2"><p class="font-semibold text-white">${item.nama} <span class="text-[10px] text-cox-cyan">(${item.kategori})</span></p><p class="text-[10px] text-blue-300">${item.qty} x Rp ${item.hargaSatuan.toLocaleString('id-ID')}</p></div><div class="flex items-center gap-3"><span class="font-bold text-cox-cyan">Rp ${item.subtotal.toLocaleString('id-ID')}</span><button type="button" onclick="hapusItemKeranjang(${idx})" class="text-rose-400 hover:text-rose-300 p-1"><i class="fa-solid fa-trash-can"></i></button></div></div>`;
             });
             container.innerHTML = html; hitungTotalAkhir();
         }
@@ -822,8 +808,7 @@
             let totalAkhir = Math.max(0, subtotal - potongan);
             let displayEl = document.getElementById('displayTotalHarga');
             
-            if (potongan > 0) {
-                displayEl.innerHTML = `<div class="flex flex-col items-end"><span class="text-[10px] text-rose-400 line-through mb-[-4px]">Rp ${subtotal.toLocaleString('id-ID')}</span><span class="text-xl font-bold text-cox-cyan">Rp ${totalAkhir.toLocaleString('id-ID')}</span></div>`;
+            if (potongan > 0) { displayEl.innerHTML = `<div class="flex flex-col items-end"><span class="text-[10px] text-rose-400 line-through mb-[-4px]">Rp ${subtotal.toLocaleString('id-ID')}</span><span class="text-xl font-bold text-cox-cyan">Rp ${totalAkhir.toLocaleString('id-ID')}</span></div>`;
             } else { displayEl.innerHTML = `Rp ${subtotal.toLocaleString('id-ID')}`; }
             displayEl.setAttribute('data-total', totalAkhir);
         }
@@ -885,7 +870,6 @@
             container.innerHTML = html;
         }
 
-        // FUNGSI LOGIN YANG TELAH DIPERBARUI (Validasi langsung ke Spreadsheet Pengguna)
         async function prosesLogin(e) {
             e.preventDefault();
             const user = document.getElementById('username').value.trim();
@@ -897,7 +881,6 @@
             btn.disabled = true;
             
             try {
-                // Memastikan data Pengguna sudah diload
                 if (masterPengguna.length === 0 && API_URL) {
                     const res = await fetch(`${API_URL}?sheetName=Pengguna`);
                     const json = await res.json();
@@ -908,15 +891,16 @@
                 let userRole = 'Kasir';
 
                 if (masterPengguna.length > 0) {
-                    // Cek di masterPengguna
                     const akun = masterPengguna.find(p => p.Username === user && String(p.Password) === pass);
                     if (akun) {
                         isValid = true;
                         userRole = akun.Role || 'Kasir';
                     }
                 } else {
-                    // Jika sheet Pengguna masih kosong, izinkan login agar Anda tidak terkunci
-                    if (user !== "" && pass !== "") isValid = true; 
+                    if (user !== "" && pass !== "") {
+                        isValid = true; 
+                        userRole = 'Admin'; // Fallback pertama kali
+                    }
                 }
 
                 if (isValid) {
@@ -933,6 +917,8 @@
                         const app = document.getElementById('appContainer');
                         app.classList.remove('hidden');
                         setTimeout(() => app.classList.remove('opacity-0'), 50);
+                        
+                        terapkanHakAksesRole(); // Panggil fungsi pembatasan saat login sukses
                         sinkronisasiData();
                     }, 500);
                 } else { 
