@@ -427,45 +427,41 @@
     <script>
         const API_URL = 'https://script.google.com/macros/s/AKfycbxq3pGfjN4bLTZ9X-ZxoDdZNkI2goBWGC_3pkP6w0HdImBi5JVB0JnbvAEwm7-MIzZd/exec'; 
 
+        // GANTI dengan nilai yang SAMA PERSIS dengan Script Property "API_TOKEN"
+        // yang Anda set di Apps Script (Project Settings > Script Properties).
+        // Lihat komentar di code.gs untuk cara membuatnya.
+        const TOKEN = 'GANTI_DENGAN_TOKEN_RAHASIA_ANDA';
+
         // ==========================================
-        // HELPER: kirim data ke Google Apps Script
+        // HELPER: komunikasi ke Google Apps Script
         // ==========================================
-        // Sebelumnya semua POST memakai mode:'no-cors', yang membuat JS TIDAK
-        // BISA membaca respons sama sekali -> aplikasi selalu bilang "berhasil"
-        // walau di sisi server sebenarnya gagal/ditolak.
+        // Content-Type: text/plain (bukan application/json) supaya browser
+        // TIDAK mengirim preflight OPTIONS (yang tidak didukung Apps Script
+        // secara default) -> respons JSON dari server bisa dibaca oleh JS,
+        // tidak lagi "fire-and-forget" seperti sebelumnya (mode:'no-cors').
         //
-        // Di sini kita kirim dengan Content-Type: text/plain (bukan
-        // application/json). Ini penting: browser tidak akan mengirim
-        // "preflight" OPTIONS request (yang tidak didukung Apps Script secara
-        // default) untuk Content-Type ini, JADI request tetap dianggap
-        // "permintaan sederhana" dan respons JSON dari server BISA dibaca.
-        //
-        // CATATAN UNTUK BACKEND (Apps Script / doPost): body tetap berupa
-        // JSON valid di dalam e.postData.contents, jadi cukup pakai
-        // JSON.parse(e.postData.contents) seperti biasa, lalu balas dengan
-        // ContentService JSON, misalnya:
-        //   return ContentService.createTextOutput(JSON.stringify({success:true}))
-        //          .setMimeType(ContentService.MimeType.JSON);
+        // Kontrak respons backend: { "result": "success" | "error", "message"?: "..." }
         async function kirimKeApiScript(payload) {
+            const payloadDenganToken = Object.assign({ token: TOKEN }, payload);
             const res = await fetch(API_URL, {
                 method: 'POST',
                 cache: 'no-cache',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify(payloadDenganToken)
             });
-            if (!res.ok) {
-                throw new Error(`Server merespons status ${res.status}`);
-            }
+            if (!res.ok) throw new Error(`Server merespons status ${res.status}`);
             let hasil;
-            try {
-                hasil = await res.json();
-            } catch (e) {
-                // Server tidak balas JSON yang valid -> anggap gagal, jangan tebak berhasil.
-                throw new Error('Respons server tidak valid.');
-            }
-            if (hasil && (hasil.success === false || hasil.error)) {
-                throw new Error(hasil.error || 'Server menolak permintaan.');
-            }
+            try { hasil = await res.json(); } catch (e) { throw new Error('Respons server tidak valid.'); }
+            if (hasil && hasil.result === 'error') throw new Error(hasil.message || 'Server menolak permintaan.');
+            return hasil;
+        }
+
+        async function apiGet(sheetName) {
+            const res = await fetch(`${API_URL}?sheetName=${encodeURIComponent(sheetName)}&token=${encodeURIComponent(TOKEN)}`);
+            if (!res.ok) throw new Error(`Server merespons status ${res.status}`);
+            let hasil;
+            try { hasil = await res.json(); } catch (e) { throw new Error('Respons server tidak valid.'); }
+            if (hasil && hasil.result === 'error') throw new Error(hasil.message || 'Server menolak permintaan.');
             return hasil;
         }
         // ==========================================
@@ -554,8 +550,7 @@
                 // dicocokkan ulang ke data akun asli dari server setiap kali
                 // aplikasi dibuka.
                 try {
-                    const res = await fetch(`${API_URL}?sheetName=Pengguna`);
-                    const json = await res.json();
+                    const json = await apiGet('Pengguna');
                     if (json.data) {
                         masterPengguna = json.data;
                         renderDaftarPegawai();
@@ -570,7 +565,7 @@
                             sesiValid = true;
                         }
                     }
-                } catch(e) { /* offline: sesi lama ditolak, lihat di bawah */ }
+                } catch(e) { /* offline atau token salah: sesi lama ditolak, lihat di bawah */ }
             }
 
             if (sesiValid) {
@@ -755,20 +750,16 @@
             syncIcon.classList.add('fa-spin');
 
             try {
-                const resPengguna = await fetch(`${API_URL}?sheetName=Pengguna`);
-                const jsonPengguna = await resPengguna.json();
+                const jsonPengguna = await apiGet('Pengguna');
                 if (jsonPengguna.data) { masterPengguna = jsonPengguna.data; renderDaftarPegawai(); }
 
-                const resLayanan = await fetch(`${API_URL}?sheetName=Layanan`);
-                const jsonLayanan = await resLayanan.json();
+                const jsonLayanan = await apiGet('Layanan');
                 if (jsonLayanan.data && jsonLayanan.data.length > 0) { masterLayanan = jsonLayanan.data; renderDropdownLayanan(); }
 
-                const resPelanggan = await fetch(`${API_URL}?sheetName=Pelanggan`);
-                const jsonPelanggan = await resPelanggan.json();
+                const jsonPelanggan = await apiGet('Pelanggan');
                 if (jsonPelanggan.data && jsonPelanggan.data.length > 0) { masterPelanggan = jsonPelanggan.data; renderDropdownPelangganMenu(); }
 
-                const resTransaksi = await fetch(`${API_URL}?sheetName=Transaksi`);
-                const jsonTransaksi = await resTransaksi.json();
+                const jsonTransaksi = await apiGet('Transaksi');
                 kalkulasiDashboard(jsonTransaksi.data || []); renderDaftarPesanan(jsonTransaksi.data || []);
             } catch (error) {
                 console.log("Menggunakan data lokal/fallback.");
@@ -975,75 +966,44 @@
             const pass = document.getElementById('password').value.trim();
             const btn = document.getElementById('btnLogin');
             if (btn.disabled) return;
-            
+
+            if (!API_URL) {
+                alert('URL Apps Script belum diisi! Tidak bisa memverifikasi akun.');
+                return;
+            }
+
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memverifikasi...';
             btn.disabled = true;
-            
+
             try {
-                if (!API_URL) {
-                    alert('URL Apps Script belum diisi! Tidak bisa memverifikasi akun.');
-                    btn.innerHTML = `<i class="fa-solid fa-right-to-bracket"></i> Masuk Sistem`;
-                    btn.disabled = false;
-                    return;
-                }
+                // Verifikasi username/password dilakukan sepenuhnya di server
+                // (Apps Script action "login"). Password tidak pernah dicek
+                // atau dibandingkan di browser, dan daftar password pegawai
+                // tidak pernah diunduh ke perangkat kasir.
+                const hasil = await kirimKeApiScript({ sheetName: "Pengguna", action: "login", username: user, password: pass });
+                const userRole = String(hasil.role || 'Kasir').trim();
 
-                if (masterPengguna.length === 0) {
-                    const res = await fetch(`${API_URL}?sheetName=Pengguna`);
-                    const json = await res.json();
-                    if (json.data) masterPengguna = json.data;
-                }
+                sessionStorage.setItem('cox_logged_in', 'true');
+                sessionStorage.setItem('cox_kasir', user);
+                sessionStorage.setItem('cox_role', userRole);
 
-                // PENTING: tidak ada lagi username "admin" ajaib, dan tidak ada
-                // fallback "asal tidak kosong langsung diloloskan sebagai Admin".
-                // Login HANYA valid jika username & password cocok dengan data
-                // di sheet "Pengguna". Kalau data pengguna gagal dimuat, login
-                // ditolak (fail-closed), bukan diloloskan.
-                let isValid = false;
-                let userRole = 'Kasir';
+                document.getElementById('namaKasir').innerText = user;
+                document.getElementById('badgeRoleKasir').innerText = userRole;
+                document.getElementById('loginScreen').classList.add('opacity-0');
 
-                if (masterPengguna.length === 0) {
-                    alert('Gagal memuat data akun dari server. Periksa koneksi internet Anda dan coba lagi.');
-                    btn.innerHTML = `<i class="fa-solid fa-right-to-bracket"></i> Masuk Sistem`;
-                    btn.disabled = false;
-                    return;
-                }
+                setTimeout(() => {
+                    document.getElementById('loginScreen').classList.add('hidden');
+                    const app = document.getElementById('appContainer');
+                    app.classList.remove('hidden');
+                    setTimeout(() => app.classList.remove('opacity-0'), 50);
 
-                const akun = masterPengguna.find(p => {
-                    let u = String(p.Username || p.username || '').trim();
-                    let pw = String(p.Password || p.password || '').trim();
-                    return u.toLowerCase() === user.toLowerCase() && pw === pass;
-                });
-
-                if (akun) {
-                    isValid = true;
-                    userRole = String(akun.Role || akun.role || akun.ROLE || 'Kasir').trim();
-                }
-
-                if (isValid) {
-                    sessionStorage.setItem('cox_logged_in', 'true');
-                    sessionStorage.setItem('cox_kasir', user);
-                    sessionStorage.setItem('cox_role', userRole);
-                    
-                    document.getElementById('namaKasir').innerText = user;
-                    document.getElementById('badgeRoleKasir').innerText = userRole;
-                    document.getElementById('loginScreen').classList.add('opacity-0');
-                    
-                    setTimeout(() => {
-                        document.getElementById('loginScreen').classList.add('hidden');
-                        const app = document.getElementById('appContainer');
-                        app.classList.remove('hidden');
-                        setTimeout(() => app.classList.remove('opacity-0'), 50);
-                        
-                        terapkanHakAksesRole(); 
-                        sinkronisasiData();
-                    }, 500);
-                } else { 
-                    handleGagalLogin(btn); 
-                }
+                    terapkanHakAksesRole(); 
+                    sinkronisasiData();
+                }, 500);
             } catch (err) {
-                alert("Gangguan server, mohon coba kembali.");
-                btn.innerHTML = `<i class="fa-solid fa-right-to-bracket"></i> Masuk Sistem`; 
-                btn.disabled = false;
+                // Baik kredensial salah maupun gangguan jaringan/server sama-sama
+                // dianggap percobaan gagal, supaya lockout brute-force tetap jalan.
+                handleGagalLogin(btn);
             }
         }
 
