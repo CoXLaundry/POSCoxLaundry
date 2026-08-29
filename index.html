@@ -16,6 +16,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- jsPDF: dipakai untuk membuat PDF nota berukuran pas kertas thermal
+         (58mm), supaya bisa langsung dibagikan/dicetak lewat aplikasi print
+         Bluetooth pihak ketiga seperti Thermer -- lihat fungsi buatPdfNota(). -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
     
     <script>
         tailwind.config = {
@@ -336,9 +340,16 @@
                         </button>
 
                         <div class="pt-4 mt-2 border-t border-blue-900 border-dashed space-y-2">
-                            <h4 class="text-xs font-bold text-cox-cyan mb-1"><i class="fa-brands fa-bluetooth-b"></i> Printer Bluetooth (Opsional)</h4>
+                            <h4 class="text-xs font-bold text-emerald-400 mb-1"><i class="fa-solid fa-file-pdf"></i> Cetak via Aplikasi Pihak Ketiga (Direkomendasikan)</h4>
                             <p class="text-[9px] text-blue-400 leading-relaxed">
-                                Cuma bekerja dengan printer Bluetooth Low Energy (BLE). Kalau saat "Sambungkan" nama printer Anda TIDAK muncul di daftar perangkat, printer Anda kemungkinan pakai Bluetooth Classic (SPP) dan tidak bisa dipakai lewat browser -- gunakan tombol "Nota" biasa sebagai gantinya.
+                                Kebanyakan printer thermal Bluetooth murah (termasuk kelas Kassen MT-200) pakai Bluetooth Classic (SPP) yang TIDAK BISA disambungkan langsung dari browser -- ini batas teknis browser, sudah terkonfirmasi lewat pengujian. Solusi yang terbukti jalan: tekan tombol <i class="fa-solid fa-file-pdf"></i> PDF di daftar pesanan, nanti PDF nota (ukuran pas 58mm) otomatis dibagikan lewat menu Bagikan Android -- pilih aplikasi seperti <b>Thermer</b> untuk langsung mencetak.
+                            </p>
+                        </div>
+
+                        <div class="pt-4 mt-2 border-t border-blue-900 border-dashed space-y-2">
+                            <h4 class="text-xs font-bold text-cox-cyan mb-1"><i class="fa-brands fa-bluetooth-b"></i> Printer Bluetooth Langsung (Eksperimental)</h4>
+                            <p class="text-[9px] text-blue-400 leading-relaxed">
+                                Cuma bekerja dengan printer Bluetooth Low Energy (BLE) -- KECIL kemungkinan cocok untuk sebagian besar printer thermal murah termasuk Kassen MT-200 (lihat catatan di atas). Kalau saat "Sambungkan" nama printer Anda tidak muncul di daftar perangkat, itu tandanya Bluetooth Classic dan fitur ini memang tidak akan berfungsi untuk printer Anda -- gunakan tombol PDF di atas sebagai gantinya.
                             </p>
                             <div id="statusPrinterBT" class="text-xs text-blue-300 py-1"><i class="fa-solid fa-circle-xmark text-blue-400"></i> Belum tersambung</div>
                             <button type="button" onclick="sambungkanPrinterBT()" class="w-full bg-cox-card border border-cox-cyan text-cox-cyan font-semibold py-2.5 rounded-xl hover:bg-cox-cyan hover:text-cox-bg transition flex justify-center items-center gap-2 text-xs">
@@ -2048,6 +2059,102 @@
             return new Uint8Array(bytes);
         }
 
+        // ==========================================
+        // PDF NOTA (untuk dibagikan/dicetak lewat aplikasi pihak ketiga
+        // seperti Thermer -- solusi utama untuk printer Bluetooth Classic
+        // (SPP) yang TIDAK bisa disambungkan lewat Web Bluetooth browser)
+        // ==========================================
+        // Thermer & aplikasi print Bluetooth sejenis mendukung menerima PDF
+        // lewat menu "Bagikan" Android. Kita buat PDF pas ukuran kertas
+        // thermal (58mm) di sini, lalu langsung tawarkan lewat Web Share
+        // API -- kalau didukung perangkat, menu Bagikan Android akan
+        // langsung terbuka dan Anda tinggal pilih Thermer.
+        function buatPdfNota(trx) {
+            const { jsPDF } = window.jspdf;
+            const toko = localStorage.getItem('toko_nama') || "COX LAUNDRY";
+            const alamat = localStorage.getItem('toko_alamat') || "Jl. Contoh Alamat";
+            const penutup = localStorage.getItem('toko_pesan') || "Terima Kasih";
+            const metodeBayarVal = trx.Metode_Pembayaran || trx.Metode || trx.Pembayaran || '-';
+            const daftarLayanan = (trx.Layanan || '').split(',').map(s => s.trim()).filter(Boolean);
+
+            // Perkirakan tinggi kertas dari jumlah baris konten, supaya PDF
+            // tidak menyisakan banyak spasi kosong kalau layanannya sedikit.
+            const jumlahBarisLayanan = daftarLayanan.length || 1;
+            const perkiraanBarisTetap = 15;
+            const tinggiMm = 18 + (perkiraanBarisTetap + jumlahBarisLayanan) * 4.3;
+
+            const doc = new jsPDF({ unit: 'mm', format: [58, tinggiMm] });
+            const tengah = 29;
+            let y = 8;
+            const turun = (h = 4.3) => { y += h; };
+            const garis = () => { doc.text('-'.repeat(32), 2, y); turun(); };
+
+            doc.setFont('courier', 'bold'); doc.setFontSize(10);
+            doc.text(toko, tengah, y, { align: 'center' }); turun();
+            doc.setFont('courier', 'normal'); doc.setFontSize(8);
+            doc.text(alamat, tengah, y, { align: 'center' }); turun(5);
+
+            garis();
+            doc.text(`Inv  : ${trx.No_Invoice}`, 2, y); turun();
+            doc.text(`Nama : ${trx.Nama_Pelanggan}`, 2, y); turun();
+            doc.text(`Masuk: ${formatWaktuIndo(trx.Tanggal_Masuk)}`, 2, y); turun();
+            doc.text(`Selesai (Est): ${formatWaktuIndo(trx.Tanggal_Selesai)}`, 2, y); turun(5);
+
+            garis();
+            doc.setFont('courier', 'bold'); doc.text('Layanan:', 2, y); doc.setFont('courier', 'normal'); turun();
+            daftarLayanan.forEach(s => { doc.text(`- ${s}`, 2, y); turun(); });
+            turun(1);
+            garis();
+
+            doc.setFont('courier', 'bold'); doc.setFontSize(10);
+            doc.text(`TOTAL: Rp ${parseFloat(trx.Total_Harga || 0).toLocaleString('id-ID')}`, 2, y); turun();
+            doc.setFont('courier', 'normal'); doc.setFontSize(8);
+            doc.text(`Bayar: ${metodeBayarVal}`, 2, y); turun(5);
+            garis();
+            turun(2);
+
+            doc.setFont('courier', 'italic');
+            doc.text(penutup, tengah, y, { align: 'center' });
+
+            return doc;
+        }
+
+        function unduhNotaPdf(noInvoice) {
+            const trx = masterTransaksi.find(t => String(t.No_Invoice) === String(noInvoice));
+            if (!trx) { alert('Data transaksi tidak ditemukan. Coba sinkronisasi ulang.'); return; }
+            if (!window.jspdf) { alert('Modul PDF belum siap dimuat, coba lagi sebentar.'); return; }
+            const doc = buatPdfNota(trx);
+            doc.save(`Nota_${trx.No_Invoice}.pdf`);
+        }
+
+        async function bagikanNotaPdf(noInvoice) {
+            const trx = masterTransaksi.find(t => String(t.No_Invoice) === String(noInvoice));
+            if (!trx) { alert('Data transaksi tidak ditemukan. Coba sinkronisasi ulang.'); return; }
+            if (!window.jspdf) { alert('Modul PDF belum siap dimuat, coba lagi sebentar.'); return; }
+
+            const doc = buatPdfNota(trx);
+            const namaFile = `Nota_${trx.No_Invoice}.pdf`;
+            const blob = doc.output('blob');
+            const file = new File([blob], namaFile, { type: 'application/pdf' });
+
+            // Kalau perangkat mendukung berbagi file (umumnya Chrome di
+            // Android), langsung buka menu Bagikan -- dari situ pilih
+            // Thermer (atau aplikasi print Bluetooth lain) untuk mencetak.
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({ files: [file], title: namaFile });
+                    return;
+                } catch (err) {
+                    if (err.name === 'AbortError') return; // Dibatalkan pengguna, bukan error.
+                    // Kalau gagal karena sebab lain, lanjut ke cara unduh biasa di bawah.
+                }
+            }
+
+            // Fallback (mis. di laptop yang tidak mendukung berbagi file):
+            // unduh PDF-nya, lalu buka manual lewat aplikasi print pilihan Anda.
+            doc.save(namaFile);
+        }
+
         async function cetakNotaBluetooth(noInvoice) {
             const trx = masterTransaksi.find(t => String(t.No_Invoice) === String(noInvoice));
             if (!trx) { alert('Data transaksi tidak ditemukan. Coba sinkronisasi ulang.'); return; }
@@ -2164,7 +2271,8 @@
                         <div class="flex gap-2">
                             <button onclick="kirimWA('${trx.No_Invoice}')" class="bg-slate-800 text-blue-300 border border-blue-800 hover:text-emerald-400 hover:border-emerald-500 px-3 py-1.5 rounded-lg text-[10px] font-bold transition flex items-center gap-1"><i class="fa-brands fa-whatsapp text-sm"></i> WA</button>
                             <button onclick="cetakNota('${trx.No_Invoice}')" class="bg-slate-800 text-blue-300 border border-blue-800 hover:text-cox-cyan hover:border-cox-cyan px-3 py-1.5 rounded-lg text-[10px] font-bold transition flex items-center gap-1"><i class="fa-solid fa-print text-sm"></i> Nota</button>
-                            <button onclick="cetakNotaBluetooth('${trx.No_Invoice}')" title="Cetak langsung ke printer Bluetooth (kalau sudah tersambung)" class="bg-slate-800 text-blue-300 border border-blue-800 hover:text-cox-cyan hover:border-cox-cyan px-3 py-1.5 rounded-lg text-[10px] font-bold transition flex items-center gap-1"><i class="fa-brands fa-bluetooth-b text-sm"></i></button>
+                            <button onclick="bagikanNotaPdf('${trx.No_Invoice}')" title="Buat PDF nota berukuran kertas thermal, lalu bagikan/cetak lewat aplikasi seperti Thermer" class="bg-slate-800 text-blue-300 border border-blue-800 hover:text-emerald-400 hover:border-emerald-500 px-3 py-1.5 rounded-lg text-[10px] font-bold transition flex items-center gap-1"><i class="fa-solid fa-file-pdf text-sm"></i></button>
+                            <button onclick="cetakNotaBluetooth('${trx.No_Invoice}')" title="Cetak langsung ke printer Bluetooth BLE (eksperimental, kemungkinan tidak berfungsi untuk printer Bluetooth Classic/SPP)" class="bg-slate-800 text-blue-300 border border-blue-800 hover:text-cox-cyan hover:border-cox-cyan px-3 py-1.5 rounded-lg text-[10px] font-bold transition flex items-center gap-1"><i class="fa-brands fa-bluetooth-b text-sm"></i></button>
                         </div>
                     </div>
                 </div>`;

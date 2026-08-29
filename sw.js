@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cox-pos-v9'; // Naikkan versi setiap kali ada perubahan file
+const CACHE_NAME = 'cox-pos-v10'; // Naikkan versi setiap kali ada perubahan file
 
 // Aset inti (wajib ada agar app shell tetap tampil saat offline)
 const urlsToCache = [
@@ -6,7 +6,8 @@ const urlsToCache = [
   './index.html',
   './manifest.json',
   'https://cdn.tailwindcss.com',
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
+  'https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js'
 ];
 
 // Install Service Worker & simpan cache awal
