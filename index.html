@@ -166,12 +166,63 @@
                 </div>
             </div>
 
-            <!-- VIEW PENGATURAN (FITUR BARU) -->
+            <!-- VIEW PENGATURAN -->
             <div id="viewPengaturan" class="hidden fade-in px-5 pb-10">
-                <div class="bg-cox-card p-5 rounded-2xl border border-blue-800 shadow-lg space-y-4">
-                    <div>
-                        <h3 class="text-sm font-bold text-white"><i class="fa-solid fa-print text-cox-cyan"></i> Template & Pengaturan</h3>
-                        <p class="text-[10px] text-blue-300 mt-1">Sesuaikan teks untuk Nota dan Pesan WhatsApp.</p>
+                
+                <!-- MENU LIST PENGATURAN -->
+                <div id="menuPengaturanList" class="space-y-3">
+                    
+                    <!-- Menu 1: Template Nota & WA -->
+                    <button onclick="bukaFormTemplate()" class="w-full bg-cox-card border border-blue-800 hover:border-cox-cyan p-4 rounded-2xl flex items-center justify-between group transition">
+                        <div class="flex items-center gap-4">
+                            <div class="w-11 h-11 rounded-full bg-cox-cyan/10 text-cox-cyan flex items-center justify-center text-xl group-hover:bg-cox-cyan group-hover:text-cox-bg transition shadow-neon">
+                                <i class="fa-solid fa-print"></i>
+                            </div>
+                            <div class="text-left">
+                                <h4 class="text-sm font-bold text-white group-hover:text-cox-cyan transition">Template Nota & WA</h4>
+                                <p class="text-[10px] text-blue-300 mt-0.5">Sesuaikan teks nota dan pesan WhatsApp</p>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-blue-400 group-hover:text-cox-cyan transition"></i>
+                    </button>
+
+                    <!-- Menu 2: Akses Role & Pegawai (Dummy) -->
+                    <button class="w-full bg-slate-800/50 border border-blue-900/50 p-4 rounded-2xl flex items-center justify-between group opacity-60 cursor-not-allowed">
+                        <div class="flex items-center gap-4">
+                            <div class="w-11 h-11 rounded-full bg-rose-500/10 text-rose-400 flex items-center justify-center text-xl">
+                                <i class="fa-solid fa-users-gear"></i>
+                            </div>
+                            <div class="text-left">
+                                <h4 class="text-sm font-bold text-slate-300">Akses Role & Pegawai</h4>
+                                <p class="text-[10px] text-slate-400 mt-0.5">Manajemen kasir (Segera Hadir)</p>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-lock text-slate-500"></i>
+                    </button>
+
+                    <!-- Menu 3: Sinkronisasi Force (Opsional Tambahan) -->
+                    <button onclick="sinkronisasiData()" class="w-full bg-cox-card border border-blue-800 hover:border-cox-cyan p-4 rounded-2xl flex items-center justify-between group transition mt-6">
+                        <div class="flex items-center gap-4">
+                            <div class="w-11 h-11 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-xl">
+                                <i class="fa-solid fa-rotate"></i>
+                            </div>
+                            <div class="text-left">
+                                <h4 class="text-sm font-bold text-white group-hover:text-cox-cyan transition">Sinkronisasi Data</h4>
+                                <p class="text-[10px] text-blue-300 mt-0.5">Muat ulang data dari Spreadsheet</p>
+                            </div>
+                        </div>
+                    </button>
+                </div>
+
+                <!-- FORM TEMPLATE NOTA & WA (Tersembunyi secara default) -->
+                <div id="formTemplatePengaturan" class="hidden bg-cox-card p-5 rounded-2xl border border-blue-800 shadow-lg space-y-4">
+                    <div class="flex items-center gap-3 mb-2">
+                        <button onclick="tutupFormTemplate()" class="w-8 h-8 rounded-full bg-blue-900/50 flex items-center justify-center text-blue-300 hover:text-white hover:bg-rose-500 transition">
+                            <i class="fa-solid fa-arrow-left"></i>
+                        </button>
+                        <div>
+                            <h3 class="text-sm font-bold text-white">Template & Pengaturan</h3>
+                        </div>
                     </div>
                     
                     <div class="space-y-3 pt-3 border-t border-blue-900">
@@ -197,6 +248,7 @@
                         </button>
                     </div>
                 </div>
+
             </div>
             
         </main>
@@ -389,6 +441,30 @@
             }
         });
 
+        // FUNGSI NAVIGASI MENU PENGATURAN
+        function bukaFormTemplate() {
+            document.getElementById('menuPengaturanList').classList.add('hidden');
+            const form = document.getElementById('formTemplatePengaturan');
+            form.classList.remove('hidden');
+            form.classList.add('fade-in');
+        }
+
+        function tutupFormTemplate() {
+            document.getElementById('formTemplatePengaturan').classList.add('hidden');
+            const menu = document.getElementById('menuPengaturanList');
+            menu.classList.remove('hidden');
+            menu.classList.add('fade-in');
+        }
+
+        function simpanPengaturanLokal() {
+            localStorage.setItem('toko_nama', document.getElementById('setToko').value);
+            localStorage.setItem('toko_alamat', document.getElementById('setAlamat').value);
+            localStorage.setItem('toko_pesan', document.getElementById('setPenutup').value);
+            localStorage.setItem('template_wa', document.getElementById('setWA').value);
+            alert("Pengaturan Template Berhasil Disimpan!");
+            tutupFormTemplate(); // Kembali ke menu setelah simpan
+        }
+
         function formatWaktuIndo(tglStr) {
             if (!tglStr) return '-';
             try {
@@ -422,13 +498,18 @@
             }
         }
 
-        // FUNGSI UPDATE TABS (Menambahkan Tab Pengaturan)
         function switchTab(tab) {
             const views = ['viewBeranda', 'viewPesanan', 'viewPengaturan'];
             const navs = ['navBeranda', 'navPesanan', 'navPengaturan'];
             const titles = { beranda: "Beranda", pesanan: "Daftar Pesanan", pengaturan: "Pengaturan & Alat" };
             
             document.getElementById('headerTitle').innerText = titles[tab];
+
+            // Reset menu pengaturan agar jika berpindah tab, menu tertutup
+            if (tab !== 'pengaturan') {
+                document.getElementById('formTemplatePengaturan').classList.add('hidden');
+                document.getElementById('menuPengaturanList').classList.remove('hidden');
+            }
 
             views.forEach(v => document.getElementById(v).classList.add('hidden'));
             navs.forEach(n => {
@@ -448,14 +529,6 @@
                 navActive.classList.replace('text-blue-400', 'text-cox-cyan');
                 navActive.classList.remove('hover:text-cox-cyan');
             }
-        }
-
-        function simpanPengaturanLokal() {
-            localStorage.setItem('toko_nama', document.getElementById('setToko').value);
-            localStorage.setItem('toko_alamat', document.getElementById('setAlamat').value);
-            localStorage.setItem('toko_pesan', document.getElementById('setPenutup').value);
-            localStorage.setItem('template_wa', document.getElementById('setWA').value);
-            alert("Pengaturan Template Berhasil Disimpan!");
         }
 
         async function sinkronisasiData() {
@@ -604,7 +677,6 @@
             document.getElementById('displayAntrean').innerHTML = `${antrean} Nota`;
         }
 
-        // FUNGSI BARU: Kirim Pesan WA
         function kirimWA(encodedData) {
             const trx = JSON.parse(decodeURIComponent(encodedData));
             let noHp = trx.No_HP || '';
@@ -619,7 +691,6 @@
             window.open(`https://wa.me/${noHp}?text=${encodeURIComponent(teks)}`, '_blank');
         }
 
-        // FUNGSI BARU: Cetak Nota Struk
         function cetakNota(encodedData) {
             const trx = JSON.parse(decodeURIComponent(encodedData));
             const toko = localStorage.getItem('toko_nama') || "COX LAUNDRY";
@@ -669,7 +740,6 @@
             printWindow.document.close();
         }
 
-        // FUNGSI BARU: Update Status ke Selesai
         async function updateStatus(invoice) {
             if(!confirm(`Ubah pesanan ${invoice} menjadi SELESAI?`)) return;
             if(!API_URL) return;
@@ -686,7 +756,6 @@
             };
 
             try {
-                // Pastikan Google Apps Script Anda (Code.gs) telah diperbarui untuk menerima "action": "update"
                 await fetch(API_URL, {
                     method: 'POST', mode: 'no-cors', cache: 'no-cache',
                     headers: { 'Content-Type': 'application/json' },
@@ -699,7 +768,6 @@
             }
         }
 
-        // UPDATE RENDER PESANAN (Menambahkan Tanggal Masuk & Tombol Aksi)
         function renderDaftarPesanan(dataTransaksi) {
             const container = document.getElementById('listPesananContainer');
             if (!dataTransaksi || dataTransaksi.length === 0) {
@@ -720,7 +788,6 @@
                     isSelesai = true;
                 }
 
-                // Siapkan data untuk dikirim ke fungsi onclick
                 let trxDataString = encodeURIComponent(JSON.stringify(trx));
 
                 let btnSelesaiHtml = '';
@@ -747,7 +814,6 @@
                         <span class="font-bold text-sm text-cox-cyan">Rp ${parseFloat(trx.Total_Harga || 0).toLocaleString('id-ID')}</span>
                     </div>
 
-                    <!-- Tombol Aksi Bawah -->
                     <div class="flex justify-between items-center pt-1">
                         <div class="flex gap-2">
                             ${btnSelesaiHtml}
