@@ -658,33 +658,23 @@
             }
         }
 
-        // FUNGSI WAKTU DIPERBAIKI (Menggunakan zona waktu Asia/Jakarta / WIB)
+        // PARSING WAKTU LANGSUNG TANPA KONVERSI UTC OTOMATIS
         function formatWaktuIndo(tglStr) {
             if (!tglStr) return '-';
             try {
-                let d = new Date(tglStr);
-                if (!isNaN(d.getTime())) {
-                    return d.toLocaleString('id-ID', {
-                        day: 'numeric',
-                        month: 'long',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        timeZone: 'Asia/Jakarta'
-                    }).replace('.', ':') + ' WIB';
-                }
-                let raw = String(tglStr).replace('T', ' ').replace('.000Z', '').replace('Z', '');
-                let parts = raw.split(' ');
-                let datePart = parts[0]; let timePart = parts[1] || '';
+                let cleanStr = String(tglStr).replace('T', ' ').replace('.000Z', '').replace('Z', '');
+                let parts = cleanStr.split(' ');
+                let datePart = parts[0]; 
+                let timePart = parts[1] || '00:00';
 
-                if (datePart.includes('-')) {
+                if (datePart && datePart.includes('-')) {
                     let [y, m, d] = datePart.split('-');
                     const namaBulan = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
                     let bln = namaBulan[parseInt(m, 10) - 1];
                     let timeFormatted = timePart ? `, ${timePart.substring(0, 5)} WIB` : '';
                     return `${d} ${bln} ${y}${timeFormatted}`;
                 }
-                return raw;
+                return cleanStr;
             } catch(e) { return String(tglStr); }
         }
 
@@ -872,7 +862,8 @@
             const toko = localStorage.getItem('toko_nama') || "COX LAUNDRY", alamat = localStorage.getItem('toko_alamat') || "Jl. Contoh Alamat", penutup = localStorage.getItem('toko_pesan') || "Terima Kasih";
             const layanans = (trx.Layanan || "").split(',').map(s => `<div>- ${s.trim()}</div>`).join('');
             const printWindow = window.open('', '_blank', 'width=350,height=600');
-            const html = `<html><head><title>Nota - ${trx.No_Invoice}</title><style>body { font-family: monospace; font-size: 12px; color: #000; margin: 0; padding: 15px; width: 280px; } .text-center { text-align: center; } .fw-bold { font-weight: bold; } .border-bottom { border-bottom: 1px dashed #000; margin: 10px 0; } .flex-between { display: flex; justify-content: space-between; }</style></head><body><div class="text-center fw-bold" style="font-size: 16px;">${toko}</div><div class="text-center">${alamat}</div><div class="border-bottom"></div><div>Inv  : ${trx.No_Invoice}</div><div>Nama : ${trx.Nama_Pelanggan}</div><div>Masuk: ${formatWaktuIndo(trx.Tanggal_Masuk)}</div><div>Selesai (Est): ${formatWaktuIndo(trx.Tanggal_Selesai)}</div><div class="border-bottom"></div><div class="fw-bold">Layanan:</div>${layanans}<div class="border-bottom"></div><div class="flex-between fw-bold" style="font-size: 14px;"><span>TOTAL:</span><span>Rp ${parseFloat(trx.Total_Harga || 0).toLocaleString('id-ID')}</span></div><div>Bayar: ${trx.Metode_Pembayaran || '-'}</div><div class="border-bottom"></div><div class="text-center italic">${penutup}</div><script>window.onload = function() { window.print(); window.onafterprint = function(){ window.close(); } };<\/script></body></html>`;
+            const metodeBayarVal = trx.Metode_Pembayaran || trx.Metode || trx.Pembayaran || '-';
+            const html = `<html><head><title>Nota - ${trx.No_Invoice}</title><style>body { font-family: monospace; font-size: 12px; color: #000; margin: 0; padding: 15px; width: 280px; } .text-center { text-align: center; } .fw-bold { font-weight: bold; } .border-bottom { border-bottom: 1px dashed #000; margin: 10px 0; } .flex-between { display: flex; justify-content: space-between; }</style></head><body><div class="text-center fw-bold" style="font-size: 16px;">${toko}</div><div class="text-center">${alamat}</div><div class="border-bottom"></div><div>Inv  : ${trx.No_Invoice}</div><div>Nama : ${trx.Nama_Pelanggan}</div><div>Masuk: ${formatWaktuIndo(trx.Tanggal_Masuk)}</div><div>Selesai (Est): ${formatWaktuIndo(trx.Tanggal_Selesai)}</div><div class="border-bottom"></div><div class="fw-bold">Layanan:</div>${layanans}<div class="border-bottom"></div><div class="flex-between fw-bold" style="font-size: 14px;"><span>TOTAL:</span><span>Rp ${parseFloat(trx.Total_Harga || 0).toLocaleString('id-ID')}</span></div><div>Bayar: ${metodeBayarVal}</div><div class="border-bottom"></div><div class="text-center italic">${penutup}</div><script>window.onload = function() { window.print(); window.onafterprint = function(){ window.close(); } };<\/script></body></html>`;
             printWindow.document.write(html); printWindow.document.close();
         }
 
@@ -888,7 +879,7 @@
             } catch (error) { alert('Gagal merubah status.'); }
         }
 
-        // RENDER DAFTAR PESANAN DENGAN KETERANGAN PEMBAYARAN
+        // RENDER DAFTAR PESANAN DENGAN DETEKSI METODE PEMBAYARAN FLEKSIBEL
         function renderDaftarPesanan(dataTransaksi) {
             const container = document.getElementById('listPesananContainer');
             if (!dataTransaksi || dataTransaksi.length === 0) { container.innerHTML = `<p class="text-xs text-blue-300 text-center italic mt-5">Belum ada transaksi.</p>`; return; }
@@ -902,6 +893,9 @@
                 let trxDataString = encodeURIComponent(JSON.stringify(trx));
                 let btnSelesaiHtml = !isSelesai ? `<button id="btn-status-${trx.No_Invoice}" onclick="updateStatus('${trx.No_Invoice}')" class="bg-emerald-500/20 text-emerald-400 border border-emerald-500 hover:bg-emerald-500 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold transition flex items-center gap-1"><i class="fa-solid fa-check-double"></i> Selesai</button>` : '';
                 
+                // Ambil nilai metode pembayaran dari berbagai kemungkinan nama kolom
+                let metodeBayar = trx.Metode_Pembayaran || trx.Metode || trx.Pembayaran || '-';
+
                 html += `
                 <div class="bg-cox-card p-4 rounded-2xl border border-blue-800 shadow-sm flex flex-col gap-2 relative">
                     <div class="flex justify-between items-start">
@@ -917,7 +911,7 @@
                             <p><i class="fa-solid fa-shirt w-4 text-cox-cyan"></i> ${trx.Layanan || ''}</p>
                             <p><i class="fa-regular fa-clock w-4 text-cox-cyan"></i> Masuk: ${formatWaktuIndo(trx.Tanggal_Masuk)}</p>
                             <p><i class="fa-regular fa-calendar-check w-4 text-cox-cyan"></i> Est. Selesai: ${formatWaktuIndo(trx.Tanggal_Selesai)}</p>
-                            <p><i class="fa-solid fa-wallet w-4 text-cox-cyan"></i> Pembayaran: <span class="text-white font-medium">${trx.Metode_Pembayaran || '-'}</span></p>
+                            <p><i class="fa-solid fa-wallet w-4 text-cox-cyan"></i> Pembayaran: <span class="text-white font-medium">${metodeBayar}</span></p>
                         </div>
                         <span class="font-bold text-sm text-cox-cyan">Rp ${parseFloat(trx.Total_Harga || 0).toLocaleString('id-ID')}</span>
                     </div>
@@ -1081,7 +1075,7 @@
 
             try {
                 await fetch(API_URL, { method: 'POST', mode: 'no-cors', cache: 'no-cache', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payloadTransaksi) });
-                await fetch(API_URL, { method: 'POST', mode: 'no-cors', cache: 'no-cache', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payloadPelanggan) });
+                await fetch(API_URL, { method: 'POST', mode: 'no-cors', cache: 'no-cache', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payloadPayloadPelanggan = payloadPelanggan) });
                 alert(`Transaksi ${noInv} Berhasil Disimpan & Pelanggan Tercatat!`);
                 tutupModalPesanan(); sinkronisasiData();
             } catch (error) { alert('Terjadi kesalahan saat menyimpan data.'); } finally { btn.innerHTML = originalBtnHtml; btn.disabled = false; }
