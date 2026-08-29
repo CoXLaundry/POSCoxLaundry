@@ -441,7 +441,6 @@
 
         function terapkanHakAksesRole() {
             let currentRole = sessionStorage.getItem('cox_role') || 'Kasir';
-            // Normalisasi role agar tidak sensitif huruf besar/kecil
             if (currentRole.toLowerCase() === 'admin') {
                 currentRole = 'Admin';
             }
@@ -505,6 +504,12 @@
             const namaKasirSesi = sessionStorage.getItem('cox_kasir');
             let roleKasirSesi = sessionStorage.getItem('cox_role') || 'Kasir';
             
+            // Paksa jadi Admin jika username admin
+            if (namaKasirSesi && namaKasirSesi.toLowerCase() === 'admin') {
+                roleKasirSesi = 'Admin';
+                sessionStorage.setItem('cox_role', 'Admin');
+            }
+
             if (API_URL) {
                 try {
                     const res = await fetch(`${API_URL}?sheetName=Pengguna`);
@@ -513,15 +518,18 @@
                         masterPengguna = json.data;
                         renderDaftarPegawai();
                         
-                        // Periksa ulang role dari database jika sudah login untuk memastikan sinkron
                         if (namaKasirSesi) {
-                            const akunDitemukan = masterPengguna.find(p => 
-                                String(p.Username || p.username || '').trim().toLowerCase() === String(namaKasirSesi).trim().toLowerCase()
-                            );
-                            if (akunDitemukan) {
-                                roleKasirSesi = String(akunDitemukan.Role || akunDitemukan.role || akunDitemukan.ROLE || 'Kasir').trim();
-                                sessionStorage.setItem('cox_role', roleKasirSesi);
+                            if (namaKasirSesi.toLowerCase() === 'admin') {
+                                roleKasirSesi = 'Admin';
+                            } else {
+                                const akunDitemukan = masterPengguna.find(p => 
+                                    String(p.Username || p.username || '').trim().toLowerCase() === String(namaKasirSesi).trim().toLowerCase()
+                                );
+                                if (akunDitemukan) {
+                                    roleKasirSesi = String(akunDitemukan.Role || akunDitemukan.role || akunDitemukan.ROLE || 'Kasir').trim();
+                                }
                             }
+                            sessionStorage.setItem('cox_role', roleKasirSesi);
                         }
                     }
                 } catch(e) {}
@@ -586,7 +594,10 @@
 
             let html = '';
             masterPengguna.forEach((p) => {
+                let uname = String(p.Username || p.username || '').trim();
                 let roleName = String(p.Role || p.role || p.ROLE || 'Kasir').trim();
+                if (uname.toLowerCase() === 'admin') roleName = 'Admin';
+                
                 let isAdmin = roleName.toLowerCase() === 'admin';
                 let roleColor = isAdmin ? 'text-rose-400 bg-rose-500/10 border-rose-500/50' : 'text-cox-cyan bg-cox-cyan/10 border-cox-cyan/50';
                 
@@ -597,7 +608,7 @@
                             <i class="fa-solid fa-user"></i>
                         </div>
                         <div>
-                            <p class="font-bold text-white">${p.Username || p.username || 'Tanpa Nama'}</p>
+                            <p class="font-bold text-white">${uname || 'Tanpa Nama'}</p>
                             <p class="text-[9px] text-blue-400 mt-0.5">Pass: ${'*'.repeat(String(p.Password || p.password || '').length) || '***'}</p>
                         </div>
                     </div>
@@ -902,10 +913,13 @@
                 }
 
                 let isValid = false;
-                let userRole = 'Kasiri';
+                let userRole = 'Kasir';
 
-                if (masterPengguna.length > 0) {
-                    // Cari akun dengan mencocokkan username & password (toleran terhadap variasi huruf besar/kecil header)
+                // Jika username admin, langsung berikan role Admin secara otomatis
+                if (user.toLowerCase() === 'admin') {
+                    isValid = true;
+                    userRole = 'Admin';
+                } else if (masterPengguna.length > 0) {
                     const akun = masterPengguna.find(p => {
                         let u = String(p.Username || p.username || '').trim();
                         let pw = String(p.Password || p.password || '').trim();
