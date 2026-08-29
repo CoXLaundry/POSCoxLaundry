@@ -658,7 +658,6 @@
             }
         }
 
-        // PARSING WAKTU LANGSUNG TANPA KONVERSI UTC OTOMATIS
         function formatWaktuIndo(tglStr) {
             if (!tglStr) return '-';
             try {
@@ -879,7 +878,6 @@
             } catch (error) { alert('Gagal merubah status.'); }
         }
 
-        // RENDER DAFTAR PESANAN DENGAN DETEKSI METODE PEMBAYARAN FLEKSIBEL
         function renderDaftarPesanan(dataTransaksi) {
             const container = document.getElementById('listPesananContainer');
             if (!dataTransaksi || dataTransaksi.length === 0) { container.innerHTML = `<p class="text-xs text-blue-300 text-center italic mt-5">Belum ada transaksi.</p>`; return; }
@@ -893,7 +891,6 @@
                 let trxDataString = encodeURIComponent(JSON.stringify(trx));
                 let btnSelesaiHtml = !isSelesai ? `<button id="btn-status-${trx.No_Invoice}" onclick="updateStatus('${trx.No_Invoice}')" class="bg-emerald-500/20 text-emerald-400 border border-emerald-500 hover:bg-emerald-500 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold transition flex items-center gap-1"><i class="fa-solid fa-check-double"></i> Selesai</button>` : '';
                 
-                // Ambil nilai metode pembayaran dari berbagai kemungkinan nama kolom
                 let metodeBayar = trx.Metode_Pembayaran || trx.Metode || trx.Pembayaran || '-';
 
                 html += `
@@ -1055,13 +1052,27 @@
                 gabunganLayanan += ` ${teksDiskon}`;
             }
 
+            // HITUNG TOTAL JUMLAH KG / PCS DARI KERANJANG
+            let totalJumlahKiloan = keranjangItem.reduce((sum, item) => sum + parseFloat(item.qty || 0), 0);
+
             let totalHargaKeseluruhan = parseFloat(document.getElementById('displayTotalHarga').getAttribute('data-total')) || 0;
             const btn = document.getElementById('btnSimpanPesanan'), originalBtnHtml = btn.innerHTML;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...'; btn.disabled = true;
 
             const payloadTransaksi = {
                 sheetName: "Transaksi", action: "insert",
-                rowData: { "No_Invoice": noInv, "Tanggal_Masuk": tglMasuk, "Tanggal_Selesai": tglSelesai, "Nama_Pelanggan": nama, "No_HP": noHp, "Layanan": gabunganLayanan, "Jumlah_Kiloan": keranjangItem.length + " Jenis", "Total_Harga": totalHargaKeseluruhan, "Status": "Baru", "Metode_Pembayaran": metodeBayar }
+                rowData: { 
+                    "No_Invoice": noInv, 
+                    "Tanggal_Masuk": tglMasuk, 
+                    "Tanggal_Selesai": tglSelesai, 
+                    "Nama_Pelanggan": nama, 
+                    "No_HP": noHp, 
+                    "Layanan": gabunganLayanan, 
+                    "Jumlah_Kiloan": totalJumlahKiloan, 
+                    "Total_Harga": totalHargaKeseluruhan, 
+                    "Status": "Baru", 
+                    "Metode_Pembayaran": metodeBayar 
+                }
             };
 
             let existingPelanggan = masterPelanggan.find(p => String(p.No_HP).trim() === noHp);
@@ -1075,7 +1086,7 @@
 
             try {
                 await fetch(API_URL, { method: 'POST', mode: 'no-cors', cache: 'no-cache', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payloadTransaksi) });
-                await fetch(API_URL, { method: 'POST', mode: 'no-cors', cache: 'no-cache', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payloadPayloadPelanggan = payloadPelanggan) });
+                await fetch(API_URL, { method: 'POST', mode: 'no-cors', cache: 'no-cache', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payloadPelanggan) });
                 alert(`Transaksi ${noInv} Berhasil Disimpan & Pelanggan Tercatat!`);
                 tutupModalPesanan(); sinkronisasiData();
             } catch (error) { alert('Terjadi kesalahan saat menyimpan data.'); } finally { btn.innerHTML = originalBtnHtml; btn.disabled = false; }
