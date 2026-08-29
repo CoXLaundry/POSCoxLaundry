@@ -504,7 +504,6 @@
             const namaKasirSesi = sessionStorage.getItem('cox_kasir');
             let roleKasirSesi = sessionStorage.getItem('cox_role') || 'Kasir';
             
-            // Paksa jadi Admin jika username admin
             if (namaKasirSesi && namaKasirSesi.toLowerCase() === 'admin') {
                 roleKasirSesi = 'Admin';
                 sessionStorage.setItem('cox_role', 'Admin');
@@ -659,9 +658,21 @@
             }
         }
 
+        // FUNGSI WAKTU DIPERBAIKI (Menggunakan zona waktu Asia/Jakarta / WIB)
         function formatWaktuIndo(tglStr) {
             if (!tglStr) return '-';
             try {
+                let d = new Date(tglStr);
+                if (!isNaN(d.getTime())) {
+                    return d.toLocaleString('id-ID', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        timeZone: 'Asia/Jakarta'
+                    }).replace('.', ':') + ' WIB';
+                }
                 let raw = String(tglStr).replace('T', ' ').replace('.000Z', '').replace('Z', '');
                 let parts = raw.split(' ');
                 let datePart = parts[0]; let timePart = parts[1] || '';
@@ -877,6 +888,7 @@
             } catch (error) { alert('Gagal merubah status.'); }
         }
 
+        // RENDER DAFTAR PESANAN DENGAN KETERANGAN PEMBAYARAN
         function renderDaftarPesanan(dataTransaksi) {
             const container = document.getElementById('listPesananContainer');
             if (!dataTransaksi || dataTransaksi.length === 0) { container.innerHTML = `<p class="text-xs text-blue-300 text-center italic mt-5">Belum ada transaksi.</p>`; return; }
@@ -890,7 +902,36 @@
                 let trxDataString = encodeURIComponent(JSON.stringify(trx));
                 let btnSelesaiHtml = !isSelesai ? `<button id="btn-status-${trx.No_Invoice}" onclick="updateStatus('${trx.No_Invoice}')" class="bg-emerald-500/20 text-emerald-400 border border-emerald-500 hover:bg-emerald-500 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold transition flex items-center gap-1"><i class="fa-solid fa-check-double"></i> Selesai</button>` : '';
                 
-                html += `<div class="bg-cox-card p-4 rounded-2xl border border-blue-800 shadow-sm flex flex-col gap-2 relative"><div class="flex justify-between items-start"><div><span class="text-[10px] text-blue-300 font-mono">${trx.No_Invoice || ''}</span><h4 class="font-bold text-sm text-white">${trx.Nama_Pelanggan || ''}</h4></div><span class="text-[10px] ${colorClass} px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">${trx.Status || 'Baru'}</span></div><div class="flex justify-between items-end mt-1 pb-3 border-b border-blue-900/50"><div class="text-[11px] text-blue-200 space-y-1"><p><i class="fa-solid fa-shirt w-4 text-cox-cyan"></i> ${trx.Layanan || ''}</p><p><i class="fa-regular fa-clock w-4 text-cox-cyan"></i> Masuk: ${formatWaktuIndo(trx.Tanggal_Masuk)}</p><p><i class="fa-regular fa-calendar-check w-4 text-cox-cyan"></i> Est. Selesai: ${formatWaktuIndo(trx.Tanggal_Selesai)}</p></div><span class="font-bold text-sm text-cox-cyan">Rp ${parseFloat(trx.Total_Harga || 0).toLocaleString('id-ID')}</span></div><div class="flex justify-between items-center pt-1"><div class="flex gap-2">${btnSelesaiHtml}</div><div class="flex gap-2"><button onclick="kirimWA('${trxDataString}')" class="bg-slate-800 text-blue-300 border border-blue-800 hover:text-emerald-400 hover:border-emerald-500 px-3 py-1.5 rounded-lg text-[10px] font-bold transition flex items-center gap-1"><i class="fa-brands fa-whatsapp text-sm"></i> WA</button><button onclick="cetakNota('${trxDataString}')" class="bg-slate-800 text-blue-300 border border-blue-800 hover:text-cox-cyan hover:border-cox-cyan px-3 py-1.5 rounded-lg text-[10px] font-bold transition flex items-center gap-1"><i class="fa-solid fa-print text-sm"></i> Nota</button></div></div></div>`;
+                html += `
+                <div class="bg-cox-card p-4 rounded-2xl border border-blue-800 shadow-sm flex flex-col gap-2 relative">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span class="text-[10px] text-blue-300 font-mono">${trx.No_Invoice || ''}</span>
+                            <h4 class="font-bold text-sm text-white">${trx.Nama_Pelanggan || ''}</h4>
+                        </div>
+                        <span class="text-[10px] ${colorClass} px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">${trx.Status || 'Baru'}</span>
+                    </div>
+                    
+                    <div class="flex justify-between items-end mt-1 pb-3 border-b border-blue-900/50">
+                        <div class="text-[11px] text-blue-200 space-y-1">
+                            <p><i class="fa-solid fa-shirt w-4 text-cox-cyan"></i> ${trx.Layanan || ''}</p>
+                            <p><i class="fa-regular fa-clock w-4 text-cox-cyan"></i> Masuk: ${formatWaktuIndo(trx.Tanggal_Masuk)}</p>
+                            <p><i class="fa-regular fa-calendar-check w-4 text-cox-cyan"></i> Est. Selesai: ${formatWaktuIndo(trx.Tanggal_Selesai)}</p>
+                            <p><i class="fa-solid fa-wallet w-4 text-cox-cyan"></i> Pembayaran: <span class="text-white font-medium">${trx.Metode_Pembayaran || '-'}</span></p>
+                        </div>
+                        <span class="font-bold text-sm text-cox-cyan">Rp ${parseFloat(trx.Total_Harga || 0).toLocaleString('id-ID')}</span>
+                    </div>
+
+                    <div class="flex justify-between items-center pt-1">
+                        <div class="flex gap-2">
+                            ${btnSelesaiHtml}
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="kirimWA('${trxDataString}')" class="bg-slate-800 text-blue-300 border border-blue-800 hover:text-emerald-400 hover:border-emerald-500 px-3 py-1.5 rounded-lg text-[10px] font-bold transition flex items-center gap-1"><i class="fa-brands fa-whatsapp text-sm"></i> WA</button>
+                            <button onclick="cetakNota('${trxDataString}')" class="bg-slate-800 text-blue-300 border border-blue-800 hover:text-cox-cyan hover:border-cox-cyan px-3 py-1.5 rounded-lg text-[10px] font-bold transition flex items-center gap-1"><i class="fa-solid fa-print text-sm"></i> Nota</button>
+                        </div>
+                    </div>
+                </div>`;
             });
             container.innerHTML = html;
         }
@@ -915,7 +956,6 @@
                 let isValid = false;
                 let userRole = 'Kasir';
 
-                // Jika username admin, langsung berikan role Admin secara otomatis
                 if (user.toLowerCase() === 'admin') {
                     isValid = true;
                     userRole = 'Admin';
