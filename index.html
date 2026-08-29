@@ -111,7 +111,7 @@
                             <h2 class="font-bold text-[17px] text-white">Cox Laundry App</h2>
                             <p class="text-[11px] text-cox-text mt-1.5 flex items-start gap-1.5 leading-tight opacity-80">
                                 <i class="fa-solid fa-user-check mt-0.5 text-cox-cyan"></i> Kasir: <span id="namaKasir">Admin</span>
-                                <span id="badgeRoleKasir" class="ml-1 px-1.5 py-0.5 bg-cox-cyan/20 text-cox-cyan rounded text-[9px] font-bold">Role</span>
+                                <span id="badgeRoleKasir" class="ml-1 px-1.5 py-0.5 bg-cox-cyan/25 text-cox-cyan rounded text-[9px] font-bold">Role</span>
                             </p>
                             <p class="text-[11px] text-cox-text mt-1.5 flex items-center gap-1.5 opacity-80">
                                 <i class="fa-solid fa-calendar-day text-cox-cyan"></i> <span id="tanggalHariIni"></span>
@@ -120,7 +120,7 @@
                     </div>
                 </div>
 
-                <!-- Kartu Laporan Dashboard (Dibatasi Aksesnya) -->
+                <!-- Kartu Laporan Dashboard -->
                 <div data-feature="dashboard_pendapatan" class="mx-5 mt-4 bg-cox-card rounded-2xl p-4 shadow-lg border border-blue-800/50 flex items-center justify-between relative z-10">
                     <div class="flex-1">
                         <p class="text-[10px] text-blue-300 opacity-70">Pendapatan Hari Ini</p>
@@ -170,7 +170,6 @@
                 
                 <div id="menuPengaturanList" class="space-y-3">
                     
-                    <!-- Fitur Template Nota dibatasi untuk Kasir -->
                     <button data-feature="template_nota" onclick="bukaFormTemplate()" class="w-full bg-cox-card border border-blue-800 hover:border-cox-cyan p-4 rounded-2xl flex items-center justify-between group transition">
                         <div class="flex items-center gap-4">
                             <div class="w-11 h-11 rounded-full bg-cox-cyan/10 text-cox-cyan flex items-center justify-center text-xl group-hover:bg-cox-cyan group-hover:text-cox-bg transition shadow-neon">
@@ -184,7 +183,6 @@
                         <i class="fa-solid fa-chevron-right text-blue-400 group-hover:text-cox-cyan transition"></i>
                     </button>
 
-                    <!-- Fitur Manajemen Pegawai dibatasi untuk Kasir -->
                     <button data-feature="manajemen_pegawai" onclick="bukaFormPegawai()" class="w-full bg-cox-card border border-blue-800 hover:border-rose-400 p-4 rounded-2xl flex items-center justify-between group transition">
                         <div class="flex items-center gap-4">
                             <div class="w-11 h-11 rounded-full bg-rose-500/10 text-rose-400 flex items-center justify-center text-xl group-hover:bg-rose-500 group-hover:text-white transition shadow-[0_0_10px_rgba(244,63,94,0.3)]">
@@ -300,7 +298,6 @@
                 <span class="text-[10px] font-medium tracking-wide">Pesanan</span>
             </button>
             
-            <!-- Menu Laporan dibatasi untuk Kasir -->
             <button data-feature="laporan" class="flex flex-col items-center gap-1.5 text-blue-400 hover:text-cox-cyan transition group opacity-50 cursor-not-allowed">
                 <i class="fa-solid fa-chart-simple text-xl group-active:scale-90 transition-transform"></i>
                 <span class="text-[10px] font-medium tracking-wide">Laporan</span>
@@ -434,18 +431,21 @@
         // KONFIGURASI HAK AKSES (FLEXIBLE RBAC)
         // ==========================================
         const ROLE_PERMISSIONS = {
-            'Admin': ['*'], // Admin punya akses ke semua fitur (*)
-            // Daftar fitur 'data-feature' yang BOLEH dilihat oleh Kasir:
+            'Admin': ['*'], 
             'Kasir': [
                 'buat_pesanan', 
                 'lihat_pesanan', 
                 'sinkronisasi'
-                // Fitur 'laporan', 'manajemen_pegawai', 'template_nota', 'dashboard_pendapatan' sengaja tidak dimasukkan agar tersembunyi
             ] 
         };
 
         function terapkanHakAksesRole() {
-            const currentRole = sessionStorage.getItem('cox_role') || 'Kasir';
+            let currentRole = sessionStorage.getItem('cox_role') || 'Kasir';
+            // Normalisasi role agar tidak sensitif huruf besar/kecil
+            if (currentRole.toLowerCase() === 'admin') {
+                currentRole = 'Admin';
+            }
+
             const restrictedElements = document.querySelectorAll('[data-feature]');
             
             restrictedElements.forEach(el => {
@@ -457,9 +457,9 @@
                 }
                 
                 if (!hasAccess) {
-                    el.classList.add('hidden'); // Sembunyikan elemen
+                    el.classList.add('hidden');
                 } else {
-                    el.classList.remove('hidden'); // Tampilkan elemen
+                    el.classList.remove('hidden');
                 }
             });
         }
@@ -503,7 +503,7 @@
         window.addEventListener('DOMContentLoaded', async () => {
             const sesiAktif = sessionStorage.getItem('cox_logged_in');
             const namaKasirSesi = sessionStorage.getItem('cox_kasir');
-            const roleKasirSesi = sessionStorage.getItem('cox_role') || 'Kasir';
+            let roleKasirSesi = sessionStorage.getItem('cox_role') || 'Kasir';
             
             if (API_URL) {
                 try {
@@ -512,6 +512,17 @@
                     if (json.data) {
                         masterPengguna = json.data;
                         renderDaftarPegawai();
+                        
+                        // Periksa ulang role dari database jika sudah login untuk memastikan sinkron
+                        if (namaKasirSesi) {
+                            const akunDitemukan = masterPengguna.find(p => 
+                                String(p.Username || p.username || '').trim().toLowerCase() === String(namaKasirSesi).trim().toLowerCase()
+                            );
+                            if (akunDitemukan) {
+                                roleKasirSesi = String(akunDitemukan.Role || akunDitemukan.role || akunDitemukan.ROLE || 'Kasir').trim();
+                                sessionStorage.setItem('cox_role', roleKasirSesi);
+                            }
+                        }
                     }
                 } catch(e) {}
             }
@@ -525,7 +536,7 @@
                 document.getElementById('namaKasir').innerText = namaKasirSesi;
                 document.getElementById('badgeRoleKasir').innerText = roleKasirSesi;
                 
-                terapkanHakAksesRole(); // Panggil saat app terbuka
+                terapkanHakAksesRole(); 
                 sinkronisasiData();
             }
         });
@@ -575,7 +586,10 @@
 
             let html = '';
             masterPengguna.forEach((p) => {
-                let roleColor = p.Role === 'Admin' ? 'text-rose-400 bg-rose-500/10 border-rose-500/50' : 'text-cox-cyan bg-cox-cyan/10 border-cox-cyan/50';
+                let roleName = String(p.Role || p.role || p.ROLE || 'Kasir').trim();
+                let isAdmin = roleName.toLowerCase() === 'admin';
+                let roleColor = isAdmin ? 'text-rose-400 bg-rose-500/10 border-rose-500/50' : 'text-cox-cyan bg-cox-cyan/10 border-cox-cyan/50';
+                
                 html += `
                 <div class="flex justify-between items-center bg-slate-900 border border-blue-800 p-3 rounded-xl text-xs">
                     <div class="flex items-center gap-3">
@@ -583,11 +597,11 @@
                             <i class="fa-solid fa-user"></i>
                         </div>
                         <div>
-                            <p class="font-bold text-white">${p.Username || 'Tanpa Nama'}</p>
-                            <p class="text-[9px] text-blue-400 mt-0.5">Pass: ${'*'.repeat(String(p.Password || '').length) || '***'}</p>
+                            <p class="font-bold text-white">${p.Username || p.username || 'Tanpa Nama'}</p>
+                            <p class="text-[9px] text-blue-400 mt-0.5">Pass: ${'*'.repeat(String(p.Password || p.password || '').length) || '***'}</p>
                         </div>
                     </div>
-                    <span class="px-2.5 py-1 border rounded-lg text-[10px] font-bold ${roleColor}">${p.Role || 'Kasir'}</span>
+                    <span class="px-2.5 py-1 border rounded-lg text-[10px] font-bold ${roleColor}">${roleName}</span>
                 </div>
                 `;
             });
@@ -602,7 +616,7 @@
 
             if (!user || !pass) { alert("Username dan Password tidak boleh kosong!"); return; }
 
-            let exists = masterPengguna.some(p => String(p.Username).toLowerCase() === user.toLowerCase());
+            let exists = masterPengguna.some(p => String(p.Username || p.username).toLowerCase() === user.toLowerCase());
             if(exists) { alert("Username tersebut sudah digunakan, pilih nama lain."); return; }
 
             const btn = document.getElementById('btnSimpanPegawai');
@@ -888,18 +902,24 @@
                 }
 
                 let isValid = false;
-                let userRole = 'Kasir';
+                let userRole = 'Kasiri';
 
                 if (masterPengguna.length > 0) {
-                    const akun = masterPengguna.find(p => p.Username === user && String(p.Password) === pass);
+                    // Cari akun dengan mencocokkan username & password (toleran terhadap variasi huruf besar/kecil header)
+                    const akun = masterPengguna.find(p => {
+                        let u = String(p.Username || p.username || '').trim();
+                        let pw = String(p.Password || p.password || '').trim();
+                        return u.toLowerCase() === user.toLowerCase() && pw === pass;
+                    });
+
                     if (akun) {
                         isValid = true;
-                        userRole = akun.Role || 'Kasir';
+                        userRole = String(akun.Role || akun.role || akun.ROLE || 'Kasir').trim();
                     }
                 } else {
                     if (user !== "" && pass !== "") {
                         isValid = true; 
-                        userRole = 'Admin'; // Fallback pertama kali
+                        userRole = 'Admin'; 
                     }
                 }
 
@@ -918,7 +938,7 @@
                         app.classList.remove('hidden');
                         setTimeout(() => app.classList.remove('opacity-0'), 50);
                         
-                        terapkanHakAksesRole(); // Panggil fungsi pembatasan saat login sukses
+                        terapkanHakAksesRole(); 
                         sinkronisasiData();
                     }, 500);
                 } else { 
