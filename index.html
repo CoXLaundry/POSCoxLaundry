@@ -111,6 +111,7 @@
                             <h2 class="font-bold text-[17px] text-white">Cox Laundry App</h2>
                             <p class="text-[11px] text-cox-text mt-1.5 flex items-start gap-1.5 leading-tight opacity-80">
                                 <i class="fa-solid fa-user-check mt-0.5 text-cox-cyan"></i> Kasir: <span id="namaKasir">Admin</span>
+                                <span id="badgeRoleKasir" class="ml-1 px-1.5 py-0.5 bg-cox-cyan/20 text-cox-cyan rounded text-[9px] font-bold">Role</span>
                             </p>
                             <p class="text-[11px] text-cox-text mt-1.5 flex items-center gap-1.5 opacity-80">
                                 <i class="fa-solid fa-calendar-day text-cox-cyan"></i> <span id="tanggalHariIni"></span>
@@ -135,7 +136,6 @@
                     </div>
                 </div>
 
-                <!-- Action Grid Menu -->
                 <div class="grid grid-cols-3 gap-y-8 gap-x-2 mt-10 px-5 relative z-10">
                     <div onclick="bukaModalPesanan()" class="flex flex-col items-center gap-2.5 cursor-pointer group">
                         <div class="w-[52px] h-[52px] rounded-full border border-cox-cyan text-cox-cyan flex items-center justify-center text-xl bg-cox-cyan/5 group-hover:bg-cox-cyan group-hover:text-cox-bg transition-all duration-300 shadow-neon">
@@ -167,6 +167,7 @@
             <!-- VIEW PENGATURAN -->
             <div id="viewPengaturan" class="hidden fade-in px-5 pb-10">
                 
+                <!-- MENU LIST -->
                 <div id="menuPengaturanList" class="space-y-3">
                     <button onclick="bukaFormTemplate()" class="w-full bg-cox-card border border-blue-800 hover:border-cox-cyan p-4 rounded-2xl flex items-center justify-between group transition">
                         <div class="flex items-center gap-4">
@@ -181,33 +182,35 @@
                         <i class="fa-solid fa-chevron-right text-blue-400 group-hover:text-cox-cyan transition"></i>
                     </button>
 
-                    <button class="w-full bg-slate-800/50 border border-blue-900/50 p-4 rounded-2xl flex items-center justify-between group opacity-60 cursor-not-allowed">
+                    <!-- TOMBOL PEGAWAI SEKARANG AKTIF -->
+                    <button onclick="bukaFormPegawai()" class="w-full bg-cox-card border border-blue-800 hover:border-rose-400 p-4 rounded-2xl flex items-center justify-between group transition">
                         <div class="flex items-center gap-4">
-                            <div class="w-11 h-11 rounded-full bg-rose-500/10 text-rose-400 flex items-center justify-center text-xl">
+                            <div class="w-11 h-11 rounded-full bg-rose-500/10 text-rose-400 flex items-center justify-center text-xl group-hover:bg-rose-500 group-hover:text-white transition shadow-[0_0_10px_rgba(244,63,94,0.3)]">
                                 <i class="fa-solid fa-users-gear"></i>
                             </div>
                             <div class="text-left">
-                                <h4 class="text-sm font-bold text-slate-300">Akses Role & Pegawai</h4>
-                                <p class="text-[10px] text-slate-400 mt-0.5">Manajemen kasir (Segera Hadir)</p>
+                                <h4 class="text-sm font-bold text-white group-hover:text-rose-400 transition">Akses Role & Pegawai</h4>
+                                <p class="text-[10px] text-blue-300 mt-0.5">Manajemen kasir dan hak akses</p>
                             </div>
                         </div>
-                        <i class="fa-solid fa-lock text-slate-500"></i>
+                        <i class="fa-solid fa-chevron-right text-blue-400 group-hover:text-rose-400 transition"></i>
                     </button>
 
-                    <button onclick="sinkronisasiData()" class="w-full bg-cox-card border border-blue-800 hover:border-cox-cyan p-4 rounded-2xl flex items-center justify-between group transition mt-6">
+                    <button onclick="sinkronisasiData()" class="w-full bg-cox-card border border-blue-800 hover:border-emerald-400 p-4 rounded-2xl flex items-center justify-between group transition mt-6">
                         <div class="flex items-center gap-4">
-                            <div class="w-11 h-11 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-xl">
+                            <div class="w-11 h-11 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-xl group-hover:bg-emerald-500 group-hover:text-white transition">
                                 <i class="fa-solid fa-rotate"></i>
                             </div>
                             <div class="text-left">
-                                <h4 class="text-sm font-bold text-white group-hover:text-cox-cyan transition">Sinkronisasi Data</h4>
-                                <p class="text-[10px] text-blue-300 mt-0.5">Muat ulang data dari Spreadsheet</p>
+                                <h4 class="text-sm font-bold text-white group-hover:text-emerald-400 transition">Sinkronisasi Data</h4>
+                                <p class="text-[10px] text-blue-300 mt-0.5">Muat ulang seluruh data secara manual</p>
                             </div>
                         </div>
                     </button>
                 </div>
 
-                <div id="formTemplatePengaturan" class="hidden bg-cox-card p-5 rounded-2xl border border-blue-800 shadow-lg space-y-4">
+                <!-- FORM TEMPLATE NOTA (Hidden) -->
+                <div id="formTemplatePengaturan" class="hidden bg-cox-card p-5 rounded-2xl border border-blue-800 shadow-lg space-y-4 relative">
                     <div class="flex items-center gap-3 mb-2">
                         <button onclick="tutupFormTemplate()" class="w-8 h-8 rounded-full bg-blue-900/50 flex items-center justify-center text-blue-300 hover:text-white hover:bg-rose-500 transition">
                             <i class="fa-solid fa-arrow-left"></i>
@@ -240,6 +243,50 @@
                         </button>
                     </div>
                 </div>
+
+                <!-- FORM PEGAWAI & ROLE (BARU - Hidden) -->
+                <div id="formPegawaiPengaturan" class="hidden bg-cox-card p-5 rounded-2xl border border-blue-800 shadow-lg space-y-4 relative">
+                    <div class="flex items-center gap-3 mb-2">
+                        <button onclick="tutupFormPegawai()" class="w-8 h-8 rounded-full bg-blue-900/50 flex items-center justify-center text-blue-300 hover:text-white hover:bg-rose-500 transition">
+                            <i class="fa-solid fa-arrow-left"></i>
+                        </button>
+                        <div>
+                            <h3 class="text-sm font-bold text-white">Manajemen Pegawai</h3>
+                            <p class="text-[10px] text-blue-300 mt-0.5">Daftar akun kasir dan akses</p>
+                        </div>
+                    </div>
+
+                    <!-- List Pegawai -->
+                    <div class="space-y-2 pt-2 border-t border-blue-900" id="listPegawaiContainer">
+                        <p class="text-[11px] text-blue-400 text-center italic py-2">Memuat data pegawai...</p>
+                    </div>
+
+                    <!-- Form Tambah Baru -->
+                    <div class="mt-4 pt-4 border-t border-blue-900 border-dashed space-y-3">
+                        <h4 class="text-xs font-bold text-cox-cyan mb-2"><i class="fa-solid fa-user-plus"></i> Tambah Pegawai Baru</h4>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[11px] font-medium text-blue-300 mb-1">Username</label>
+                                <input type="text" id="inputNewUser" class="w-full bg-slate-900 border border-blue-800 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:border-cox-cyan" placeholder="nama_kasir">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-medium text-blue-300 mb-1">Password</label>
+                                <input type="password" id="inputNewPass" class="w-full bg-slate-900 border border-blue-800 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:border-cox-cyan" placeholder="******">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-medium text-blue-300 mb-1">Role / Hak Akses</label>
+                            <select id="inputNewRole" class="w-full bg-slate-900 border border-blue-800 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:border-cox-cyan appearance-none">
+                                <option value="Kasir">Kasir</option>
+                                <option value="Admin">Admin / Pemilik</option>
+                            </select>
+                        </div>
+                        <button type="button" onclick="simpanPegawaiBaru()" id="btnSimpanPegawai" class="w-full bg-cox-cyan text-cox-bg font-bold py-2.5 rounded-xl hover:bg-white transition flex justify-center items-center gap-2 shadow-neon text-sm mt-2">
+                            <i class="fa-solid fa-plus"></i> Buat Akun Kasir
+                        </button>
+                    </div>
+                </div>
+
             </div>
             
         </main>
@@ -276,16 +323,13 @@
                 <span id="noInvoiceDisplay" class="text-xs bg-cox-card text-cox-cyan px-2 py-1 rounded-lg border border-blue-800">INV-...</span>
             </div>
 
-            <!-- Form Pesanan -->
             <div class="flex-1 overflow-y-auto p-6 space-y-4 no-scrollbar">
-                
                 <div>
                     <label class="block text-[11px] font-medium text-blue-300 mb-1"><i class="fa-solid fa-address-book text-cox-cyan"></i> Pilih Pelanggan Tersimpan (Opsional)</label>
                     <select id="pilihPelangganDropdown" onchange="pilihPelangganDariDropdown()" class="w-full bg-slate-900 border border-blue-800 rounded-xl py-2.5 px-3 text-xs text-white focus:outline-none focus:border-cox-cyan appearance-none shadow-sm">
                         <option value="" disabled selected>+ Ketik Pelanggan Baru / Pilih dari daftar...</option>
                     </select>
                 </div>
-
                 <div class="grid grid-cols-2 gap-3 pt-2">
                     <div>
                         <label class="block text-[11px] font-medium text-blue-300 mb-1">No. WhatsApp</label>
@@ -296,7 +340,6 @@
                         <input type="text" id="inputNamaPelanggan" class="w-full bg-slate-900 border border-blue-800/80 rounded-xl py-2.5 px-3 text-xs text-white focus:outline-none focus:border-cox-cyan" placeholder="Nama...">
                     </div>
                 </div>
-
                 <div>
                     <label class="block text-[11px] font-medium text-blue-300 mb-1">Pilih Kategori Layanan</label>
                     <div class="grid grid-cols-2 gap-2">
@@ -304,7 +347,6 @@
                         <button type="button" onclick="filterKategori('Satuan', this)" class="btn-kat bg-slate-900 border border-blue-800 text-blue-200 py-1.5 rounded-lg text-xs transition">Satuan</button>
                     </div>
                 </div>
-
                 <div class="bg-slate-900/60 p-3.5 rounded-2xl border border-blue-800/50 space-y-3">
                     <div>
                         <label class="block text-[11px] font-medium text-blue-300 mb-1">Jenis Layanan</label>
@@ -312,7 +354,6 @@
                             <option value="" disabled selected>Pilih layanan...</option>
                         </select>
                     </div>
-
                     <div class="grid grid-cols-2 gap-3 items-end">
                         <div>
                             <label class="block text-[11px] font-medium text-blue-300 mb-1">Jumlah (Kg / Pcs)</label>
@@ -323,7 +364,6 @@
                         </button>
                     </div>
                 </div>
-
                 <div>
                     <div class="flex justify-between items-center mb-1.5">
                         <label class="block text-[11px] font-medium text-blue-300">Daftar Item Terpilih</label>
@@ -333,8 +373,6 @@
                         <p class="text-[11px] text-blue-400 text-center py-3 italic">Belum ada item ditambahkan ke pesanan.</p>
                     </div>
                 </div>
-
-                <!-- FITUR DISKON (BARU) -->
                 <div class="pt-2 border-t border-blue-900/50">
                     <label class="block text-[11px] font-medium text-blue-300 mb-1.5"><i class="fa-solid fa-tag text-cox-cyan"></i> Potongan Harga / Diskon (Opsional)</label>
                     <div class="flex gap-2 items-center">
@@ -346,7 +384,6 @@
                         <input type="hidden" id="tipeDiskonVal" value="Rp">
                     </div>
                 </div>
-
                 <div class="grid grid-cols-2 gap-3 pt-2 border-t border-blue-900/50">
                     <div>
                         <label class="block text-[11px] font-medium text-blue-300 mb-1">Tanggal Masuk</label>
@@ -357,7 +394,6 @@
                         <input type="datetime-local" id="inputTglSelesai" class="w-full bg-slate-900 border border-blue-800 rounded-xl py-2 px-3 text-[11px] text-white focus:outline-none focus:border-cox-cyan [color-scheme:dark]">
                     </div>
                 </div>
-
                 <div>
                     <label class="block text-[11px] font-medium text-blue-300 mb-1">Metode Pembayaran</label>
                     <div class="grid grid-cols-3 gap-2">
@@ -367,10 +403,8 @@
                     </div>
                     <input type="hidden" id="inputMetodePembayaran" value="">
                 </div>
-                
             </div>
 
-            <!-- Footer Modal (Total & Submit) -->
             <div class="bg-cox-card p-4 border-t border-blue-900/60 pb-6 rounded-t-2xl shadow-[0_-10px_20px_rgba(0,0,0,0.3)]">
                 <div class="flex justify-between items-center mb-3">
                     <span class="text-xs text-blue-200">Total Tagihan Keseluruhan</span>
@@ -383,7 +417,7 @@
         </div>
     </div>
 
-    <!-- PWA Service Worker Registration -->
+    <!-- PWA Service Worker -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -409,6 +443,7 @@
 
         let masterLayanan = [];
         let masterPelanggan = [];
+        let masterPengguna = []; // Data untuk Role & Pegawai
         let keranjangItem = [];
         let kategoriAktif = 'Kiloan';
         let percobaanLogin = 0;
@@ -430,32 +465,63 @@
         masterLayanan = defaultLayanan;
         renderDropdownLayanan();
 
-        window.addEventListener('DOMContentLoaded', () => {
+        window.addEventListener('DOMContentLoaded', async () => {
             const sesiAktif = sessionStorage.getItem('cox_logged_in');
             const namaKasirSesi = sessionStorage.getItem('cox_kasir');
+            const roleKasirSesi = sessionStorage.getItem('cox_role') || 'Kasir';
             
+            // Diam-diam memuat data pengguna di latar belakang agar login lebih cepat divalidasi
+            if (API_URL) {
+                try {
+                    const res = await fetch(`${API_URL}?sheetName=Pengguna`);
+                    const json = await res.json();
+                    if (json.data) {
+                        masterPengguna = json.data;
+                        renderDaftarPegawai();
+                    }
+                } catch(e) {}
+            }
+
             if (sesiAktif === 'true' && namaKasirSesi) {
                 document.getElementById('loginScreen').classList.add('hidden');
                 const app = document.getElementById('appContainer');
                 app.classList.remove('hidden');
                 app.classList.remove('opacity-0');
+                
                 document.getElementById('namaKasir').innerText = namaKasirSesi;
+                document.getElementById('badgeRoleKasir').innerText = roleKasirSesi;
+                
                 sinkronisasiData();
             }
         });
 
+        // FUNGSI NAVIGASI MENU PENGATURAN
         function bukaFormTemplate() {
             document.getElementById('menuPengaturanList').classList.add('hidden');
+            document.getElementById('formPegawaiPengaturan').classList.add('hidden');
             const form = document.getElementById('formTemplatePengaturan');
-            form.classList.remove('hidden');
-            form.classList.add('fade-in');
+            form.classList.remove('hidden'); form.classList.add('fade-in');
         }
 
         function tutupFormTemplate() {
             document.getElementById('formTemplatePengaturan').classList.add('hidden');
             const menu = document.getElementById('menuPengaturanList');
-            menu.classList.remove('hidden');
-            menu.classList.add('fade-in');
+            menu.classList.remove('hidden'); menu.classList.add('fade-in');
+        }
+
+        function bukaFormPegawai() {
+            // Memastikan data pegawai terbaru sudah dimuat sebelum dibuka
+            renderDaftarPegawai();
+            document.getElementById('menuPengaturanList').classList.add('hidden');
+            document.getElementById('formTemplatePengaturan').classList.add('hidden');
+            const form = document.getElementById('formPegawaiPengaturan');
+            form.classList.remove('hidden'); form.classList.add('fade-in');
+        }
+
+        function tutupFormPegawai() {
+            document.getElementById('formPegawaiPengaturan').classList.add('hidden');
+            const menu = document.getElementById('menuPengaturanList');
+            menu.classList.remove('hidden'); menu.classList.add('fade-in');
         }
 
         function simpanPengaturanLokal() {
@@ -467,6 +533,94 @@
             tutupFormTemplate(); 
         }
 
+        // FUNGSI MANAJEMEN PEGAWAI (BARU)
+        function renderDaftarPegawai() {
+            const container = document.getElementById('listPegawaiContainer');
+            if (masterPengguna.length === 0) {
+                container.innerHTML = `<p class="text-[11px] text-blue-400 text-center italic py-2">Belum ada akun terdaftar di Database.</p>`;
+                return;
+            }
+
+            let html = '';
+            masterPengguna.forEach((p) => {
+                let roleColor = p.Role === 'Admin' ? 'text-rose-400 bg-rose-500/10 border-rose-500/50' : 'text-cox-cyan bg-cox-cyan/10 border-cox-cyan/50';
+                html += `
+                <div class="flex justify-between items-center bg-slate-900 border border-blue-800 p-3 rounded-xl text-xs">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full bg-blue-800/50 flex items-center justify-center text-blue-300">
+                            <i class="fa-solid fa-user"></i>
+                        </div>
+                        <div>
+                            <p class="font-bold text-white">${p.Username || 'Tanpa Nama'}</p>
+                            <p class="text-[9px] text-blue-400 mt-0.5">Pass: ${'*'.repeat(String(p.Password || '').length) || '***'}</p>
+                        </div>
+                    </div>
+                    <span class="px-2.5 py-1 border rounded-lg text-[10px] font-bold ${roleColor}">${p.Role || 'Kasir'}</span>
+                </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        async function simpanPegawaiBaru() {
+            if (!API_URL) { alert('URL Apps Script belum diisi!'); return; }
+            
+            const user = document.getElementById('inputNewUser').value.trim();
+            const pass = document.getElementById('inputNewPass').value.trim();
+            const role = document.getElementById('inputNewRole').value;
+
+            if (!user || !pass) {
+                alert("Username dan Password tidak boleh kosong!");
+                return;
+            }
+
+            // Cek apakah username sudah ada
+            let exists = masterPengguna.some(p => String(p.Username).toLowerCase() === user.toLowerCase());
+            if(exists) {
+                alert("Username tersebut sudah digunakan, pilih nama lain.");
+                return;
+            }
+
+            const btn = document.getElementById('btnSimpanPegawai');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses...';
+            btn.disabled = true;
+
+            const payload = {
+                sheetName: "Pengguna",
+                action: "insert",
+                rowData: {
+                    "Username": user,
+                    "Password": pass,
+                    "Role": role
+                }
+            };
+
+            try {
+                await fetch(API_URL, {
+                    method: 'POST', mode: 'no-cors', cache: 'no-cache',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                alert(`Akun pegawai ${user} berhasil ditambahkan!`);
+                
+                // Tambahkan langsung ke memori lokal tanpa harus refresh total
+                masterPengguna.push({"Username": user, "Password": pass, "Role": role});
+                
+                document.getElementById('inputNewUser').value = '';
+                document.getElementById('inputNewPass').value = '';
+                
+                renderDaftarPegawai();
+            } catch (err) {
+                alert("Terjadi kesalahan jaringan.");
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        // FUNGSI UTILITAS
         function formatWaktuIndo(tglStr) {
             if (!tglStr) return '-';
             try {
@@ -492,11 +646,9 @@
             const passInput = document.getElementById('password');
             const eyeIcon = document.getElementById('eyeIcon');
             if (passInput.type === 'password') {
-                passInput.type = 'text';
-                eyeIcon.className = 'fa-solid fa-eye-slash text-sm';
+                passInput.type = 'text'; eyeIcon.className = 'fa-solid fa-eye-slash text-sm';
             } else {
-                passInput.type = 'password';
-                eyeIcon.className = 'fa-solid fa-eye text-sm';
+                passInput.type = 'password'; eyeIcon.className = 'fa-solid fa-eye text-sm';
             }
         }
 
@@ -509,16 +661,14 @@
 
             if (tab !== 'pengaturan') {
                 document.getElementById('formTemplatePengaturan').classList.add('hidden');
+                document.getElementById('formPegawaiPengaturan').classList.add('hidden');
                 document.getElementById('menuPengaturanList').classList.remove('hidden');
             }
 
             views.forEach(v => document.getElementById(v).classList.add('hidden'));
             navs.forEach(n => {
                 const el = document.getElementById(n);
-                if(el) {
-                    el.classList.replace('text-cox-cyan', 'text-blue-400');
-                    el.classList.add('hover:text-cox-cyan');
-                }
+                if(el) { el.classList.replace('text-cox-cyan', 'text-blue-400'); el.classList.add('hover:text-cox-cyan'); }
             });
 
             let viewId = 'view' + tab.charAt(0).toUpperCase() + tab.slice(1);
@@ -526,10 +676,7 @@
 
             document.getElementById(viewId).classList.remove('hidden');
             let navActive = document.getElementById(navId);
-            if(navActive) {
-                navActive.classList.replace('text-blue-400', 'text-cox-cyan');
-                navActive.classList.remove('hover:text-cox-cyan');
-            }
+            if(navActive) { navActive.classList.replace('text-blue-400', 'text-cox-cyan'); navActive.classList.remove('hover:text-cox-cyan'); }
         }
 
         async function sinkronisasiData() {
@@ -538,6 +685,14 @@
             syncIcon.classList.add('fa-spin');
 
             try {
+                // Fetch Pengguna (jika sewaktu-waktu ada perubahan akun di spreadsheet)
+                const resPengguna = await fetch(`${API_URL}?sheetName=Pengguna`);
+                const jsonPengguna = await resPengguna.json();
+                if (jsonPengguna.data) {
+                    masterPengguna = jsonPengguna.data;
+                    renderDaftarPegawai(); 
+                }
+
                 const resLayanan = await fetch(`${API_URL}?sheetName=Layanan`);
                 const jsonLayanan = await resLayanan.json();
                 if (jsonLayanan.data && jsonLayanan.data.length > 0) {
@@ -554,7 +709,6 @@
 
                 const resTransaksi = await fetch(`${API_URL}?sheetName=Transaksi`);
                 const jsonTransaksi = await resTransaksi.json();
-                
                 kalkulasiDashboard(jsonTransaksi.data || []);
                 renderDaftarPesanan(jsonTransaksi.data || []);
             } catch (error) {
@@ -564,16 +718,14 @@
             }
         }
 
+        // FUNGSI TRANSAKSI & LAINNYA
         function renderDropdownPelangganMenu() {
             const select = document.getElementById('pilihPelangganDropdown');
             select.innerHTML = '<option value="" disabled selected>+ Ketik Pelanggan Baru / Pilih dari daftar...</option>';
-            
             masterPelanggan.forEach(p => {
                 if(p.Nama && p.No_HP) {
                     const opt = document.createElement('option');
-                    opt.value = p.No_HP; 
-                    opt.setAttribute('data-nama', p.Nama);
-                    opt.innerText = `${p.Nama} (${p.No_HP})`;
+                    opt.value = p.No_HP; opt.setAttribute('data-nama', p.Nama); opt.innerText = `${p.Nama} (${p.No_HP})`;
                     select.appendChild(opt);
                 }
             });
@@ -582,19 +734,14 @@
         function pilihPelangganDariDropdown() {
             const select = document.getElementById('pilihPelangganDropdown');
             if (select.selectedIndex > 0) {
-                const noHp = select.value;
-                const nama = select.options[select.selectedIndex].getAttribute('data-nama');
-                
-                document.getElementById('inputNamaPelanggan').value = nama;
-                document.getElementById('inputNoHP').value = noHp;
+                document.getElementById('inputNamaPelanggan').value = select.options[select.selectedIndex].getAttribute('data-nama');
+                document.getElementById('inputNoHP').value = select.value;
             }
         }
 
         function filterKategori(kategori, element) {
             kategoriAktif = kategori;
-            document.querySelectorAll('.btn-kat').forEach(b => {
-                b.className = "btn-kat bg-slate-900 border border-blue-800 text-blue-200 py-1.5 rounded-lg text-xs transition";
-            });
+            document.querySelectorAll('.btn-kat').forEach(b => b.className = "btn-kat bg-slate-900 border border-blue-800 text-blue-200 py-1.5 rounded-lg text-xs transition");
             element.className = "btn-kat bg-cox-cyan/20 border border-cox-cyan text-cox-cyan py-1.5 rounded-lg text-xs font-semibold transition";
             renderDropdownLayanan();
         }
@@ -605,12 +752,11 @@
             let dateObj = new Date(tglMasukVal);
             let adaSatuan = keranjangItem.some(item => String(item.kategori).trim().toLowerCase() === 'satuan');
             let adaExpress = keranjangItem.some(item => item.nama.toLowerCase().includes('express'));
-            let durasiJam = 24; 
-            if (adaSatuan) { durasiJam = 72; } else if (adaExpress) { durasiJam = 12; }
+            let durasiJam = adaSatuan ? 72 : (adaExpress ? 12 : 24);
             dateObj.setTime(dateObj.getTime() + (durasiJam * 60 * 60 * 1000));
-            const y = dateObj.getFullYear(), m = String(dateObj.getMonth() + 1).padStart(2, '0');
-            const d = String(dateObj.getDate()).padStart(2, '0'), h = String(dateObj.getHours()).padStart(2, '0');
-            const min = String(dateObj.getMinutes()).padStart(2, '0');
+            
+            const y = dateObj.getFullYear(), m = String(dateObj.getMonth() + 1).padStart(2, '0'), d = String(dateObj.getDate()).padStart(2, '0');
+            const h = String(dateObj.getHours()).padStart(2, '0'), min = String(dateObj.getMinutes()).padStart(2, '0');
             document.getElementById('inputTglSelesai').value = `${y}-${m}-${d}T${h}:${min}`;
         }
 
@@ -622,9 +768,7 @@
                 let rawHarga = item.Harga !== undefined && item.Harga !== "" ? item.Harga : "0";
                 let harga = typeof rawHarga === 'string' ? parseInt(rawHarga.replace(/\./g, '').replace(/,/g, '')) || 0 : parseInt(rawHarga) || 0;
                 const opt = document.createElement('option');
-                opt.value = item.Nama_Layanan;
-                opt.setAttribute('data-harga', harga);
-                opt.setAttribute('data-kategori', item.Kategori || 'Kiloan');
+                opt.value = item.Nama_Layanan; opt.setAttribute('data-harga', harga); opt.setAttribute('data-kategori', item.Kategori || 'Kiloan');
                 opt.innerText = `${item.Nama_Layanan} - Rp ${harga.toLocaleString('id-ID')}`;
                 select.appendChild(opt);
             });
@@ -642,17 +786,11 @@
             renderKeranjang(); hitungOtomatisTanggalSelesai(); 
         }
 
-        function hapusItemKeranjang(index) {
-            keranjangItem.splice(index, 1);
-            renderKeranjang(); hitungOtomatisTanggalSelesai();
-        }
+        function hapusItemKeranjang(index) { keranjangItem.splice(index, 1); renderKeranjang(); hitungOtomatisTanggalSelesai(); }
 
-        // FUNGSI DISKON & KALKULASI TOTAL AKHIR
         function ubahTipeDiskon(tipe, element) {
             document.getElementById('tipeDiskonVal').value = tipe;
-            document.querySelectorAll('.btn-tipe-diskon').forEach(b => {
-                b.className = "btn-tipe-diskon w-1/2 text-blue-400 text-xs py-1.5 rounded-lg hover:text-white transition";
-            });
+            document.querySelectorAll('.btn-tipe-diskon').forEach(b => b.className = "btn-tipe-diskon w-1/2 text-blue-400 text-xs py-1.5 rounded-lg hover:text-white transition");
             element.className = "btn-tipe-diskon w-1/2 bg-cox-cyan/20 text-cox-cyan text-xs py-1.5 rounded-lg font-semibold transition";
             hitungTotalAkhir();
         }
@@ -662,8 +800,7 @@
             badge.innerText = `${keranjangItem.length} Item`;
             if (keranjangItem.length === 0) {
                 container.innerHTML = `<p class="text-[11px] text-blue-400 text-center py-3 italic">Belum ada item ditambahkan ke pesanan.</p>`;
-                hitungTotalAkhir();
-                return;
+                hitungTotalAkhir(); return;
             }
             let html = '';
             keranjangItem.forEach((item, idx) => {
@@ -673,34 +810,21 @@
                     <div class="flex items-center gap-3"><span class="font-bold text-cox-cyan">Rp ${item.subtotal.toLocaleString('id-ID')}</span><button type="button" onclick="hapusItemKeranjang(${idx})" class="text-rose-400 hover:text-rose-300 p-1"><i class="fa-solid fa-trash-can"></i></button></div>
                 </div>`;
             });
-            container.innerHTML = html;
-            hitungTotalAkhir();
+            container.innerHTML = html; hitungTotalAkhir();
         }
 
         function hitungTotalAkhir() {
             let subtotal = keranjangItem.reduce((sum, item) => sum + item.subtotal, 0);
             let valDiskon = parseFloat(document.getElementById('inputDiskon').value) || 0;
             let tipe = document.getElementById('tipeDiskonVal').value;
-            let potongan = 0;
-
-            if (valDiskon > 0) {
-                if (tipe === '%') {
-                    potongan = subtotal * (valDiskon / 100);
-                } else {
-                    potongan = valDiskon;
-                }
-            }
-
-            let totalAkhir = subtotal - potongan;
-            if (totalAkhir < 0) totalAkhir = 0;
-
+            let potongan = (valDiskon > 0) ? (tipe === '%' ? subtotal * (valDiskon / 100) : valDiskon) : 0;
+            
+            let totalAkhir = Math.max(0, subtotal - potongan);
             let displayEl = document.getElementById('displayTotalHarga');
+            
             if (potongan > 0) {
                 displayEl.innerHTML = `<div class="flex flex-col items-end"><span class="text-[10px] text-rose-400 line-through mb-[-4px]">Rp ${subtotal.toLocaleString('id-ID')}</span><span class="text-xl font-bold text-cox-cyan">Rp ${totalAkhir.toLocaleString('id-ID')}</span></div>`;
-            } else {
-                displayEl.innerHTML = `Rp ${subtotal.toLocaleString('id-ID')}`;
-            }
-            
+            } else { displayEl.innerHTML = `Rp ${subtotal.toLocaleString('id-ID')}`; }
             displayEl.setAttribute('data-total', totalAkhir);
         }
 
@@ -716,169 +840,94 @@
 
         function kirimWA(encodedData) {
             const trx = JSON.parse(decodeURIComponent(encodedData));
-            let noHp = trx.No_HP || '';
-            if(noHp.startsWith('0')) noHp = '62' + noHp.substring(1);
-            
+            let noHp = trx.No_HP || ''; if(noHp.startsWith('0')) noHp = '62' + noHp.substring(1);
             let template = localStorage.getItem('template_wa') || "Halo *[NAMA]*, pesanan laundry Anda dengan No. Nota *[NOTA]* sudah selesai. Total: *[TOTAL]*. Terima kasih!";
-            let teks = template
-                .replace(/\[NAMA\]/g, trx.Nama_Pelanggan)
-                .replace(/\[NOTA\]/g, trx.No_Invoice)
-                .replace(/\[TOTAL\]/g, "Rp " + parseFloat(trx.Total_Harga || 0).toLocaleString('id-ID'));
-                
+            let teks = template.replace(/\[NAMA\]/g, trx.Nama_Pelanggan).replace(/\[NOTA\]/g, trx.No_Invoice).replace(/\[TOTAL\]/g, "Rp " + parseFloat(trx.Total_Harga || 0).toLocaleString('id-ID'));
             window.open(`https://wa.me/${noHp}?text=${encodeURIComponent(teks)}`, '_blank');
         }
 
         function cetakNota(encodedData) {
             const trx = JSON.parse(decodeURIComponent(encodedData));
-            const toko = localStorage.getItem('toko_nama') || "COX LAUNDRY";
-            const alamat = localStorage.getItem('toko_alamat') || "Jl. Contoh Alamat";
-            const penutup = localStorage.getItem('toko_pesan') || "Terima Kasih";
+            const toko = localStorage.getItem('toko_nama') || "COX LAUNDRY", alamat = localStorage.getItem('toko_alamat') || "Jl. Contoh Alamat", penutup = localStorage.getItem('toko_pesan') || "Terima Kasih";
             const layanans = (trx.Layanan || "").split(',').map(s => `<div>- ${s.trim()}</div>`).join('');
-
             const printWindow = window.open('', '_blank', 'width=350,height=600');
-            const html = `
-                <html>
-                <head>
-                    <title>Nota - ${trx.No_Invoice}</title>
-                    <style>
-                        body { font-family: monospace; font-size: 12px; color: #000; margin: 0; padding: 15px; width: 280px; }
-                        .text-center { text-align: center; }
-                        .fw-bold { font-weight: bold; }
-                        .border-bottom { border-bottom: 1px dashed #000; margin: 10px 0; }
-                        .flex-between { display: flex; justify-content: space-between; }
-                    </style>
-                </head>
-                <body>
-                    <div class="text-center fw-bold" style="font-size: 16px;">${toko}</div>
-                    <div class="text-center">${alamat}</div>
-                    <div class="border-bottom"></div>
-                    <div>Inv  : ${trx.No_Invoice}</div>
-                    <div>Nama : ${trx.Nama_Pelanggan}</div>
-                    <div>Masuk: ${formatWaktuIndo(trx.Tanggal_Masuk)}</div>
-                    <div>Selesai (Est): ${formatWaktuIndo(trx.Tanggal_Selesai)}</div>
-                    <div class="border-bottom"></div>
-                    <div class="fw-bold">Layanan:</div>
-                    ${layanans}
-                    <div class="border-bottom"></div>
-                    <div class="flex-between fw-bold" style="font-size: 14px;">
-                        <span>TOTAL:</span>
-                        <span>Rp ${parseFloat(trx.Total_Harga || 0).toLocaleString('id-ID')}</span>
-                    </div>
-                    <div>Bayar: ${trx.Metode_Pembayaran || '-'}</div>
-                    <div class="border-bottom"></div>
-                    <div class="text-center italic">${penutup}</div>
-                    <script>
-                        window.onload = function() { window.print(); window.onafterprint = function(){ window.close(); } };
-                    <\/script>
-                </body>
-                </html>
-            `;
-            printWindow.document.write(html);
-            printWindow.document.close();
+            const html = `<html><head><title>Nota - ${trx.No_Invoice}</title><style>body { font-family: monospace; font-size: 12px; color: #000; margin: 0; padding: 15px; width: 280px; } .text-center { text-align: center; } .fw-bold { font-weight: bold; } .border-bottom { border-bottom: 1px dashed #000; margin: 10px 0; } .flex-between { display: flex; justify-content: space-between; }</style></head><body><div class="text-center fw-bold" style="font-size: 16px;">${toko}</div><div class="text-center">${alamat}</div><div class="border-bottom"></div><div>Inv  : ${trx.No_Invoice}</div><div>Nama : ${trx.Nama_Pelanggan}</div><div>Masuk: ${formatWaktuIndo(trx.Tanggal_Masuk)}</div><div>Selesai (Est): ${formatWaktuIndo(trx.Tanggal_Selesai)}</div><div class="border-bottom"></div><div class="fw-bold">Layanan:</div>${layanans}<div class="border-bottom"></div><div class="flex-between fw-bold" style="font-size: 14px;"><span>TOTAL:</span><span>Rp ${parseFloat(trx.Total_Harga || 0).toLocaleString('id-ID')}</span></div><div>Bayar: ${trx.Metode_Pembayaran || '-'}</div><div class="border-bottom"></div><div class="text-center italic">${penutup}</div><script>window.onload = function() { window.print(); window.onafterprint = function(){ window.close(); } };<\/script></body></html>`;
+            printWindow.document.write(html); printWindow.document.close();
         }
 
         async function updateStatus(invoice) {
             if(!confirm(`Ubah pesanan ${invoice} menjadi SELESAI?`)) return;
             if(!API_URL) return;
-
-            const btnId = `btn-status-${invoice}`;
-            const btnEl = document.getElementById(btnId);
+            const btnEl = document.getElementById(`btn-status-${invoice}`);
             if(btnEl) btnEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-
-            const payload = {
-                sheetName: "Transaksi", 
-                action: "update", 
-                id: invoice, 
-                updateData: { "Status": "Selesai" }
-            };
-
+            const payload = { sheetName: "Transaksi", action: "update", id: invoice, updateData: { "Status": "Selesai" } };
             try {
-                await fetch(API_URL, {
-                    method: 'POST', mode: 'no-cors', cache: 'no-cache',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                alert(`Pesanan ${invoice} ditandai selesai!`);
-                sinkronisasiData();
-            } catch (error) {
-                alert('Gagal merubah status.');
-            }
+                await fetch(API_URL, { method: 'POST', mode: 'no-cors', cache: 'no-cache', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                alert(`Pesanan ${invoice} ditandai selesai!`); sinkronisasiData();
+            } catch (error) { alert('Gagal merubah status.'); }
         }
 
         function renderDaftarPesanan(dataTransaksi) {
             const container = document.getElementById('listPesananContainer');
-            if (!dataTransaksi || dataTransaksi.length === 0) {
-                container.innerHTML = `<p class="text-xs text-blue-300 text-center italic mt-5">Belum ada transaksi.</p>`;
-                return;
-            }
-
+            if (!dataTransaksi || dataTransaksi.length === 0) { container.innerHTML = `<p class="text-xs text-blue-300 text-center italic mt-5">Belum ada transaksi.</p>`; return; }
             let reversedData = [...dataTransaksi].reverse();
             let html = '';
-
             reversedData.forEach(trx => {
-                let colorClass = 'bg-slate-600 text-white';
-                let isSelesai = false;
+                let colorClass = 'bg-slate-600 text-white', isSelesai = false;
                 if(trx.Status && trx.Status.toLowerCase() === 'baru') colorClass = 'bg-cox-blue text-white';
                 if(trx.Status && trx.Status.toLowerCase() === 'proses') colorClass = 'bg-amber-500 text-white';
-                if(trx.Status && (trx.Status.toLowerCase() === 'selesai' || trx.Status.toLowerCase() === 'diambil')) {
-                    colorClass = 'bg-emerald-500 text-white';
-                    isSelesai = true;
-                }
-
+                if(trx.Status && (trx.Status.toLowerCase() === 'selesai' || trx.Status.toLowerCase() === 'diambil')) { colorClass = 'bg-emerald-500 text-white'; isSelesai = true; }
                 let trxDataString = encodeURIComponent(JSON.stringify(trx));
-
-                let btnSelesaiHtml = '';
-                if(!isSelesai) {
-                    btnSelesaiHtml = `<button id="btn-status-${trx.No_Invoice}" onclick="updateStatus('${trx.No_Invoice}')" class="bg-emerald-500/20 text-emerald-400 border border-emerald-500 hover:bg-emerald-500 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold transition flex items-center gap-1"><i class="fa-solid fa-check-double"></i> Selesai</button>`;
-                }
-
-                html += `
-                <div class="bg-cox-card p-4 rounded-2xl border border-blue-800 shadow-sm flex flex-col gap-2 relative">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <span class="text-[10px] text-blue-300 font-mono">${trx.No_Invoice || ''}</span>
-                            <h4 class="font-bold text-sm text-white">${trx.Nama_Pelanggan || ''}</h4>
-                        </div>
-                        <span class="text-[10px] ${colorClass} px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">${trx.Status || 'Baru'}</span>
-                    </div>
-                    
-                    <div class="flex justify-between items-end mt-1 pb-3 border-b border-blue-900/50">
-                        <div class="text-[11px] text-blue-200 space-y-1">
-                            <p><i class="fa-solid fa-shirt w-4 text-cox-cyan"></i> ${trx.Layanan || ''}</p>
-                            <p><i class="fa-regular fa-clock w-4 text-cox-cyan"></i> Masuk: ${formatWaktuIndo(trx.Tanggal_Masuk)}</p>
-                            <p><i class="fa-regular fa-calendar-check w-4 text-cox-cyan"></i> Est. Selesai: ${formatWaktuIndo(trx.Tanggal_Selesai)}</p>
-                        </div>
-                        <span class="font-bold text-sm text-cox-cyan">Rp ${parseFloat(trx.Total_Harga || 0).toLocaleString('id-ID')}</span>
-                    </div>
-
-                    <div class="flex justify-between items-center pt-1">
-                        <div class="flex gap-2">
-                            ${btnSelesaiHtml}
-                        </div>
-                        <div class="flex gap-2">
-                            <button onclick="kirimWA('${trxDataString}')" class="bg-slate-800 text-blue-300 border border-blue-800 hover:text-emerald-400 hover:border-emerald-500 px-3 py-1.5 rounded-lg text-[10px] font-bold transition flex items-center gap-1"><i class="fa-brands fa-whatsapp text-sm"></i> WA</button>
-                            <button onclick="cetakNota('${trxDataString}')" class="bg-slate-800 text-blue-300 border border-blue-800 hover:text-cox-cyan hover:border-cox-cyan px-3 py-1.5 rounded-lg text-[10px] font-bold transition flex items-center gap-1"><i class="fa-solid fa-print text-sm"></i> Nota</button>
-                        </div>
-                    </div>
-                </div>`;
+                let btnSelesaiHtml = !isSelesai ? `<button id="btn-status-${trx.No_Invoice}" onclick="updateStatus('${trx.No_Invoice}')" class="bg-emerald-500/20 text-emerald-400 border border-emerald-500 hover:bg-emerald-500 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold transition flex items-center gap-1"><i class="fa-solid fa-check-double"></i> Selesai</button>` : '';
+                
+                html += `<div class="bg-cox-card p-4 rounded-2xl border border-blue-800 shadow-sm flex flex-col gap-2 relative"><div class="flex justify-between items-start"><div><span class="text-[10px] text-blue-300 font-mono">${trx.No_Invoice || ''}</span><h4 class="font-bold text-sm text-white">${trx.Nama_Pelanggan || ''}</h4></div><span class="text-[10px] ${colorClass} px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">${trx.Status || 'Baru'}</span></div><div class="flex justify-between items-end mt-1 pb-3 border-b border-blue-900/50"><div class="text-[11px] text-blue-200 space-y-1"><p><i class="fa-solid fa-shirt w-4 text-cox-cyan"></i> ${trx.Layanan || ''}</p><p><i class="fa-regular fa-clock w-4 text-cox-cyan"></i> Masuk: ${formatWaktuIndo(trx.Tanggal_Masuk)}</p><p><i class="fa-regular fa-calendar-check w-4 text-cox-cyan"></i> Est. Selesai: ${formatWaktuIndo(trx.Tanggal_Selesai)}</p></div><span class="font-bold text-sm text-cox-cyan">Rp ${parseFloat(trx.Total_Harga || 0).toLocaleString('id-ID')}</span></div><div class="flex justify-between items-center pt-1"><div class="flex gap-2">${btnSelesaiHtml}</div><div class="flex gap-2"><button onclick="kirimWA('${trxDataString}')" class="bg-slate-800 text-blue-300 border border-blue-800 hover:text-emerald-400 hover:border-emerald-500 px-3 py-1.5 rounded-lg text-[10px] font-bold transition flex items-center gap-1"><i class="fa-brands fa-whatsapp text-sm"></i> WA</button><button onclick="cetakNota('${trxDataString}')" class="bg-slate-800 text-blue-300 border border-blue-800 hover:text-cox-cyan hover:border-cox-cyan px-3 py-1.5 rounded-lg text-[10px] font-bold transition flex items-center gap-1"><i class="fa-solid fa-print text-sm"></i> Nota</button></div></div></div>`;
             });
             container.innerHTML = html;
         }
 
-        function prosesLogin(e) {
+        // FUNGSI LOGIN YANG TELAH DIPERBARUI (Validasi langsung ke Spreadsheet Pengguna)
+        async function prosesLogin(e) {
             e.preventDefault();
-            const user = document.getElementById('username').value;
-            const pass = document.getElementById('password').value;
+            const user = document.getElementById('username').value.trim();
+            const pass = document.getElementById('password').value.trim();
             const btn = document.getElementById('btnLogin');
             if (btn.disabled) return;
+            
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memverifikasi...';
             btn.disabled = true;
-            setTimeout(() => {
-                if (user.trim() !== "" && pass.trim() !== "") {
+            
+            try {
+                // Memastikan data Pengguna sudah diload
+                if (masterPengguna.length === 0 && API_URL) {
+                    const res = await fetch(`${API_URL}?sheetName=Pengguna`);
+                    const json = await res.json();
+                    if (json.data) masterPengguna = json.data;
+                }
+
+                let isValid = false;
+                let userRole = 'Kasir';
+
+                if (masterPengguna.length > 0) {
+                    // Cek di masterPengguna
+                    const akun = masterPengguna.find(p => p.Username === user && String(p.Password) === pass);
+                    if (akun) {
+                        isValid = true;
+                        userRole = akun.Role || 'Kasir';
+                    }
+                } else {
+                    // Jika sheet Pengguna masih kosong, izinkan login agar Anda tidak terkunci
+                    if (user !== "" && pass !== "") isValid = true; 
+                }
+
+                if (isValid) {
                     sessionStorage.setItem('cox_logged_in', 'true');
                     sessionStorage.setItem('cox_kasir', user);
+                    sessionStorage.setItem('cox_role', userRole);
+                    
                     document.getElementById('namaKasir').innerText = user;
+                    document.getElementById('badgeRoleKasir').innerText = userRole;
                     document.getElementById('loginScreen').classList.add('opacity-0');
+                    
                     setTimeout(() => {
                         document.getElementById('loginScreen').classList.add('hidden');
                         const app = document.getElementById('appContainer');
@@ -886,8 +935,14 @@
                         setTimeout(() => app.classList.remove('opacity-0'), 50);
                         sinkronisasiData();
                     }, 500);
-                } else { handleGagalLogin(btn); }
-            }, 1000);
+                } else { 
+                    handleGagalLogin(btn); 
+                }
+            } catch (err) {
+                alert("Gangguan server, mohon coba kembali.");
+                btn.innerHTML = `<i class="fa-solid fa-right-to-bracket"></i> Masuk Sistem`; 
+                btn.disabled = false;
+            }
         }
 
         function handleGagalLogin(btn) {
@@ -911,13 +966,10 @@
 
         function resetFormPesanan() {
             document.getElementById('pilihPelangganDropdown').selectedIndex = 0; 
-            document.getElementById('inputNamaPelanggan').value = '';
-            document.getElementById('inputNoHP').value = '';
-            document.getElementById('inputJumlah').value = '';
-            document.getElementById('inputDiskon').value = ''; 
+            document.getElementById('inputNamaPelanggan').value = ''; document.getElementById('inputNoHP').value = '';
+            document.getElementById('inputJumlah').value = ''; document.getElementById('inputDiskon').value = ''; 
             document.getElementById('inputTglMasuk').value = currentDateTimeString;
             
-            // Reset tipe diskon ke Rupiah
             const btnTipes = document.querySelectorAll('.btn-tipe-diskon');
             if(btnTipes.length > 0) ubahTipeDiskon('Rp', btnTipes[0]);
 
@@ -940,7 +992,6 @@
             const tglSelesai = document.getElementById('inputTglSelesai').value, metodeBayar = document.getElementById('inputMetodePembayaran').value;
             if (!nama || !noHp || keranjangItem.length === 0 || !tglSelesai || !metodeBayar) { alert('Mohon lengkapi seluruh data!'); return; }
             
-            // Gabungkan teks layanan dengan info diskon jika ada
             let valDiskon = parseFloat(document.getElementById('inputDiskon').value) || 0;
             let tipeDiskon = document.getElementById('tipeDiskonVal').value;
             let gabunganLayanan = keranjangItem.map(item => `${item.nama} (${item.qty})`).join(', ');
@@ -950,9 +1001,7 @@
                 gabunganLayanan += ` ${teksDiskon}`;
             }
 
-            // Ambil total harga yang sudah didiskon dari atribut html data-total
             let totalHargaKeseluruhan = parseFloat(document.getElementById('displayTotalHarga').getAttribute('data-total')) || 0;
-            
             const btn = document.getElementById('btnSimpanPesanan'), originalBtnHtml = btn.innerHTML;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...'; btn.disabled = true;
 
