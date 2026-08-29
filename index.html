@@ -428,6 +428,49 @@
         const API_URL = 'https://script.google.com/macros/s/AKfycbxq3pGfjN4bLTZ9X-ZxoDdZNkI2goBWGC_3pkP6w0HdImBi5JVB0JnbvAEwm7-MIzZd/exec'; 
 
         // ==========================================
+        // HELPER: kirim data ke Google Apps Script
+        // ==========================================
+        // Sebelumnya semua POST memakai mode:'no-cors', yang membuat JS TIDAK
+        // BISA membaca respons sama sekali -> aplikasi selalu bilang "berhasil"
+        // walau di sisi server sebenarnya gagal/ditolak.
+        //
+        // Di sini kita kirim dengan Content-Type: text/plain (bukan
+        // application/json). Ini penting: browser tidak akan mengirim
+        // "preflight" OPTIONS request (yang tidak didukung Apps Script secara
+        // default) untuk Content-Type ini, JADI request tetap dianggap
+        // "permintaan sederhana" dan respons JSON dari server BISA dibaca.
+        //
+        // CATATAN UNTUK BACKEND (Apps Script / doPost): body tetap berupa
+        // JSON valid di dalam e.postData.contents, jadi cukup pakai
+        // JSON.parse(e.postData.contents) seperti biasa, lalu balas dengan
+        // ContentService JSON, misalnya:
+        //   return ContentService.createTextOutput(JSON.stringify({success:true}))
+        //          .setMimeType(ContentService.MimeType.JSON);
+        async function kirimKeApiScript(payload) {
+            const res = await fetch(API_URL, {
+                method: 'POST',
+                cache: 'no-cache',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(payload)
+            });
+            if (!res.ok) {
+                throw new Error(`Server merespons status ${res.status}`);
+            }
+            let hasil;
+            try {
+                hasil = await res.json();
+            } catch (e) {
+                // Server tidak balas JSON yang valid -> anggap gagal, jangan tebak berhasil.
+                throw new Error('Respons server tidak valid.');
+            }
+            if (hasil && (hasil.success === false || hasil.error)) {
+                throw new Error(hasil.error || 'Server menolak permintaan.');
+            }
+            return hasil;
+        }
+        // ==========================================
+
+        // ==========================================
         // KONFIGURASI HAK AKSES (FLEXIBLE RBAC)
         // ==========================================
         const ROLE_PERMISSIONS = {
@@ -502,49 +545,49 @@
         window.addEventListener('DOMContentLoaded', async () => {
             const sesiAktif = sessionStorage.getItem('cox_logged_in');
             const namaKasirSesi = sessionStorage.getItem('cox_kasir');
-            let roleKasirSesi = sessionStorage.getItem('cox_role') || 'Kasir';
-            
-            if (namaKasirSesi && namaKasirSesi.toLowerCase() === 'admin') {
-                roleKasirSesi = 'Admin';
-                sessionStorage.setItem('cox_role', 'Admin');
-            }
+            let roleKasirSesi = 'Kasir';
+            let sesiValid = false;
 
-            if (API_URL) {
+            if (sesiAktif === 'true' && namaKasirSesi && API_URL) {
+                // Jangan pernah percaya begitu saja pada role yang tersimpan di
+                // sessionStorage (bisa diubah manual lewat DevTools). Role wajib
+                // dicocokkan ulang ke data akun asli dari server setiap kali
+                // aplikasi dibuka.
                 try {
                     const res = await fetch(`${API_URL}?sheetName=Pengguna`);
                     const json = await res.json();
                     if (json.data) {
                         masterPengguna = json.data;
                         renderDaftarPegawai();
-                        
-                        if (namaKasirSesi) {
-                            if (namaKasirSesi.toLowerCase() === 'admin') {
-                                roleKasirSesi = 'Admin';
-                            } else {
-                                const akunDitemukan = masterPengguna.find(p => 
-                                    String(p.Username || p.username || '').trim().toLowerCase() === String(namaKasirSesi).trim().toLowerCase()
-                                );
-                                if (akunDitemukan) {
-                                    roleKasirSesi = String(akunDitemukan.Role || akunDitemukan.role || akunDitemukan.ROLE || 'Kasir').trim();
-                                }
-                            }
+
+                        const akunDitemukan = masterPengguna.find(p =>
+                            String(p.Username || p.username || '').trim().toLowerCase() === String(namaKasirSesi).trim().toLowerCase()
+                        );
+
+                        if (akunDitemukan) {
+                            roleKasirSesi = String(akunDitemukan.Role || akunDitemukan.role || akunDitemukan.ROLE || 'Kasir').trim();
                             sessionStorage.setItem('cox_role', roleKasirSesi);
+                            sesiValid = true;
                         }
                     }
-                } catch(e) {}
+                } catch(e) { /* offline: sesi lama ditolak, lihat di bawah */ }
             }
 
-            if (sesiAktif === 'true' && namaKasirSesi) {
+            if (sesiValid) {
                 document.getElementById('loginScreen').classList.add('hidden');
                 const app = document.getElementById('appContainer');
                 app.classList.remove('hidden');
                 app.classList.remove('opacity-0');
-                
+
                 document.getElementById('namaKasir').innerText = namaKasirSesi;
                 document.getElementById('badgeRoleKasir').innerText = roleKasirSesi;
-                
+
                 terapkanHakAksesRole(); 
                 sinkronisasiData();
+            } else if (sesiAktif === 'true') {
+                // Sesi lama ada tapi akunnya tidak bisa diverifikasi ulang
+                // (misal akun dihapus, atau sessionStorage dipalsukan) -> paksa logout.
+                sessionStorage.clear();
             }
         });
 
@@ -640,19 +683,15 @@
             };
 
             try {
-                await fetch(API_URL, {
-                    method: 'POST', mode: 'no-cors', cache: 'no-cache',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                
+                await kirimKeApiScript(payload);
+
                 alert(`Akun pegawai ${user} berhasil ditambahkan!`);
                 masterPengguna.push({"Username": user, "Password": pass, "Role": role});
                 document.getElementById('inputNewUser').value = '';
                 document.getElementById('inputNewPass').value = '';
                 renderDaftarPegawai();
             } catch (err) {
-                alert("Terjadi kesalahan jaringan.");
+                alert(`Gagal menambahkan pegawai: ${err.message}`);
             } finally {
                 btn.innerHTML = originalText; btn.disabled = false;
             }
@@ -873,9 +912,12 @@
             if(btnEl) btnEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
             const payload = { sheetName: "Transaksi", action: "update", id: invoice, updateData: { "Status": "Selesai" } };
             try {
-                await fetch(API_URL, { method: 'POST', mode: 'no-cors', cache: 'no-cache', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                await kirimKeApiScript(payload);
                 alert(`Pesanan ${invoice} ditandai selesai!`); sinkronisasiData();
-            } catch (error) { alert('Gagal merubah status.'); }
+            } catch (error) {
+                alert(`Gagal merubah status: ${error.message}`);
+                if (btnEl) btnEl.innerHTML = '<i class="fa-solid fa-check-double"></i> Selesai';
+            }
         }
 
         function renderDaftarPesanan(dataTransaksi) {
@@ -938,34 +980,43 @@
             btn.disabled = true;
             
             try {
-                if (masterPengguna.length === 0 && API_URL) {
+                if (!API_URL) {
+                    alert('URL Apps Script belum diisi! Tidak bisa memverifikasi akun.');
+                    btn.innerHTML = `<i class="fa-solid fa-right-to-bracket"></i> Masuk Sistem`;
+                    btn.disabled = false;
+                    return;
+                }
+
+                if (masterPengguna.length === 0) {
                     const res = await fetch(`${API_URL}?sheetName=Pengguna`);
                     const json = await res.json();
                     if (json.data) masterPengguna = json.data;
                 }
 
+                // PENTING: tidak ada lagi username "admin" ajaib, dan tidak ada
+                // fallback "asal tidak kosong langsung diloloskan sebagai Admin".
+                // Login HANYA valid jika username & password cocok dengan data
+                // di sheet "Pengguna". Kalau data pengguna gagal dimuat, login
+                // ditolak (fail-closed), bukan diloloskan.
                 let isValid = false;
                 let userRole = 'Kasir';
 
-                if (user.toLowerCase() === 'admin') {
-                    isValid = true;
-                    userRole = 'Admin';
-                } else if (masterPengguna.length > 0) {
-                    const akun = masterPengguna.find(p => {
-                        let u = String(p.Username || p.username || '').trim();
-                        let pw = String(p.Password || p.password || '').trim();
-                        return u.toLowerCase() === user.toLowerCase() && pw === pass;
-                    });
+                if (masterPengguna.length === 0) {
+                    alert('Gagal memuat data akun dari server. Periksa koneksi internet Anda dan coba lagi.');
+                    btn.innerHTML = `<i class="fa-solid fa-right-to-bracket"></i> Masuk Sistem`;
+                    btn.disabled = false;
+                    return;
+                }
 
-                    if (akun) {
-                        isValid = true;
-                        userRole = String(akun.Role || akun.role || akun.ROLE || 'Kasir').trim();
-                    }
-                } else {
-                    if (user !== "" && pass !== "") {
-                        isValid = true; 
-                        userRole = 'Admin'; 
-                    }
+                const akun = masterPengguna.find(p => {
+                    let u = String(p.Username || p.username || '').trim();
+                    let pw = String(p.Password || p.password || '').trim();
+                    return u.toLowerCase() === user.toLowerCase() && pw === pass;
+                });
+
+                if (akun) {
+                    isValid = true;
+                    userRole = String(akun.Role || akun.role || akun.ROLE || 'Kasir').trim();
                 }
 
                 if (isValid) {
@@ -1085,11 +1136,25 @@
             };
 
             try {
-                await fetch(API_URL, { method: 'POST', mode: 'no-cors', cache: 'no-cache', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payloadTransaksi) });
-                await fetch(API_URL, { method: 'POST', mode: 'no-cors', cache: 'no-cache', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payloadPelanggan) });
-                alert(`Transaksi ${noInv} Berhasil Disimpan & Pelanggan Tercatat!`);
+                // Simpan transaksi dulu -- ini yang paling penting.
+                await kirimKeApiScript(payloadTransaksi);
+
+                try {
+                    // Update data pelanggan. Kalau ini gagal, transaksi TETAP
+                    // sudah tersimpan -- jangan buat kasir mengira transaksinya
+                    // hilang, cukup beri tahu bagian mana yang perlu dicek manual.
+                    await kirimKeApiScript(payloadPelanggan);
+                    alert(`Transaksi ${noInv} berhasil disimpan & data pelanggan tercatat!`);
+                } catch (errPelanggan) {
+                    alert(`Transaksi ${noInv} berhasil disimpan, tapi data pelanggan gagal diperbarui (${errPelanggan.message}). Mohon cek data pelanggan secara manual.`);
+                }
+
                 tutupModalPesanan(); sinkronisasiData();
-            } catch (error) { alert('Terjadi kesalahan saat menyimpan data.'); } finally { btn.innerHTML = originalBtnHtml; btn.disabled = false; }
+            } catch (error) {
+                alert(`Gagal menyimpan transaksi ${noInv}: ${error.message}. Silakan coba lagi.`);
+            } finally {
+                btn.innerHTML = originalBtnHtml; btn.disabled = false;
+            }
         }
     </script>
 </body>
