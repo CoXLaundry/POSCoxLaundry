@@ -1,9 +1,10 @@
-const CACHE_NAME = 'cox-pos-v15'; // Naikkan versi setiap kali ada perubahan file
+const CACHE_NAME = 'cox-pos-v16'; // Naikkan versi setiap kali ada perubahan file
 
 // Aset inti (wajib ada agar app shell tetap tampil saat offline)
 const urlsToCache = [
   './',
   './index.html',
+  './script.js',
   './manifest.json',
   'https://cdn.tailwindcss.com',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
