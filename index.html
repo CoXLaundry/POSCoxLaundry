@@ -2092,13 +2092,27 @@
             bukaModalPilihTemplate(trx, daftarTemplate);
         }
 
+        // Normalisasi nomor HP ke format internasional (62xxx) untuk link
+        // wa.me. Dibuat tahan terhadap beberapa kasus nyata:
+        //  - Sudah format 62xxx -> dibiarkan.
+        //  - Format lokal 0xxx -> 0 diganti 62.
+        //  - 0 di depan SUDAH HILANG (kasus paling umum: kolom No_HP di
+        //    Spreadsheet otomatis terdeteksi sebagai tipe Angka, dan angka
+        //    tidak bisa punya 0 di depan -- "081234567890" tersimpan
+        //    sebagai 81234567890) -- tetap ditambahkan 62 di depan, karena
+        //    nomor HP Indonesia yang valid akan diawali 8 pada titik ini.
+        //  - Ada karakter format lain (spasi, strip, tanda +) -- dibuang dulu.
+        function normalisasiNoHp(nomor) {
+            let n = String(nomor || '').trim().replace(/\D/g, ''); // buang semua selain digit
+            if (!n) return '';
+            if (n.startsWith('62')) return n;
+            if (n.startsWith('0')) return '62' + n.substring(1);
+            return '62' + n; // asumsikan 0 di depan sudah hilang (lihat catatan di atas)
+        }
+
         function kirimWaDenganTemplate(trx, template) {
-            // No_HP dipaksa jadi String -- kalau kolomnya di Spreadsheet
-            // otomatis terdeteksi sebagai tipe Angka (umum terjadi karena
-            // isinya semua digit), trx.No_HP bisa berupa Number, dan
-            // .startsWith() akan error diam-diam (tombol WA jadi tidak
-            // bereaksi tanpa pesan error yang kelihatan).
-            let noHp = String(trx.No_HP || ''); if (noHp.startsWith('0')) noHp = '62' + noHp.substring(1);
+            const noHp = normalisasiNoHp(trx.No_HP);
+            if (!noHp) { alert('Nomor HP pelanggan ini kosong/tidak valid, tidak bisa kirim WA.'); return; }
             const teks = isiPlaceholder(template.isi, trx, false);
             window.open(`https://wa.me/${noHp}?text=${encodeURIComponent(teks)}`, '_blank');
         }
