@@ -749,7 +749,7 @@
                     <label class="block text-[11px] font-medium text-blue-300 mb-1">Preview (pakai data contoh)</label>
                     <div id="previewTemplateNota" class="bg-white text-black rounded-xl p-3 text-[11px] font-mono whitespace-pre-wrap leading-relaxed"></div>
                 </div>
-                <button onclick="simpanTemplateNota_UI()" class="w-full bg-cox-cyan text-cox-bg font-bold py-2.5 rounded-xl hover:bg-white transition text-sm">Simpan Template Nota</button>
+                <button id="btnSimpanTemplateNota" onclick="simpanTemplateNota_UI()" class="w-full bg-cox-cyan text-cox-bg font-bold py-2.5 rounded-xl hover:bg-white transition text-sm">Simpan Template Nota</button>
             </div>
 
         </div>
@@ -934,6 +934,7 @@
         let masterPengeluaran = [];
         let masterPresensi = [];
         let masterTemplateWa = [];
+        let masterTemplateToko = [];
         let keranjangItem = [];
         let kategoriAktif = 'Kiloan';
         let percobaanLogin = 0;
@@ -955,8 +956,7 @@
             { token: '[METODE]', label: 'Metode Bayar' },
             { token: '[POIN]', label: 'Poin' },
             { token: '[TOKO]', label: 'Nama Toko' },
-            { token: '[ALAMAT]', label: 'Alamat Toko' },
-            { token: '[PENUTUP]', label: 'Pesan Penutup' }
+            { token: '[ALAMAT]', label: 'Alamat Toko' }
         ];
 
         // Beberapa template WA siap pakai untuk situasi berbeda -- dipakai
@@ -973,8 +973,11 @@
         ];
 
         // Susunan nota bawaan -- baris diawali "^^" dirender rata tengah,
-        // dibungkus "**...**" dirender tebal. Lihat parseBarisNota().
-        const DEFAULT_NOTA_TEMPLATE = "^^**[TOKO]**\n^^[ALAMAT]\n--------------------------------\nInv  : [NOTA]\nNama : [NAMA]\nMasuk: [TGL_MASUK]\nSelesai (Est): [TGL_SELESAI]\n--------------------------------\nLayanan:\n[LAYANAN]\n--------------------------------\n**TOTAL: [TOTAL]**\nBayar: [METODE]\n--------------------------------\nPoin Anda: [POIN]\n\n^^[PENUTUP]";
+        // dibungkus "**...**" dirender tebal. Lihat parseBarisNota(). Pesan
+        // penutup langsung ditulis sebagai teks biasa di baris terakhir
+        // (bukan placeholder terpisah lagi) -- tinggal diedit langsung di
+        // sini kalau mau diganti.
+        const DEFAULT_NOTA_TEMPLATE = "^^**[TOKO]**\n^^[ALAMAT]\n--------------------------------\nInv  : [NOTA]\nNama : [NAMA]\nMasuk: [TGL_MASUK]\nSelesai (Est): [TGL_SELESAI]\n--------------------------------\nLayanan:\n[LAYANAN]\n--------------------------------\n**TOTAL: [TOTAL]**\nBayar: [METODE]\n--------------------------------\nPoin Anda: [POIN]\n\n^^Terima kasih telah mempercayakan cucian Anda";
 
         // Data contoh untuk preview live di editor template (bukan transaksi
         // sungguhan).
@@ -1367,14 +1370,15 @@
                 // waktu tunggu cuma sebesar request yang PALING LAMBAT, bukan
                 // jumlah semuanya -- ini yang paling berdampak ke kecepatan
                 // sinkronisasi awal (login/refresh).
-                const [jsonPengguna, jsonLayanan, jsonPelanggan, jsonTransaksi, jsonPengeluaran, jsonPresensi, jsonTemplateWa] = await Promise.all([
+                const [jsonPengguna, jsonLayanan, jsonPelanggan, jsonTransaksi, jsonPengeluaran, jsonPresensi, jsonTemplateWa, jsonTemplateToko] = await Promise.all([
                     apiGet('Pengguna'),
                     apiGet('Layanan'),
                     apiGet('Pelanggan'),
                     apiGet('Transaksi'),
                     apiGet('Pengeluaran'),
                     apiGet('Presensi'),
-                    apiGet('Template_WA')
+                    apiGet('Template_WA'),
+                    apiGet('Template_Toko')
                 ]);
 
                 if (jsonPengguna.data) { masterPengguna = jsonPengguna.data; renderDaftarPegawai(); }
@@ -1391,6 +1395,7 @@
                 renderDaftarPresensiSemua();
 
                 masterTemplateWa = jsonTemplateWa.data || [];
+                masterTemplateToko = jsonTemplateToko.data || [];
 
                 const viewLaporanEl = document.getElementById('viewLaporan');
                 if (viewLaporanEl && !viewLaporanEl.classList.contains('hidden')) renderLaporan();
@@ -2045,9 +2050,8 @@
                 '[LAYANAN]': layananMultiBaris ? (daftarLayananArr.map(s => `- ${s}`).join('\n') || '-') : (daftarLayananArr.join(', ') || '-'),
                 '[METODE]': trx.Metode_Pembayaran || trx.Metode || trx.Pembayaran || '-',
                 '[POIN]': String(hitungPoinPelanggan(trx.No_HP)),
-                '[TOKO]': localStorage.getItem('toko_nama') || 'COX LAUNDRY',
-                '[ALAMAT]': localStorage.getItem('toko_alamat') || 'Jl. Contoh Alamat',
-                '[PENUTUP]': localStorage.getItem('toko_pesan') || 'Terima Kasih'
+                '[TOKO]': ambilNamaToko(),
+                '[ALAMAT]': ambilAlamatToko()
             };
         }
 
@@ -2080,8 +2084,30 @@
             if (masterTemplateWa && masterTemplateWa.length > 0) return masterTemplateWa;
             return DEFAULT_WA_TEMPLATES; // tampilan awal sebelum ada yang benar-benar tersimpan
         }
+        // ==========================================
+        // PENYIMPANAN TEMPLATE NOTA & IDENTITAS TOKO (Sheet "Template_Toko"
+        // -- tersinkron ke SEMUA perangkat/kasir, sama seperti Template_WA)
+        // ==========================================
+        // Disimpan sebagai SATU baris konfigurasi (Kunci="config", Nilai=
+        // JSON berisi nama toko/alamat/susunan nota) supaya cukup SATU kali
+        // insert/update saat disimpan, bukan tiga panggilan API terpisah.
+        function ambilKonfigTokoTersimpan() {
+            if (masterTemplateToko && masterTemplateToko.length > 0) {
+                try { return JSON.parse(masterTemplateToko[0].Nilai); } catch (e) { /* data rusak/kosong -- fallback di bawah */ }
+            }
+            return null;
+        }
+        function ambilNamaToko() {
+            const cfg = ambilKonfigTokoTersimpan();
+            return (cfg && cfg.toko_nama) || 'COX LAUNDRY';
+        }
+        function ambilAlamatToko() {
+            const cfg = ambilKonfigTokoTersimpan();
+            return (cfg && cfg.toko_alamat) || 'Jl. Contoh Alamat';
+        }
         function ambilTemplateNotaTeks() {
-            return localStorage.getItem('nota_template') || DEFAULT_NOTA_TEMPLATE;
+            const cfg = ambilKonfigTokoTersimpan();
+            return (cfg && cfg.nota_template) || DEFAULT_NOTA_TEMPLATE;
         }
 
         // ==========================================
@@ -2173,8 +2199,8 @@
         function bukaModalTemplate() {
             gantiTabTemplate('wa', document.querySelector('.tab-template-btn'));
             renderListTemplateWa();
-            document.getElementById('inputNamaTokoTemplate').value = localStorage.getItem('toko_nama') || 'COX LAUNDRY';
-            document.getElementById('inputAlamatTokoTemplate').value = localStorage.getItem('toko_alamat') || 'Jl. Contoh Alamat';
+            document.getElementById('inputNamaTokoTemplate').value = ambilNamaToko();
+            document.getElementById('inputAlamatTokoTemplate').value = ambilAlamatToko();
             document.getElementById('inputTemplateNota').value = ambilTemplateNotaTeks();
             renderChipPlaceholder('chipPlaceholderWa', 'inputIsiTemplateWa');
             renderChipPlaceholder('chipPlaceholderNota', 'inputTemplateNota');
@@ -2347,16 +2373,41 @@
             perbaruiPreviewNota();
         }
 
-        function simpanTemplateNota_UI() {
+        async function simpanTemplateNota_UI() {
+            if (!API_URL) { alert('URL Apps Script belum diisi!'); return; }
             const namaToko = document.getElementById('inputNamaTokoTemplate').value.trim() || 'COX LAUNDRY';
             const alamatToko = document.getElementById('inputAlamatTokoTemplate').value.trim() || 'Jl. Contoh Alamat';
             const templateNota = document.getElementById('inputTemplateNota').value;
 
-            localStorage.setItem('toko_nama', namaToko);
-            localStorage.setItem('toko_alamat', alamatToko);
-            localStorage.setItem('nota_template', templateNota);
+            const konfigBaru = { toko_nama: namaToko, toko_alamat: alamatToko, nota_template: templateNota };
+            const nilaiJson = JSON.stringify(konfigBaru);
+            // Sudah ada baris config di Sheet? -> update. Belum? -> insert.
+            const sudahAda = masterTemplateToko && masterTemplateToko.length > 0;
 
-            alert('Template nota berhasil disimpan!');
+            const btn = document.getElementById('btnSimpanTemplateNota');
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...'; btn.disabled = true;
+
+            try {
+                if (sudahAda) {
+                    await kirimKeApiScript({
+                        sheetName: "Template_Toko", action: "update", idField: "Kunci", id: "config",
+                        updateData: { "Nilai": nilaiJson }
+                    });
+                    masterTemplateToko[0].Nilai = nilaiJson;
+                } else {
+                    await kirimKeApiScript({
+                        sheetName: "Template_Toko", action: "insert",
+                        rowData: { "Kunci": "config", "Nilai": nilaiJson }
+                    });
+                    masterTemplateToko = [{ Kunci: "config", Nilai: nilaiJson }];
+                }
+                alert('Template nota berhasil disimpan!');
+            } catch (err) {
+                alert(`Gagal menyimpan template nota: ${err.message}`);
+            } finally {
+                btn.innerHTML = originalHtml; btn.disabled = false;
+            }
         }
 
         // ==========================================
