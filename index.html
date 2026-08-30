@@ -717,7 +717,7 @@
                 </div>
                 <input type="hidden" id="editTemplateWaId" value="">
                 <div class="flex gap-2 pt-2">
-                    <button onclick="simpanTemplateWa()" class="flex-1 bg-cox-cyan text-cox-bg font-bold py-2.5 rounded-xl hover:bg-white transition text-sm">Simpan</button>
+                    <button id="btnSimpanTemplateWa" onclick="simpanTemplateWa()" class="flex-1 bg-cox-cyan text-cox-bg font-bold py-2.5 rounded-xl hover:bg-white transition text-sm">Simpan</button>
                     <button id="btnHapusTemplateWa" onclick="hapusTemplateWaAktif()" class="hidden bg-rose-500/20 border border-rose-500 text-rose-400 font-bold py-2.5 px-4 rounded-xl hover:bg-rose-500 hover:text-white transition text-sm">Hapus</button>
                 </div>
             </div>
@@ -933,6 +933,7 @@
         let masterTransaksi = [];
         let masterPengeluaran = [];
         let masterPresensi = [];
+        let masterTemplateWa = [];
         let keranjangItem = [];
         let kategoriAktif = 'Kiloan';
         let percobaanLogin = 0;
@@ -959,13 +960,16 @@
         ];
 
         // Beberapa template WA siap pakai untuk situasi berbeda -- dipakai
-        // sebagai isi awal kalau pengguna belum pernah menyimpan template
-        // sendiri (lihat ambilDaftarTemplateWa()).
+        // sebagai TAMPILAN AWAL saja sebelum ada satu pun template yang
+        // benar-benar tersimpan ke Sheet "Template_WA" (lihat
+        // ambilDaftarTemplateWa()). Nama field sengaja disamakan dengan
+        // nama kolom Sheet (ID_Template/Nama/Isi) supaya konsisten dengan
+        // data yang datang dari server.
         const DEFAULT_WA_TEMPLATES = [
-            { id: 'default_diterima', nama: 'Pesanan Diterima', isi: 'Halo *[NAMA]*, pesanan laundry Anda (No. Nota *[NOTA]*) sudah kami terima.\nLayanan: [LAYANAN]\nEstimasi selesai: [TGL_SELESAI]\nTotal: *[TOTAL]*\nTerima kasih!' },
-            { id: 'default_selesai', nama: 'Notifikasi Selesai', isi: 'Halo *[NAMA]*, pesanan laundry Anda dengan No. Nota *[NOTA]* sudah selesai dan siap diambil. Total tagihan: *[TOTAL]*. Terima kasih!' },
-            { id: 'default_reminder', nama: 'Reminder Belum Diambil', isi: 'Halo *[NAMA]*, mengingatkan pesanan laundry Anda (No. Nota *[NOTA]*) sudah selesai sejak [TGL_SELESAI] dan belum diambil ya. Ditunggu kedatangannya, terima kasih!' },
-            { id: 'default_terimakasih', nama: 'Ucapan Terima Kasih', isi: 'Terima kasih *[NAMA]* sudah menggunakan layanan kami! Poin Anda sekarang: *[POIN]*. Sampai jumpa lagi 🙏' }
+            { ID_Template: 'default_diterima', Nama: 'Pesanan Diterima', Isi: 'Halo *[NAMA]*, pesanan laundry Anda (No. Nota *[NOTA]*) sudah kami terima.\nLayanan: [LAYANAN]\nEstimasi selesai: [TGL_SELESAI]\nTotal: *[TOTAL]*\nTerima kasih!' },
+            { ID_Template: 'default_selesai', Nama: 'Notifikasi Selesai', Isi: 'Halo *[NAMA]*, pesanan laundry Anda dengan No. Nota *[NOTA]* sudah selesai dan siap diambil. Total tagihan: *[TOTAL]*. Terima kasih!' },
+            { ID_Template: 'default_reminder', Nama: 'Reminder Belum Diambil', Isi: 'Halo *[NAMA]*, mengingatkan pesanan laundry Anda (No. Nota *[NOTA]*) sudah selesai sejak [TGL_SELESAI] dan belum diambil ya. Ditunggu kedatangannya, terima kasih!' },
+            { ID_Template: 'default_terimakasih', Nama: 'Ucapan Terima Kasih', Isi: 'Terima kasih *[NAMA]* sudah menggunakan layanan kami! Poin Anda sekarang: *[POIN]*. Sampai jumpa lagi 🙏' }
         ];
 
         // Susunan nota bawaan -- baris diawali "^^" dirender rata tengah,
@@ -1363,13 +1367,14 @@
                 // waktu tunggu cuma sebesar request yang PALING LAMBAT, bukan
                 // jumlah semuanya -- ini yang paling berdampak ke kecepatan
                 // sinkronisasi awal (login/refresh).
-                const [jsonPengguna, jsonLayanan, jsonPelanggan, jsonTransaksi, jsonPengeluaran, jsonPresensi] = await Promise.all([
+                const [jsonPengguna, jsonLayanan, jsonPelanggan, jsonTransaksi, jsonPengeluaran, jsonPresensi, jsonTemplateWa] = await Promise.all([
                     apiGet('Pengguna'),
                     apiGet('Layanan'),
                     apiGet('Pelanggan'),
                     apiGet('Transaksi'),
                     apiGet('Pengeluaran'),
-                    apiGet('Presensi')
+                    apiGet('Presensi'),
+                    apiGet('Template_WA')
                 ]);
 
                 if (jsonPengguna.data) { masterPengguna = jsonPengguna.data; renderDaftarPegawai(); }
@@ -1384,6 +1389,8 @@
                 masterPresensi = jsonPresensi.data || [];
                 renderStatusPresensiHariIni();
                 renderDaftarPresensiSemua();
+
+                masterTemplateWa = jsonTemplateWa.data || [];
 
                 const viewLaporanEl = document.getElementById('viewLaporan');
                 if (viewLaporanEl && !viewLaporanEl.classList.contains('hidden')) renderLaporan();
@@ -2061,20 +2068,17 @@
         }
 
         // ==========================================
-        // PENYIMPANAN TEMPLATE (localStorage)
+        // PENYIMPANAN TEMPLATE WA (Sheet "Template_WA" -- tersinkron ke
+        // SEMUA perangkat/kasir, BUKAN localStorage lagi)
         // ==========================================
+        // Sebelumnya template WA disimpan di localStorage, yang artinya
+        // per perangkat/browser -- kalau dibuat di satu HP tapi dites di
+        // HP lain, template barunya memang belum pernah "sampai" ke sana.
+        // Sekarang disimpan di Sheet lewat masterTemplateWa (diisi saat
+        // sinkronisasiData()), jadi otomatis sama di semua perangkat.
         function ambilDaftarTemplateWa() {
-            try {
-                const raw = localStorage.getItem('wa_templates');
-                if (raw) {
-                    const parsed = JSON.parse(raw);
-                    if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-                }
-            } catch (e) { /* fallback ke default di bawah */ }
-            return JSON.parse(JSON.stringify(DEFAULT_WA_TEMPLATES));
-        }
-        function simpanDaftarTemplateWaKeStorage(list) {
-            localStorage.setItem('wa_templates', JSON.stringify(list));
+            if (masterTemplateWa && masterTemplateWa.length > 0) return masterTemplateWa;
+            return DEFAULT_WA_TEMPLATES; // tampilan awal sebelum ada yang benar-benar tersimpan
         }
         function ambilTemplateNotaTeks() {
             return localStorage.getItem('nota_template') || DEFAULT_NOTA_TEMPLATE;
@@ -2113,7 +2117,7 @@
         function kirimWaDenganTemplate(trx, template) {
             const noHp = normalisasiNoHp(trx.No_HP);
             if (!noHp) { alert('Nomor HP pelanggan ini kosong/tidak valid, tidak bisa kirim WA.'); return; }
-            const teks = isiPlaceholder(template.isi, trx, false);
+            const teks = isiPlaceholder(template.Isi, trx, false);
             window.open(`https://wa.me/${noHp}?text=${encodeURIComponent(teks)}`, '_blank');
         }
 
@@ -2121,8 +2125,8 @@
             const container = document.getElementById('listPilihTemplateWa');
             container.innerHTML = daftarTemplate.map((t, idx) => `
                 <button onclick="pilihTemplateUntukKirim(${idx})" class="w-full text-left bg-cox-card border border-blue-800 hover:border-cox-cyan p-3 rounded-xl transition">
-                    <p class="text-sm font-bold text-white">${escapeHtml(t.nama)}</p>
-                    <p class="text-[10px] text-blue-300 mt-1 line-clamp-2">${escapeHtml(t.isi.slice(0, 90))}${t.isi.length > 90 ? '...' : ''}</p>
+                    <p class="text-sm font-bold text-white">${escapeHtml(t.Nama)}</p>
+                    <p class="text-[10px] text-blue-300 mt-1 line-clamp-2">${escapeHtml(t.Isi.slice(0, 90))}${t.Isi.length > 90 ? '...' : ''}</p>
                 </button>`).join('');
             _trxUntukKirimWa = trx;
             _daftarTemplateUntukKirimWa = daftarTemplate;
@@ -2221,8 +2225,8 @@
             container.innerHTML = list.map((t, idx) => `
                 <button onclick="mulaiEditTemplateWa(${idx})" class="w-full text-left bg-cox-card border border-blue-800 hover:border-cox-cyan p-3 rounded-xl transition flex justify-between items-center">
                     <div class="flex-1 pr-2">
-                        <p class="text-sm font-bold text-white">${escapeHtml(t.nama)}</p>
-                        <p class="text-[10px] text-blue-300 mt-0.5 line-clamp-1">${escapeHtml(t.isi.slice(0, 60))}${t.isi.length > 60 ? '...' : ''}</p>
+                        <p class="text-sm font-bold text-white">${escapeHtml(t.Nama)}</p>
+                        <p class="text-[10px] text-blue-300 mt-0.5 line-clamp-1">${escapeHtml(t.Isi.slice(0, 60))}${t.Isi.length > 60 ? '...' : ''}</p>
                     </div>
                     <i class="fa-solid fa-chevron-right text-blue-400"></i>
                 </button>`).join('');
@@ -2242,10 +2246,14 @@
             const list = ambilDaftarTemplateWa();
             const t = list[idx];
             if (!t) return;
-            document.getElementById('editTemplateWaId').value = t.id;
-            document.getElementById('inputNamaTemplateWa').value = t.nama;
-            document.getElementById('inputIsiTemplateWa').value = t.isi;
-            document.getElementById('btnHapusTemplateWa').classList.remove('hidden');
+            document.getElementById('editTemplateWaId').value = t.ID_Template;
+            document.getElementById('inputNamaTemplateWa').value = t.Nama;
+            document.getElementById('inputIsiTemplateWa').value = t.Isi;
+            // Tombol Hapus cuma muncul untuk template yang BENAR-BENAR
+            // sudah tersimpan di Sheet -- template bawaan yang belum pernah
+            // disimpan tidak punya apa-apa untuk dihapus di server.
+            const tersimpanDiSheet = masterTemplateWa.some(m => m.ID_Template === t.ID_Template);
+            document.getElementById('btnHapusTemplateWa').classList.toggle('hidden', !tersimpanDiSheet);
             perbaruiPreviewWa();
             document.getElementById('tabWaList').classList.add('hidden');
             document.getElementById('tabWaEditor').classList.remove('hidden');
@@ -2257,33 +2265,64 @@
             renderListTemplateWa();
         }
 
-        function simpanTemplateWa() {
+        async function simpanTemplateWa() {
+            if (!API_URL) { alert('URL Apps Script belum diisi!'); return; }
             const nama = document.getElementById('inputNamaTemplateWa').value.trim();
             const isi = document.getElementById('inputIsiTemplateWa').value.trim();
             const idLama = document.getElementById('editTemplateWaId').value;
             if (!nama || !isi) { alert('Nama dan isi template wajib diisi!'); return; }
 
-            let list = ambilDaftarTemplateWa();
-            if (idLama) {
-                const idx = list.findIndex(t => t.id === idLama);
-                if (idx > -1) list[idx] = { id: idLama, nama, isi };
-            } else {
-                list.push({ id: 'tpl' + Date.now(), nama, isi });
+            // Template ini "nyata" (tersimpan di Sheet) kalau ID-nya memang
+            // ada di masterTemplateWa. Kalau tidak (mis. sedang "mengedit"
+            // salah satu template bawaan yang belum pernah disimpan),
+            // perlakukan sebagai simpan baru, bukan update.
+            const templateNyata = masterTemplateWa.find(t => t.ID_Template === idLama);
+            const isEdit = !!templateNyata;
+
+            const btnSimpan = document.getElementById('btnSimpanTemplateWa');
+            const originalHtml = btnSimpan.innerHTML;
+            btnSimpan.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...'; btnSimpan.disabled = true;
+
+            try {
+                if (isEdit) {
+                    await kirimKeApiScript({
+                        sheetName: "Template_WA", action: "update", idField: "ID_Template", id: idLama,
+                        updateData: { "Nama": nama, "Isi": isi }
+                    });
+                    templateNyata.Nama = nama; templateNyata.Isi = isi;
+                } else {
+                    const idBaru = 'tpl' + Date.now();
+                    await kirimKeApiScript({
+                        sheetName: "Template_WA", action: "insert",
+                        rowData: { "ID_Template": idBaru, "Nama": nama, "Isi": isi }
+                    });
+                    masterTemplateWa.push({ ID_Template: idBaru, Nama: nama, Isi: isi });
+                }
+                alert(`Template "${nama}" berhasil disimpan!`);
+                kembaliKeListTemplateWa();
+            } catch (err) {
+                alert(`Gagal menyimpan template: ${err.message}`);
+            } finally {
+                btnSimpan.innerHTML = originalHtml; btnSimpan.disabled = false;
             }
-            simpanDaftarTemplateWaKeStorage(list);
-            alert(`Template "${nama}" berhasil disimpan!`);
-            kembaliKeListTemplateWa();
         }
 
-        function hapusTemplateWaAktif() {
+        async function hapusTemplateWaAktif() {
             const idLama = document.getElementById('editTemplateWaId').value;
             if (!idLama) return;
-            let list = ambilDaftarTemplateWa();
-            if (list.length <= 1) { alert('Minimal harus ada 1 template WhatsApp.'); return; }
+            const templateNyata = masterTemplateWa.find(t => t.ID_Template === idLama);
+            if (!templateNyata) { kembaliKeListTemplateWa(); return; } // template bawaan yang belum pernah disimpan, tidak ada yang perlu dihapus di server
+
+            if (masterTemplateWa.length <= 1) { alert('Minimal harus ada 1 template WhatsApp.'); return; }
             if (!confirm('Hapus template ini?')) return;
-            list = list.filter(t => t.id !== idLama);
-            simpanDaftarTemplateWaKeStorage(list);
-            kembaliKeListTemplateWa();
+
+            try {
+                await kirimKeApiScript({ sheetName: "Template_WA", action: "delete", idField: "ID_Template", id: idLama });
+                masterTemplateWa = masterTemplateWa.filter(t => t.ID_Template !== idLama);
+                kembaliKeListTemplateWa();
+            } catch (err) {
+                alert(`Gagal menghapus template: ${err.message}`);
+            }
         }
 
         function perbaruiPreviewWa() {
