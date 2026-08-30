@@ -766,6 +766,23 @@
         </div>
         <div id="listPilihTemplateWa" class="flex-1 overflow-y-auto no-scrollbar p-4 space-y-2"></div>
     </div>
+
+    <!-- MODAL PROMPT KIRIM WA (setelah pesanan ditandai selesai) -->
+    <div id="modalPromptWaOverlay" class="absolute inset-0 bg-black/60 z-40 hidden backdrop-blur-sm transition-opacity opacity-0" onclick="tutupPromptKirimWa()"></div>
+    <div id="modalPromptWaContent" class="absolute bottom-0 left-0 right-0 bg-cox-bg rounded-t-3xl z-50 slide-up flex flex-col border-t border-blue-800">
+        <div class="w-full flex justify-center py-3" onclick="tutupPromptKirimWa()">
+            <div class="w-12 h-1.5 bg-blue-800 rounded-full"></div>
+        </div>
+        <div class="px-6 pb-6 text-center space-y-4">
+            <div class="w-14 h-14 rounded-full bg-emerald-500/15 text-emerald-400 flex items-center justify-center text-2xl mx-auto"><i class="fa-solid fa-circle-check"></i></div>
+            <p class="text-sm text-white font-semibold">Pesanan ditandai selesai!</p>
+            <p id="teksPromptWa" class="text-xs text-blue-300"></p>
+            <div class="flex gap-2">
+                <button onclick="tutupPromptKirimWa()" class="flex-1 bg-cox-card border border-blue-800 text-blue-300 font-semibold py-2.5 rounded-xl hover:text-white transition text-sm">Nanti Saja</button>
+                <button onclick="konfirmasiKirimWaDariPrompt()" class="flex-1 bg-emerald-500 text-white font-bold py-2.5 rounded-xl hover:bg-emerald-400 transition text-sm flex justify-center items-center gap-2"><i class="fa-brands fa-whatsapp"></i> Kirim WA</button>
+            </div>
+        </div>
+    </div>
     </div>
 
     <script>
@@ -2076,7 +2093,12 @@
         }
 
         function kirimWaDenganTemplate(trx, template) {
-            let noHp = trx.No_HP || ''; if (noHp.startsWith('0')) noHp = '62' + noHp.substring(1);
+            // No_HP dipaksa jadi String -- kalau kolomnya di Spreadsheet
+            // otomatis terdeteksi sebagai tipe Angka (umum terjadi karena
+            // isinya semua digit), trx.No_HP bisa berupa Number, dan
+            // .startsWith() akan error diam-diam (tombol WA jadi tidak
+            // bereaksi tanpa pesan error yang kelihatan).
+            let noHp = String(trx.No_HP || ''); if (noHp.startsWith('0')) noHp = '62' + noHp.substring(1);
             const teks = isiPlaceholder(template.isi, trx, false);
             window.open(`https://wa.me/${noHp}?text=${encodeURIComponent(teks)}`, '_blank');
         }
@@ -2102,6 +2124,29 @@
         function pilihTemplateUntukKirim(idx) {
             tutupModalPilihTemplate();
             kirimWaDenganTemplate(_trxUntukKirimWa, _daftarTemplateUntukKirimWa[idx]);
+        }
+
+        // --- Prompt kirim WA setelah pesanan ditandai selesai ---
+        // Dipisah dari confirm() supaya window.open() (dipanggil lewat
+        // kirimWA -> kirimWaDenganTemplate) selalu terjadi tepat saat
+        // tombol di modal ini di-tap, bukan setelah proses async lain --
+        // lihat catatan di updateStatus().
+        let _invoiceUntukPromptWa = null;
+
+        function tampilkanPromptKirimWa(invoice) {
+            _invoiceUntukPromptWa = invoice;
+            document.getElementById('teksPromptWa').innerText = `Kirim notifikasi WhatsApp untuk pesanan ${invoice} sekarang?`;
+            const overlay = document.getElementById('modalPromptWaOverlay'), content = document.getElementById('modalPromptWaContent');
+            overlay.classList.remove('hidden'); setTimeout(() => { overlay.classList.remove('opacity-0'); content.classList.add('active'); }, 10);
+        }
+        function tutupPromptKirimWa() {
+            const overlay = document.getElementById('modalPromptWaOverlay'), content = document.getElementById('modalPromptWaContent');
+            content.classList.remove('active'); overlay.classList.add('opacity-0');
+            setTimeout(() => overlay.classList.add('hidden'), 300);
+        }
+        function konfirmasiKirimWaDariPrompt() {
+            tutupPromptKirimWa();
+            if (_invoiceUntukPromptWa) kirimWA(_invoiceUntukPromptWa);
         }
 
         // ==========================================
@@ -2548,11 +2593,17 @@
                 if (trxLokal) trxLokal.Status = 'Selesai';
                 kalkulasiDashboard(masterTransaksi);
                 renderDaftarPesanan(masterTransaksi);
-                // Tawarkan kirim notifikasi WA langsung, supaya kasir tidak
-                // perlu klik tombol WA terpisah setiap kali menandai selesai.
-                if (confirm(`Pesanan ${invoice} ditandai selesai! Kirim notifikasi WhatsApp ke pelanggan sekarang?`)) {
-                    kirimWA(invoice);
-                }
+                // PENTING (khusus mobile): window.open() untuk WA HARUS
+                // dipicu LANGSUNG dari tap pengguna yang sinkron -- banyak
+                // browser mobile (terutama Safari iOS, juga makin ketat di
+                // Chrome Android) memblokir popup kalau ada jeda proses
+                // async (seperti panggilan API di atas) sebelum
+                // window.open() dipanggil, meskipun jedanya cuma lewat
+                // dialog confirm(). Makanya di sini TIDAK langsung
+                // confirm()+kirimWA seperti sebelumnya, tapi memunculkan
+                // modal dengan tombol nyata -- begitu tombol itu di-tap,
+                // window.open() terjadi tanpa jeda async apa pun lagi.
+                tampilkanPromptKirimWa(invoice);
             } catch (error) {
                 alert(`Gagal merubah status: ${error.message}`);
                 if (btnEl) btnEl.innerHTML = '<i class="fa-solid fa-check-double"></i> Selesai';
