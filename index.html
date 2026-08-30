@@ -176,6 +176,12 @@
                         </div>
                         <span class="text-[11px] text-center text-cox-text group-hover:text-white font-medium">Laporan</span>
                     </div>
+                    <div data-feature="template_nota" onclick="bukaModalTemplate()" class="flex flex-col items-center gap-2.5 cursor-pointer group">
+                        <div class="w-[52px] h-[52px] rounded-full border border-cox-cyan text-cox-cyan flex items-center justify-center text-xl bg-cox-cyan/5 group-hover:bg-cox-cyan group-hover:text-cox-bg transition-all duration-300 shadow-neon">
+                            <i class="fa-solid fa-file-lines"></i>
+                        </div>
+                        <span class="text-[11px] text-center text-cox-text group-hover:text-white font-medium">Template</span>
+                    </div>
                 </div>
             </div>
 
@@ -255,14 +261,14 @@
                 
                 <div id="menuPengaturanList" class="space-y-3">
                     
-                    <button data-feature="template_nota" onclick="bukaFormTemplate()" class="w-full bg-cox-card border border-blue-800 hover:border-cox-cyan p-4 rounded-2xl flex items-center justify-between group transition">
+                    <button data-feature="template_nota" onclick="bukaFormPrinter()" class="w-full bg-cox-card border border-blue-800 hover:border-cox-cyan p-4 rounded-2xl flex items-center justify-between group transition">
                         <div class="flex items-center gap-4">
                             <div class="w-11 h-11 rounded-full bg-cox-cyan/10 text-cox-cyan flex items-center justify-center text-xl group-hover:bg-cox-cyan group-hover:text-cox-bg transition shadow-neon">
                                 <i class="fa-solid fa-print"></i>
                             </div>
                             <div class="text-left">
-                                <h4 class="text-sm font-bold text-white group-hover:text-cox-cyan transition">Template Nota & WA</h4>
-                                <p class="text-[10px] text-blue-300 mt-0.5">Sesuaikan teks nota dan pesan WhatsApp</p>
+                                <h4 class="text-sm font-bold text-white group-hover:text-cox-cyan transition">Printer & Cetak</h4>
+                                <p class="text-[10px] text-blue-300 mt-0.5">Sambungkan printer Bluetooth / cetak via PDF</p>
                             </div>
                         </div>
                         <i class="fa-solid fa-chevron-right text-blue-400 group-hover:text-cox-cyan transition"></i>
@@ -307,39 +313,18 @@
                     </button>
                 </div>
 
-                <div id="formTemplatePengaturan" class="hidden bg-cox-card p-5 rounded-2xl border border-blue-800 shadow-lg space-y-4 relative">
+                <div id="formPrinterPengaturan" class="hidden bg-cox-card p-5 rounded-2xl border border-blue-800 shadow-lg space-y-4 relative">
                     <div class="flex items-center gap-3 mb-2">
-                        <button onclick="tutupFormTemplate()" class="w-8 h-8 rounded-full bg-blue-900/50 flex items-center justify-center text-blue-300 hover:text-white hover:bg-rose-500 transition">
+                        <button onclick="tutupFormPrinter()" class="w-8 h-8 rounded-full bg-blue-900/50 flex items-center justify-center text-blue-300 hover:text-white hover:bg-rose-500 transition">
                             <i class="fa-solid fa-arrow-left"></i>
                         </button>
                         <div>
-                            <h3 class="text-sm font-bold text-white">Template & Pengaturan</h3>
+                            <h3 class="text-sm font-bold text-white">Printer & Cetak</h3>
                         </div>
                     </div>
-                    
-                    <div class="space-y-3 pt-3 border-t border-blue-900">
-                        <div>
-                            <label class="block text-[11px] font-medium text-blue-300 mb-1">Nama Toko (Untuk Nota)</label>
-                            <input type="text" id="setToko" class="w-full bg-slate-900 border border-blue-800 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:border-cox-cyan" value="COX LAUNDRY">
-                        </div>
-                        <div>
-                            <label class="block text-[11px] font-medium text-blue-300 mb-1">Alamat (Untuk Nota)</label>
-                            <input type="text" id="setAlamat" class="w-full bg-slate-900 border border-blue-800 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:border-cox-cyan" value="Jl. Contoh Alamat No. 123">
-                        </div>
-                        <div>
-                            <label class="block text-[11px] font-medium text-blue-300 mb-1">Pesan Penutup (Untuk Nota)</label>
-                            <input type="text" id="setPenutup" class="w-full bg-slate-900 border border-blue-800 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:border-cox-cyan" value="Terima Kasih Telah Mempercayakan Cucian Anda">
-                        </div>
-                        <div>
-                            <label class="block text-[11px] font-medium text-blue-300 mb-1">Template WhatsApp</label>
-                            <p class="text-[9px] text-blue-400 mb-1">Gunakan kode: [NAMA], [NOTA], [TOTAL]</p>
-                            <textarea id="setWA" rows="5" class="w-full bg-slate-900 border border-blue-800 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:border-cox-cyan">Halo *[NAMA]*, pesanan laundry Anda dengan No. Nota *[NOTA]* sudah selesai dan siap diambil. Total tagihan: *[TOTAL]*. Terima kasih!</textarea>
-                        </div>
-                        <button type="button" onclick="simpanPengaturanLokal()" class="w-full bg-cox-cyan text-cox-bg font-bold py-2.5 rounded-xl hover:bg-white transition flex justify-center items-center gap-2 shadow-neon text-sm mt-2">
-                            <i class="fa-solid fa-floppy-disk"></i> Simpan Pengaturan
-                        </button>
 
-                        <div class="pt-4 mt-2 border-t border-blue-900 border-dashed space-y-2">
+                    <div class="space-y-3 pt-3 border-t border-blue-900">
+                        <div class="space-y-2">
                             <h4 class="text-xs font-bold text-emerald-400 mb-1"><i class="fa-solid fa-file-pdf"></i> Cetak via Aplikasi Pihak Ketiga (Direkomendasikan)</h4>
                             <p class="text-[9px] text-blue-400 leading-relaxed">
                                 Kebanyakan printer thermal Bluetooth murah (termasuk kelas Kassen MT-200) pakai Bluetooth Classic (SPP) yang TIDAK BISA disambungkan langsung dari browser -- ini batas teknis browser, sudah terkonfirmasi lewat pengujian. Solusi yang terbukti jalan: tekan tombol <i class="fa-solid fa-file-pdf"></i> PDF di daftar pesanan, nanti PDF nota (ukuran pas 58mm) otomatis dibagikan lewat menu Bagikan Android -- pilih aplikasi seperti <b>Thermer</b> untuk langsung mencetak.
@@ -686,6 +671,101 @@
             <div id="isiDetailPelanggan"></div>
         </div>
     </div>
+
+    <!-- MODAL TEMPLATE NOTA & WHATSAPP -->
+    <div id="modalTemplateOverlay" class="absolute inset-0 bg-black/60 z-40 hidden backdrop-blur-sm transition-opacity opacity-0" onclick="tutupModalTemplate()"></div>
+    <div id="modalTemplateContent" class="absolute bottom-0 left-0 right-0 bg-cox-bg rounded-t-3xl z-50 slide-up h-[92%] flex flex-col border-t border-blue-800">
+        <div class="w-full flex justify-center py-3" onclick="tutupModalTemplate()">
+            <div class="w-12 h-1.5 bg-blue-800 rounded-full"></div>
+        </div>
+        <div class="px-6 pb-2 flex justify-between items-center">
+            <h3 class="text-lg font-bold text-white">Template Nota & WhatsApp</h3>
+            <i class="fa-solid fa-file-lines text-cox-cyan"></i>
+        </div>
+
+        <div class="flex bg-cox-card border-y border-blue-900 px-6 pt-3 gap-2">
+            <button onclick="gantiTabTemplate('wa', this)" class="tab-template-btn flex-1 py-2 rounded-t-lg text-xs font-semibold bg-cox-cyan/20 text-cox-cyan transition">WhatsApp</button>
+            <button onclick="gantiTabTemplate('nota', this)" class="tab-template-btn flex-1 py-2 rounded-t-lg text-xs font-semibold text-blue-300 transition">Nota</button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto no-scrollbar">
+
+            <!-- TAB WA: DAFTAR TEMPLATE -->
+            <div id="tabWaList" class="p-6 space-y-3">
+                <p class="text-[10px] text-blue-400 leading-relaxed">Buat beberapa template pesan untuk situasi berbeda -- misalnya notifikasi selesai, reminder belum diambil, atau ucapan terima kasih. Saat kirim WA, Anda tinggal pilih mana yang mau dipakai.</p>
+                <div id="listTemplateWa" class="space-y-2"></div>
+                <button onclick="mulaiTambahTemplateWa()" class="w-full bg-cox-card border border-dashed border-blue-700 text-blue-300 font-semibold py-3 rounded-xl hover:text-cox-cyan hover:border-cox-cyan transition text-xs flex justify-center items-center gap-2">
+                    <i class="fa-solid fa-plus"></i> Tambah Template Baru
+                </button>
+            </div>
+
+            <!-- TAB WA: EDITOR SATU TEMPLATE -->
+            <div id="tabWaEditor" class="hidden p-6 space-y-4">
+                <button onclick="kembaliKeListTemplateWa()" class="text-blue-300 hover:text-white text-xs flex items-center gap-1.5"><i class="fa-solid fa-arrow-left"></i> Kembali ke daftar template</button>
+                <div>
+                    <label class="block text-[11px] font-medium text-blue-300 mb-1">Nama Template</label>
+                    <input type="text" id="inputNamaTemplateWa" placeholder="Cth: Reminder Belum Diambil" class="w-full bg-slate-900 border border-blue-800 rounded-xl py-2.5 px-3 text-xs text-white focus:outline-none focus:border-cox-cyan">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-medium text-blue-300 mb-1">Isi Pesan</label>
+                    <textarea id="inputIsiTemplateWa" rows="6" oninput="perbaruiPreviewWa()" class="w-full bg-slate-900 border border-blue-800 rounded-xl py-2.5 px-3 text-xs text-white focus:outline-none focus:border-cox-cyan"></textarea>
+                </div>
+                <div id="chipPlaceholderWa" class="flex flex-wrap gap-1.5"></div>
+                <div>
+                    <label class="block text-[11px] font-medium text-blue-300 mb-1">Preview (pakai data contoh)</label>
+                    <div id="previewTemplateWa" class="bg-slate-900 border border-blue-800/50 rounded-xl p-3 text-xs text-emerald-300 whitespace-pre-wrap leading-relaxed"></div>
+                </div>
+                <input type="hidden" id="editTemplateWaId" value="">
+                <div class="flex gap-2 pt-2">
+                    <button onclick="simpanTemplateWa()" class="flex-1 bg-cox-cyan text-cox-bg font-bold py-2.5 rounded-xl hover:bg-white transition text-sm">Simpan</button>
+                    <button id="btnHapusTemplateWa" onclick="hapusTemplateWaAktif()" class="hidden bg-rose-500/20 border border-rose-500 text-rose-400 font-bold py-2.5 px-4 rounded-xl hover:bg-rose-500 hover:text-white transition text-sm">Hapus</button>
+                </div>
+            </div>
+
+            <!-- TAB NOTA -->
+            <div id="tabNota" class="hidden p-6 space-y-4">
+                <div class="grid grid-cols-1 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-medium text-blue-300 mb-1">Nama Toko</label>
+                        <input type="text" id="inputNamaTokoTemplate" class="w-full bg-slate-900 border border-blue-800 rounded-xl py-2.5 px-3 text-xs text-white focus:outline-none focus:border-cox-cyan">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-medium text-blue-300 mb-1">Alamat Toko</label>
+                        <input type="text" id="inputAlamatTokoTemplate" class="w-full bg-slate-900 border border-blue-800 rounded-xl py-2.5 px-3 text-xs text-white focus:outline-none focus:border-cox-cyan">
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="block text-[11px] font-medium text-blue-300">Susunan Nota (bebas diatur)</label>
+                        <button type="button" onclick="resetTemplateNotaDefault()" class="text-[10px] text-blue-400 hover:text-cox-cyan underline">Reset ke default</button>
+                    </div>
+                    <textarea id="inputTemplateNota" rows="12" oninput="perbaruiPreviewNota()" class="w-full bg-slate-900 border border-blue-800 rounded-xl py-2.5 px-3 text-[11px] text-white font-mono focus:outline-none focus:border-cox-cyan"></textarea>
+                    <p class="text-[9px] text-blue-400 mt-1.5 leading-relaxed">
+                        Awali baris dengan <code class="bg-slate-800 px-1 rounded">^^</code> supaya rata tengah, atau bungkus dengan <code class="bg-slate-800 px-1 rounded">**tebal**</code> supaya cetak tebal (bisa digabung, cth <code class="bg-slate-800 px-1 rounded">^^**[TOKO]**</code>). Baris berisi <code class="bg-slate-800 px-1 rounded">[LAYANAN]</code> sendirian otomatis diperluas jadi daftar per layanan.
+                    </p>
+                </div>
+                <div id="chipPlaceholderNota" class="flex flex-wrap gap-1.5"></div>
+                <div>
+                    <label class="block text-[11px] font-medium text-blue-300 mb-1">Preview (pakai data contoh)</label>
+                    <div id="previewTemplateNota" class="bg-white text-black rounded-xl p-3 text-[11px] font-mono whitespace-pre-wrap leading-relaxed"></div>
+                </div>
+                <button onclick="simpanTemplateNota_UI()" class="w-full bg-cox-cyan text-cox-bg font-bold py-2.5 rounded-xl hover:bg-white transition text-sm">Simpan Template Nota</button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- MODAL PILIH TEMPLATE WA SAAT KIRIM -->
+    <div id="modalPilihTemplateOverlay" class="absolute inset-0 bg-black/60 z-40 hidden backdrop-blur-sm transition-opacity opacity-0" onclick="tutupModalPilihTemplate()"></div>
+    <div id="modalPilihTemplateContent" class="absolute bottom-0 left-0 right-0 bg-cox-bg rounded-t-3xl z-50 slide-up max-h-[70%] flex flex-col border-t border-blue-800">
+        <div class="w-full flex justify-center py-3" onclick="tutupModalPilihTemplate()">
+            <div class="w-12 h-1.5 bg-blue-800 rounded-full"></div>
+        </div>
+        <div class="px-6 pb-3 border-b border-blue-900/60">
+            <h3 class="text-sm font-bold text-white">Pilih Template Pesan</h3>
+        </div>
+        <div id="listPilihTemplateWa" class="flex-1 overflow-y-auto no-scrollbar p-4 space-y-2"></div>
+    </div>
     </div>
 
     <script>
@@ -842,10 +922,49 @@
         let periodeLaporanAktif = 'harian';
         let waktuTerakhirAktif = Date.now();
 
-        document.getElementById('setToko').value = localStorage.getItem('toko_nama') || "COX LAUNDRY";
-        document.getElementById('setAlamat').value = localStorage.getItem('toko_alamat') || "Jl. Contoh Alamat No. 123";
-        document.getElementById('setPenutup').value = localStorage.getItem('toko_pesan') || "Terima Kasih Telah Mempercayakan Cucian Anda";
-        document.getElementById('setWA').value = localStorage.getItem('template_wa') || "Halo *[NAMA]*, pesanan laundry Anda dengan No. Nota *[NOTA]* sudah selesai dan siap diambil. Total tagihan: *[TOTAL]*. Terima kasih!";
+        // ==========================================
+        // TEMPLATE NOTA & WHATSAPP (dinamis)
+        // ==========================================
+        // Data placeholder yang tersedia di kedua jenis template. Dipakai
+        // untuk render tombol "sisip placeholder" & untuk resolve nilainya.
+        const DAFTAR_PLACEHOLDER_TEMPLATE = [
+            { token: '[NAMA]', label: 'Nama' },
+            { token: '[NOTA]', label: 'No. Invoice' },
+            { token: '[TOTAL]', label: 'Total' },
+            { token: '[TGL_MASUK]', label: 'Tgl Masuk' },
+            { token: '[TGL_SELESAI]', label: 'Est. Selesai' },
+            { token: '[LAYANAN]', label: 'Layanan' },
+            { token: '[METODE]', label: 'Metode Bayar' },
+            { token: '[POIN]', label: 'Poin' },
+            { token: '[TOKO]', label: 'Nama Toko' },
+            { token: '[ALAMAT]', label: 'Alamat Toko' },
+            { token: '[PENUTUP]', label: 'Pesan Penutup' }
+        ];
+
+        // Beberapa template WA siap pakai untuk situasi berbeda -- dipakai
+        // sebagai isi awal kalau pengguna belum pernah menyimpan template
+        // sendiri (lihat ambilDaftarTemplateWa()).
+        const DEFAULT_WA_TEMPLATES = [
+            { id: 'default_diterima', nama: 'Pesanan Diterima', isi: 'Halo *[NAMA]*, pesanan laundry Anda (No. Nota *[NOTA]*) sudah kami terima.\nLayanan: [LAYANAN]\nEstimasi selesai: [TGL_SELESAI]\nTotal: *[TOTAL]*\nTerima kasih!' },
+            { id: 'default_selesai', nama: 'Notifikasi Selesai', isi: 'Halo *[NAMA]*, pesanan laundry Anda dengan No. Nota *[NOTA]* sudah selesai dan siap diambil. Total tagihan: *[TOTAL]*. Terima kasih!' },
+            { id: 'default_reminder', nama: 'Reminder Belum Diambil', isi: 'Halo *[NAMA]*, mengingatkan pesanan laundry Anda (No. Nota *[NOTA]*) sudah selesai sejak [TGL_SELESAI] dan belum diambil ya. Ditunggu kedatangannya, terima kasih!' },
+            { id: 'default_terimakasih', nama: 'Ucapan Terima Kasih', isi: 'Terima kasih *[NAMA]* sudah menggunakan layanan kami! Poin Anda sekarang: *[POIN]*. Sampai jumpa lagi 🙏' }
+        ];
+
+        // Susunan nota bawaan -- baris diawali "^^" dirender rata tengah,
+        // dibungkus "**...**" dirender tebal. Lihat parseBarisNota().
+        const DEFAULT_NOTA_TEMPLATE = "^^**[TOKO]**\n^^[ALAMAT]\n--------------------------------\nInv  : [NOTA]\nNama : [NAMA]\nMasuk: [TGL_MASUK]\nSelesai (Est): [TGL_SELESAI]\n--------------------------------\nLayanan:\n[LAYANAN]\n--------------------------------\n**TOTAL: [TOTAL]**\nBayar: [METODE]\n--------------------------------\nPoin Anda: [POIN]\n\n^^[PENUTUP]";
+
+        // Data contoh untuk preview live di editor template (bukan transaksi
+        // sungguhan).
+        const CONTOH_TRX_PREVIEW = {
+            Nama_Pelanggan: 'Budi Santoso', No_Invoice: 'INV2608299999', Total_Harga: 45000,
+            Tanggal_Masuk: '2026-08-29 14:00', Tanggal_Selesai: '2026-08-30 14:00',
+            Layanan: 'Cuci Setrika Reguler (3), Setrika Saja (2)', Metode_Pembayaran: 'QRIS', No_HP: '81234567890'
+        };
+
+        let _trxUntukKirimWa = null;
+        let _daftarTemplateUntukKirimWa = [];
 
         hitungOtomatisTanggalSelesai();
 
@@ -926,16 +1045,17 @@
             }
         });
 
-        function bukaFormTemplate() {
+        function bukaFormPrinter() {
             document.getElementById('menuPengaturanList').classList.add('hidden');
             document.getElementById('formPegawaiPengaturan').classList.add('hidden');
             document.getElementById('formLayananPengaturan').classList.add('hidden');
-            const form = document.getElementById('formTemplatePengaturan');
+            const form = document.getElementById('formPrinterPengaturan');
             form.classList.remove('hidden'); form.classList.add('fade-in');
+            perbaruiStatusPrinterBT();
         }
 
-        function tutupFormTemplate() {
-            document.getElementById('formTemplatePengaturan').classList.add('hidden');
+        function tutupFormPrinter() {
+            document.getElementById('formPrinterPengaturan').classList.add('hidden');
             const menu = document.getElementById('menuPengaturanList');
             menu.classList.remove('hidden'); menu.classList.add('fade-in');
         }
@@ -943,7 +1063,7 @@
         function bukaFormPegawai() {
             renderDaftarPegawai();
             document.getElementById('menuPengaturanList').classList.add('hidden');
-            document.getElementById('formTemplatePengaturan').classList.add('hidden');
+            document.getElementById('formPrinterPengaturan').classList.add('hidden');
             document.getElementById('formLayananPengaturan').classList.add('hidden');
             const form = document.getElementById('formPegawaiPengaturan');
             form.classList.remove('hidden'); form.classList.add('fade-in');
@@ -958,7 +1078,7 @@
         function bukaFormLayanan() {
             renderDaftarLayanan();
             document.getElementById('menuPengaturanList').classList.add('hidden');
-            document.getElementById('formTemplatePengaturan').classList.add('hidden');
+            document.getElementById('formPrinterPengaturan').classList.add('hidden');
             document.getElementById('formPegawaiPengaturan').classList.add('hidden');
             const form = document.getElementById('formLayananPengaturan');
             form.classList.remove('hidden'); form.classList.add('fade-in');
@@ -969,15 +1089,6 @@
             resetFormLayanan();
             const menu = document.getElementById('menuPengaturanList');
             menu.classList.remove('hidden'); menu.classList.add('fade-in');
-        }
-
-        function simpanPengaturanLokal() {
-            localStorage.setItem('toko_nama', document.getElementById('setToko').value);
-            localStorage.setItem('toko_alamat', document.getElementById('setAlamat').value);
-            localStorage.setItem('toko_pesan', document.getElementById('setPenutup').value);
-            localStorage.setItem('template_wa', document.getElementById('setWA').value);
-            alert("Pengaturan Template Berhasil Disimpan!");
-            tutupFormTemplate(); 
         }
 
         function renderDaftarPegawai() {
@@ -1199,7 +1310,7 @@
             document.getElementById('headerTitle').innerText = titles[tab];
 
             if (tab !== 'pengaturan') {
-                document.getElementById('formTemplatePengaturan').classList.add('hidden');
+                document.getElementById('formPrinterPengaturan').classList.add('hidden');
                 document.getElementById('formPegawaiPengaturan').classList.add('hidden');
                 document.getElementById('formLayananPengaturan').classList.add('hidden');
                 document.getElementById('menuPengaturanList').classList.remove('hidden');
@@ -1896,13 +2007,258 @@
             document.getElementById('listViewPelanggan').classList.remove('hidden');
         }
 
+        // ==========================================
+        // RESOLVE PLACEHOLDER (dipakai bersama oleh WA, Nota HTML, PDF, Bluetooth)
+        // ==========================================
+        function bangunDataPlaceholder(trx, layananMultiBaris) {
+            const daftarLayananArr = (trx.Layanan || '').split(',').map(s => s.trim()).filter(Boolean);
+            return {
+                '[NAMA]': trx.Nama_Pelanggan || '-',
+                '[NOTA]': trx.No_Invoice || '-',
+                '[TOTAL]': 'Rp ' + parseFloat(trx.Total_Harga || 0).toLocaleString('id-ID'),
+                '[TGL_MASUK]': formatWaktuIndo(trx.Tanggal_Masuk),
+                '[TGL_SELESAI]': formatWaktuIndo(trx.Tanggal_Selesai),
+                '[LAYANAN]': layananMultiBaris ? (daftarLayananArr.map(s => `- ${s}`).join('\n') || '-') : (daftarLayananArr.join(', ') || '-'),
+                '[METODE]': trx.Metode_Pembayaran || trx.Metode || trx.Pembayaran || '-',
+                '[POIN]': String(hitungPoinPelanggan(trx.No_HP)),
+                '[TOKO]': localStorage.getItem('toko_nama') || 'COX LAUNDRY',
+                '[ALAMAT]': localStorage.getItem('toko_alamat') || 'Jl. Contoh Alamat',
+                '[PENUTUP]': localStorage.getItem('toko_pesan') || 'Terima Kasih'
+            };
+        }
+
+        function isiPlaceholder(template, trx, layananMultiBaris) {
+            const data = bangunDataPlaceholder(trx, layananMultiBaris);
+            let hasil = template || '';
+            for (const key in data) hasil = hasil.split(key).join(data[key]);
+            return hasil;
+        }
+
+        // Parsing konvensi sederhana untuk baris template Nota:
+        // "^^..." = rata tengah, "**...**" = tebal (bisa digabung).
+        function parseBarisNota(rawBaris) {
+            let baris = rawBaris, tengah = false, tebal = false;
+            if (baris.startsWith('^^')) { tengah = true; baris = baris.slice(2); }
+            if (baris.startsWith('**') && baris.endsWith('**') && baris.length >= 4) { tebal = true; baris = baris.slice(2, -2); }
+            return { teks: baris, tengah, tebal };
+        }
+
+        // ==========================================
+        // PENYIMPANAN TEMPLATE (localStorage)
+        // ==========================================
+        function ambilDaftarTemplateWa() {
+            try {
+                const raw = localStorage.getItem('wa_templates');
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+                }
+            } catch (e) { /* fallback ke default di bawah */ }
+            return JSON.parse(JSON.stringify(DEFAULT_WA_TEMPLATES));
+        }
+        function simpanDaftarTemplateWaKeStorage(list) {
+            localStorage.setItem('wa_templates', JSON.stringify(list));
+        }
+        function ambilTemplateNotaTeks() {
+            return localStorage.getItem('nota_template') || DEFAULT_NOTA_TEMPLATE;
+        }
+
+        // ==========================================
+        // KIRIM WA -- otomatis tawarkan pilihan kalau template lebih dari satu
+        // ==========================================
         function kirimWA(noInvoice) {
             const trx = masterTransaksi.find(t => String(t.No_Invoice) === String(noInvoice));
             if (!trx) { alert('Data transaksi tidak ditemukan. Coba sinkronisasi ulang.'); return; }
-            let noHp = trx.No_HP || ''; if(noHp.startsWith('0')) noHp = '62' + noHp.substring(1);
-            let template = localStorage.getItem('template_wa') || "Halo *[NAMA]*, pesanan laundry Anda dengan No. Nota *[NOTA]* sudah selesai. Total: *[TOTAL]*. Terima kasih!";
-            let teks = template.replace(/\[NAMA\]/g, trx.Nama_Pelanggan).replace(/\[NOTA\]/g, trx.No_Invoice).replace(/\[TOTAL\]/g, "Rp " + parseFloat(trx.Total_Harga || 0).toLocaleString('id-ID'));
+
+            const daftarTemplate = ambilDaftarTemplateWa();
+            if (daftarTemplate.length === 1) { kirimWaDenganTemplate(trx, daftarTemplate[0]); return; }
+            bukaModalPilihTemplate(trx, daftarTemplate);
+        }
+
+        function kirimWaDenganTemplate(trx, template) {
+            let noHp = trx.No_HP || ''; if (noHp.startsWith('0')) noHp = '62' + noHp.substring(1);
+            const teks = isiPlaceholder(template.isi, trx, false);
             window.open(`https://wa.me/${noHp}?text=${encodeURIComponent(teks)}`, '_blank');
+        }
+
+        function bukaModalPilihTemplate(trx, daftarTemplate) {
+            const container = document.getElementById('listPilihTemplateWa');
+            container.innerHTML = daftarTemplate.map((t, idx) => `
+                <button onclick="pilihTemplateUntukKirim(${idx})" class="w-full text-left bg-cox-card border border-blue-800 hover:border-cox-cyan p-3 rounded-xl transition">
+                    <p class="text-sm font-bold text-white">${escapeHtml(t.nama)}</p>
+                    <p class="text-[10px] text-blue-300 mt-1 line-clamp-2">${escapeHtml(t.isi.slice(0, 90))}${t.isi.length > 90 ? '...' : ''}</p>
+                </button>`).join('');
+            _trxUntukKirimWa = trx;
+            _daftarTemplateUntukKirimWa = daftarTemplate;
+
+            const overlay = document.getElementById('modalPilihTemplateOverlay'), content = document.getElementById('modalPilihTemplateContent');
+            overlay.classList.remove('hidden'); setTimeout(() => { overlay.classList.remove('opacity-0'); content.classList.add('active'); }, 10);
+        }
+        function tutupModalPilihTemplate() {
+            const overlay = document.getElementById('modalPilihTemplateOverlay'), content = document.getElementById('modalPilihTemplateContent');
+            content.classList.remove('active'); overlay.classList.add('opacity-0');
+            setTimeout(() => overlay.classList.add('hidden'), 300);
+        }
+        function pilihTemplateUntukKirim(idx) {
+            tutupModalPilihTemplate();
+            kirimWaDenganTemplate(_trxUntukKirimWa, _daftarTemplateUntukKirimWa[idx]);
+        }
+
+        // ==========================================
+        // MODAL KELOLA TEMPLATE (dibuka dari tile "Template" di Beranda)
+        // ==========================================
+        function bukaModalTemplate() {
+            gantiTabTemplate('wa', document.querySelector('.tab-template-btn'));
+            renderListTemplateWa();
+            document.getElementById('inputNamaTokoTemplate').value = localStorage.getItem('toko_nama') || 'COX LAUNDRY';
+            document.getElementById('inputAlamatTokoTemplate').value = localStorage.getItem('toko_alamat') || 'Jl. Contoh Alamat';
+            document.getElementById('inputTemplateNota').value = ambilTemplateNotaTeks();
+            renderChipPlaceholder('chipPlaceholderWa', 'inputIsiTemplateWa');
+            renderChipPlaceholder('chipPlaceholderNota', 'inputTemplateNota');
+            perbaruiPreviewNota();
+
+            const overlay = document.getElementById('modalTemplateOverlay'), content = document.getElementById('modalTemplateContent');
+            overlay.classList.remove('hidden'); setTimeout(() => { overlay.classList.remove('opacity-0'); content.classList.add('active'); }, 10);
+        }
+        function tutupModalTemplate() {
+            const overlay = document.getElementById('modalTemplateOverlay'), content = document.getElementById('modalTemplateContent');
+            content.classList.remove('active'); overlay.classList.add('opacity-0');
+            setTimeout(() => overlay.classList.add('hidden'), 300);
+        }
+
+        function gantiTabTemplate(tab, btnEl) {
+            document.querySelectorAll('.tab-template-btn').forEach(b => b.className = "tab-template-btn flex-1 py-2 rounded-t-lg text-xs font-semibold text-blue-300 transition");
+            if (btnEl) btnEl.className = "tab-template-btn flex-1 py-2 rounded-t-lg text-xs font-semibold bg-cox-cyan/20 text-cox-cyan transition";
+
+            document.getElementById('tabWaList').classList.add('hidden');
+            document.getElementById('tabWaEditor').classList.add('hidden');
+            document.getElementById('tabNota').classList.add('hidden');
+
+            if (tab === 'wa') document.getElementById('tabWaList').classList.remove('hidden');
+            else document.getElementById('tabNota').classList.remove('hidden');
+        }
+
+        function renderChipPlaceholder(containerId, targetTextareaId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = DAFTAR_PLACEHOLDER_TEMPLATE.map(p => `
+                <button type="button" onclick="sisipkanPlaceholder('${targetTextareaId}', '${p.token}')" class="text-[10px] bg-slate-800 border border-blue-800 text-blue-300 hover:text-cox-cyan hover:border-cox-cyan px-2 py-1 rounded-full transition">+ ${p.label}</button>`).join('');
+        }
+
+        function sisipkanPlaceholder(textareaId, placeholder) {
+            const ta = document.getElementById(textareaId);
+            const mulai = ta.selectionStart ?? ta.value.length, akhir = ta.selectionEnd ?? ta.value.length;
+            const teks = ta.value;
+            ta.value = teks.slice(0, mulai) + placeholder + teks.slice(akhir);
+            const posisiBaru = mulai + placeholder.length;
+            ta.focus(); ta.setSelectionRange(posisiBaru, posisiBaru);
+            if (textareaId === 'inputIsiTemplateWa') perbaruiPreviewWa();
+            else if (textareaId === 'inputTemplateNota') perbaruiPreviewNota();
+        }
+
+        // --- Tab WhatsApp: daftar & editor ---
+        function renderListTemplateWa() {
+            const list = ambilDaftarTemplateWa();
+            const container = document.getElementById('listTemplateWa');
+            container.innerHTML = list.map((t, idx) => `
+                <button onclick="mulaiEditTemplateWa(${idx})" class="w-full text-left bg-cox-card border border-blue-800 hover:border-cox-cyan p-3 rounded-xl transition flex justify-between items-center">
+                    <div class="flex-1 pr-2">
+                        <p class="text-sm font-bold text-white">${escapeHtml(t.nama)}</p>
+                        <p class="text-[10px] text-blue-300 mt-0.5 line-clamp-1">${escapeHtml(t.isi.slice(0, 60))}${t.isi.length > 60 ? '...' : ''}</p>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-blue-400"></i>
+                </button>`).join('');
+        }
+
+        function mulaiTambahTemplateWa() {
+            document.getElementById('editTemplateWaId').value = '';
+            document.getElementById('inputNamaTemplateWa').value = '';
+            document.getElementById('inputIsiTemplateWa').value = '';
+            document.getElementById('btnHapusTemplateWa').classList.add('hidden');
+            perbaruiPreviewWa();
+            document.getElementById('tabWaList').classList.add('hidden');
+            document.getElementById('tabWaEditor').classList.remove('hidden');
+        }
+
+        function mulaiEditTemplateWa(idx) {
+            const list = ambilDaftarTemplateWa();
+            const t = list[idx];
+            if (!t) return;
+            document.getElementById('editTemplateWaId').value = t.id;
+            document.getElementById('inputNamaTemplateWa').value = t.nama;
+            document.getElementById('inputIsiTemplateWa').value = t.isi;
+            document.getElementById('btnHapusTemplateWa').classList.remove('hidden');
+            perbaruiPreviewWa();
+            document.getElementById('tabWaList').classList.add('hidden');
+            document.getElementById('tabWaEditor').classList.remove('hidden');
+        }
+
+        function kembaliKeListTemplateWa() {
+            document.getElementById('tabWaEditor').classList.add('hidden');
+            document.getElementById('tabWaList').classList.remove('hidden');
+            renderListTemplateWa();
+        }
+
+        function simpanTemplateWa() {
+            const nama = document.getElementById('inputNamaTemplateWa').value.trim();
+            const isi = document.getElementById('inputIsiTemplateWa').value.trim();
+            const idLama = document.getElementById('editTemplateWaId').value;
+            if (!nama || !isi) { alert('Nama dan isi template wajib diisi!'); return; }
+
+            let list = ambilDaftarTemplateWa();
+            if (idLama) {
+                const idx = list.findIndex(t => t.id === idLama);
+                if (idx > -1) list[idx] = { id: idLama, nama, isi };
+            } else {
+                list.push({ id: 'tpl' + Date.now(), nama, isi });
+            }
+            simpanDaftarTemplateWaKeStorage(list);
+            alert(`Template "${nama}" berhasil disimpan!`);
+            kembaliKeListTemplateWa();
+        }
+
+        function hapusTemplateWaAktif() {
+            const idLama = document.getElementById('editTemplateWaId').value;
+            if (!idLama) return;
+            let list = ambilDaftarTemplateWa();
+            if (list.length <= 1) { alert('Minimal harus ada 1 template WhatsApp.'); return; }
+            if (!confirm('Hapus template ini?')) return;
+            list = list.filter(t => t.id !== idLama);
+            simpanDaftarTemplateWaKeStorage(list);
+            kembaliKeListTemplateWa();
+        }
+
+        function perbaruiPreviewWa() {
+            const isi = document.getElementById('inputIsiTemplateWa').value;
+            document.getElementById('previewTemplateWa').innerText = isiPlaceholder(isi, CONTOH_TRX_PREVIEW, false);
+        }
+
+        // --- Tab Nota ---
+        function perbaruiPreviewNota() {
+            const template = document.getElementById('inputTemplateNota').value;
+            const teksResolved = isiPlaceholder(template, CONTOH_TRX_PREVIEW, true);
+            document.getElementById('previewTemplateNota').innerHTML = teksResolved.split('\n').map(rawBaris => {
+                const { teks, tengah, tebal } = parseBarisNota(rawBaris);
+                const style = `${tengah ? 'text-align:center;' : ''}${tebal ? 'font-weight:bold;' : ''}`;
+                return `<div style="${style}">${escapeHtml(teks) || '&nbsp;'}</div>`;
+            }).join('');
+        }
+
+        function resetTemplateNotaDefault() {
+            if (!confirm('Kembalikan susunan nota ke bawaan aplikasi? Perubahan yang belum disimpan akan hilang.')) return;
+            document.getElementById('inputTemplateNota').value = DEFAULT_NOTA_TEMPLATE;
+            perbaruiPreviewNota();
+        }
+
+        function simpanTemplateNota_UI() {
+            const namaToko = document.getElementById('inputNamaTokoTemplate').value.trim() || 'COX LAUNDRY';
+            const alamatToko = document.getElementById('inputAlamatTokoTemplate').value.trim() || 'Jl. Contoh Alamat';
+            const templateNota = document.getElementById('inputTemplateNota').value;
+
+            localStorage.setItem('toko_nama', namaToko);
+            localStorage.setItem('toko_alamat', alamatToko);
+            localStorage.setItem('nota_template', templateNota);
+
+            alert('Template nota berhasil disimpan!');
         }
 
         // ==========================================
@@ -2030,40 +2386,21 @@
         function buatPerintahEscPosNota(trx) {
             const ESC = 0x1B;
             let bytes = [];
-            const teks = (s) => Array.from(new TextEncoder().encode(String(s)));
+            const teksBytes = (s) => Array.from(new TextEncoder().encode(String(s)));
             const tambah = (arr) => { bytes = bytes.concat(arr); };
 
-            const toko = localStorage.getItem('toko_nama') || "COX LAUNDRY";
-            const alamat = localStorage.getItem('toko_alamat') || "Jl. Contoh Alamat";
-            const penutup = localStorage.getItem('toko_pesan') || "Terima Kasih";
-            const metodeBayarVal = trx.Metode_Pembayaran || trx.Metode || trx.Pembayaran || '-';
+            const teksResolved = isiPlaceholder(ambilTemplateNotaTeks(), trx, true);
 
             tambah([ESC, 0x40]); // Inisialisasi printer
 
-            tambah([ESC, 0x61, 0x01]); // Rata tengah
-            tambah([ESC, 0x45, 0x01]); tambah(teks(toko + '\n')); tambah([ESC, 0x45, 0x00]); // Bold nama toko
-            tambah(teks(alamat + '\n'));
-            tambah(teks('--------------------------------\n'));
-
-            tambah([ESC, 0x61, 0x00]); // Rata kiri
-            tambah(teks(`Inv  : ${trx.No_Invoice}\n`));
-            tambah(teks(`Nama : ${trx.Nama_Pelanggan}\n`));
-            tambah(teks(`Masuk: ${formatWaktuIndo(trx.Tanggal_Masuk)}\n`));
-            tambah(teks(`Selesai (Est): ${formatWaktuIndo(trx.Tanggal_Selesai)}\n`));
-            tambah(teks('--------------------------------\n'));
-
-            tambah([ESC, 0x45, 0x01]); tambah(teks('Layanan:\n')); tambah([ESC, 0x45, 0x00]);
-            (trx.Layanan || '').split(',').forEach(s => { if (s.trim()) tambah(teks(`- ${s.trim()}\n`)); });
-            tambah(teks('--------------------------------\n'));
-
-            tambah([ESC, 0x45, 0x01]);
-            tambah(teks(`TOTAL: Rp ${parseFloat(trx.Total_Harga || 0).toLocaleString('id-ID')}\n`));
-            tambah([ESC, 0x45, 0x00]);
-            tambah(teks(`Bayar: ${metodeBayarVal}\n`));
-            tambah(teks('--------------------------------\n'));
-
-            tambah([ESC, 0x61, 0x01]); // Rata tengah
-            tambah(teks(penutup + '\n\n\n'));
+            teksResolved.split('\n').forEach(rawBaris => {
+                const { teks, tengah, tebal } = parseBarisNota(rawBaris);
+                tambah([ESC, 0x61, tengah ? 0x01 : 0x00]);
+                tambah([ESC, 0x45, tebal ? 0x01 : 0x00]);
+                tambah(teksBytes(teks + '\n'));
+            });
+            tambah([ESC, 0x45, 0x00]); // Pastikan bold mati di akhir
+            tambah(teksBytes('\n\n'));
 
             return new Uint8Array(bytes);
         }
@@ -2080,50 +2417,25 @@
         // langsung terbuka dan Anda tinggal pilih Thermer.
         function buatPdfNota(trx) {
             const { jsPDF } = window.jspdf;
-            const toko = localStorage.getItem('toko_nama') || "COX LAUNDRY";
-            const alamat = localStorage.getItem('toko_alamat') || "Jl. Contoh Alamat";
-            const penutup = localStorage.getItem('toko_pesan') || "Terima Kasih";
-            const metodeBayarVal = trx.Metode_Pembayaran || trx.Metode || trx.Pembayaran || '-';
-            const daftarLayanan = (trx.Layanan || '').split(',').map(s => s.trim()).filter(Boolean);
+            const teksResolved = isiPlaceholder(ambilTemplateNotaTeks(), trx, true);
+            const barisArr = teksResolved.split('\n');
 
             // Perkirakan tinggi kertas dari jumlah baris konten, supaya PDF
-            // tidak menyisakan banyak spasi kosong kalau layanannya sedikit.
-            const jumlahBarisLayanan = daftarLayanan.length || 1;
-            const perkiraanBarisTetap = 15;
-            const tinggiMm = 18 + (perkiraanBarisTetap + jumlahBarisLayanan) * 4.3;
+            // tidak menyisakan banyak spasi kosong.
+            const tinggiMm = Math.max(40, 16 + barisArr.length * 4.3);
 
             const doc = new jsPDF({ unit: 'mm', format: [58, tinggiMm] });
-            const tengah = 29;
+            const tengahX = 29;
             let y = 8;
-            const turun = (h = 4.3) => { y += h; };
-            const garis = () => { doc.text('-'.repeat(32), 2, y); turun(); };
 
-            doc.setFont('courier', 'bold'); doc.setFontSize(10);
-            doc.text(toko, tengah, y, { align: 'center' }); turun();
-            doc.setFont('courier', 'normal'); doc.setFontSize(8);
-            doc.text(alamat, tengah, y, { align: 'center' }); turun(5);
-
-            garis();
-            doc.text(`Inv  : ${trx.No_Invoice}`, 2, y); turun();
-            doc.text(`Nama : ${trx.Nama_Pelanggan}`, 2, y); turun();
-            doc.text(`Masuk: ${formatWaktuIndo(trx.Tanggal_Masuk)}`, 2, y); turun();
-            doc.text(`Selesai (Est): ${formatWaktuIndo(trx.Tanggal_Selesai)}`, 2, y); turun(5);
-
-            garis();
-            doc.setFont('courier', 'bold'); doc.text('Layanan:', 2, y); doc.setFont('courier', 'normal'); turun();
-            daftarLayanan.forEach(s => { doc.text(`- ${s}`, 2, y); turun(); });
-            turun(1);
-            garis();
-
-            doc.setFont('courier', 'bold'); doc.setFontSize(10);
-            doc.text(`TOTAL: Rp ${parseFloat(trx.Total_Harga || 0).toLocaleString('id-ID')}`, 2, y); turun();
-            doc.setFont('courier', 'normal'); doc.setFontSize(8);
-            doc.text(`Bayar: ${metodeBayarVal}`, 2, y); turun(5);
-            garis();
-            turun(2);
-
-            doc.setFont('courier', 'italic');
-            doc.text(penutup, tengah, y, { align: 'center' });
+            barisArr.forEach(rawBaris => {
+                const { teks, tengah, tebal } = parseBarisNota(rawBaris);
+                doc.setFont('courier', tebal ? 'bold' : 'normal');
+                doc.setFontSize(tebal ? 9.5 : 8);
+                if (tengah) doc.text(teks, tengahX, y, { align: 'center' });
+                else doc.text(teks, 2, y);
+                y += 4.3;
+            });
 
             return doc;
         }
@@ -2197,14 +2509,16 @@
         function cetakNota(noInvoice) {
             const trx = masterTransaksi.find(t => String(t.No_Invoice) === String(noInvoice));
             if (!trx) { alert('Data transaksi tidak ditemukan. Coba sinkronisasi ulang.'); return; }
-            const toko = escapeHtml(localStorage.getItem('toko_nama') || "COX LAUNDRY");
-            const alamat = escapeHtml(localStorage.getItem('toko_alamat') || "Jl. Contoh Alamat");
-            const penutup = escapeHtml(localStorage.getItem('toko_pesan') || "Terima Kasih");
-            const layanans = (trx.Layanan || "").split(',').map(s => `<div>- ${escapeHtml(s.trim())}</div>`).join('');
+
+            const teksResolved = isiPlaceholder(ambilTemplateNotaTeks(), trx, true);
             const printWindow = window.open('', '_blank', 'width=350,height=600');
-            const metodeBayarVal = escapeHtml(trx.Metode_Pembayaran || trx.Metode || trx.Pembayaran || '-');
             const noInvoiceAman = escapeHtml(trx.No_Invoice);
-            const namaAman = escapeHtml(trx.Nama_Pelanggan);
+
+            const bodyHtml = teksResolved.split('\n').map(rawBaris => {
+                const { teks, tengah, tebal } = parseBarisNota(rawBaris);
+                const style = `${tengah ? 'text-align:center;' : ''}${tebal ? 'font-weight:bold;' : ''}`;
+                return `<div style="${style}">${escapeHtml(teks) || '&nbsp;'}</div>`;
+            }).join('');
 
             // QR code lacak pesanan hanya muncul kalau LACAK_URL sudah diisi
             // (lihat komentar di dekat deklarasi konstanta LACAK_URL).
@@ -2212,10 +2526,10 @@
             if (LACAK_URL) {
                 const urlLacak = `${LACAK_URL}?invoice=${encodeURIComponent(trx.No_Invoice)}`;
                 const urlGambarQr = `https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=${encodeURIComponent(urlLacak)}`;
-                qrHtml = `<div class="text-center" style="margin-top:10px;"><img src="${urlGambarQr}" width="100" height="100" alt="QR Lacak Pesanan"/><div style="font-size:9px; margin-top:2px;">Scan untuk lacak status pesanan</div></div>`;
+                qrHtml = `<div style="text-align:center;margin-top:10px;"><img src="${urlGambarQr}" width="100" height="100" alt="QR Lacak Pesanan"/><div style="font-size:9px;margin-top:2px;">Scan untuk lacak status pesanan</div></div>`;
             }
 
-            const html = `<html><head><title>Nota - ${noInvoiceAman}</title><style>@media print { @page { margin: 0; } body { margin: 0; } } body { font-family: monospace; font-size: 12px; color: #000; margin: 0; padding: 15px; width: 280px; } .text-center { text-align: center; } .fw-bold { font-weight: bold; } .border-bottom { border-bottom: 1px dashed #000; margin: 10px 0; } .flex-between { display: flex; justify-content: space-between; }</style></head><body><div class="text-center fw-bold" style="font-size: 16px;">${toko}</div><div class="text-center">${alamat}</div><div class="border-bottom"></div><div>Inv  : ${noInvoiceAman}</div><div>Nama : ${namaAman}</div><div>Masuk: ${escapeHtml(formatWaktuIndo(trx.Tanggal_Masuk))}</div><div>Selesai (Est): ${escapeHtml(formatWaktuIndo(trx.Tanggal_Selesai))}</div><div class="border-bottom"></div><div class="fw-bold">Layanan:</div>${layanans}<div class="border-bottom"></div><div class="flex-between fw-bold" style="font-size: 14px;"><span>TOTAL:</span><span>Rp ${parseFloat(trx.Total_Harga || 0).toLocaleString('id-ID')}</span></div><div>Bayar: ${metodeBayarVal}</div><div class="border-bottom"></div><div class="text-center italic">${penutup}</div>${qrHtml}<script>window.onload = function() { window.print(); window.onafterprint = function(){ window.close(); } };<\/script></body></html>`;
+            const html = `<html><head><title>Nota - ${noInvoiceAman}</title><style>@media print { @page { margin: 0; } body { margin: 0; } } body { font-family: monospace; font-size: 12px; color: #000; margin: 0; padding: 15px; width: 280px; }</style></head><body>${bodyHtml}${qrHtml}<script>window.onload = function() { window.print(); window.onafterprint = function(){ window.close(); } };<\/script></body></html>`;
             printWindow.document.write(html); printWindow.document.close();
         }
 
