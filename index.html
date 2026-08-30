@@ -844,8 +844,8 @@
         async function kirimKeApiScript(payload) {
             const payloadDenganToken = Object.assign({
                 token: TOKEN,
-                sessionToken: sessionStorage.getItem('cox_session') || '',
-                actor: sessionStorage.getItem('cox_kasir') || 'Sistem'
+                sessionToken: localStorage.getItem('cox_session') || '',
+                actor: localStorage.getItem('cox_kasir') || 'Sistem'
             }, payload);
             const res = await fetch(API_URL, {
                 method: 'POST',
@@ -892,7 +892,7 @@
         };
 
         function terapkanHakAksesRole() {
-            let currentRole = sessionStorage.getItem('cox_role') || 'Kasir';
+            let currentRole = localStorage.getItem('cox_role') || 'Kasir';
             if (currentRole.toLowerCase() === 'admin') {
                 currentRole = 'Admin';
             }
@@ -1008,28 +1008,70 @@
         // Mitigasi untuk perangkat yang lupa di-logout manual (misal HP kasir
         // ditinggal di meja kasir dalam keadaan terbuka). Ganti BATAS_IDLE_MENIT
         // sesuai kenyamanan toko Anda.
+        //
+        // Waktu aktivitas terakhir disimpan di localStorage (bukan cuma
+        // variabel JS di memori) supaya perhitungan idle tetap akurat walau
+        // browser/PWA sempat benar-benar dimatikan paksa oleh OS saat
+        // di-minimize (umum terjadi di HP, apalagi PWA yang di-"Add to Home
+        // Screen") -- begitu dibuka lagi, kita langsung tahu sudah berapa
+        // lama berlalu sejak aktivitas terakhir, bukan mulai hitung dari nol.
         const BATAS_IDLE_MENIT = 30;
+
+        function catatAktivitasTerakhir() {
+            waktuTerakhirAktif = Date.now();
+            localStorage.setItem('cox_last_active', String(waktuTerakhirAktif));
+        }
+        function bersihkanSesiLogin() {
+            ['cox_logged_in', 'cox_kasir', 'cox_role', 'cox_session', 'cox_last_active'].forEach(k => localStorage.removeItem(k));
+        }
+        function sesiSudahKedaluwarsa() {
+            const tersimpan = parseInt(localStorage.getItem('cox_last_active') || '0', 10);
+            if (!tersimpan) return false; // belum pernah tercatat -> anggap belum kedaluwarsa
+            return (Date.now() - tersimpan) > BATAS_IDLE_MENIT * 60 * 1000;
+        }
+
         ['click', 'keydown', 'touchstart', 'mousemove'].forEach(evt => {
-            document.addEventListener(evt, () => { waktuTerakhirAktif = Date.now(); }, { passive: true });
+            document.addEventListener(evt, catatAktivitasTerakhir, { passive: true });
         });
         setInterval(() => {
-            const sesiAktifSekarang = sessionStorage.getItem('cox_logged_in') === 'true';
-            if (sesiAktifSekarang && (Date.now() - waktuTerakhirAktif) > BATAS_IDLE_MENIT * 60 * 1000) {
-                sessionStorage.clear();
+            const sesiAktifSekarang = localStorage.getItem('cox_logged_in') === 'true';
+            if (sesiAktifSekarang && sesiSudahKedaluwarsa()) {
+                bersihkanSesiLogin();
                 alert(`Sesi berakhir karena tidak ada aktivitas selama ${BATAS_IDLE_MENIT} menit. Silakan login kembali.`);
                 location.reload();
             }
         }, 60 * 1000);
 
+        // Cek ulang begitu aplikasi kembali terlihat (mis. dibuka lagi
+        // setelah di-minimize) -- tidak perlu menunggu interval 60 detik
+        // berikutnya untuk tahu apakah sesi sudah kedaluwarsa.
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState !== 'visible') return;
+            const sesiAktifSekarang = localStorage.getItem('cox_logged_in') === 'true';
+            if (sesiAktifSekarang && sesiSudahKedaluwarsa()) {
+                bersihkanSesiLogin();
+                alert(`Sesi berakhir karena tidak ada aktivitas selama ${BATAS_IDLE_MENIT} menit. Silakan login kembali.`);
+                location.reload();
+            } else if (sesiAktifSekarang) {
+                catatAktivitasTerakhir();
+            }
+        });
+
         window.addEventListener('DOMContentLoaded', async () => {
-            const sesiAktif = sessionStorage.getItem('cox_logged_in');
-            const namaKasirSesi = sessionStorage.getItem('cox_kasir');
+            const sesiAktif = localStorage.getItem('cox_logged_in');
+            const namaKasirSesi = localStorage.getItem('cox_kasir');
             let roleKasirSesi = 'Kasir';
             let sesiValid = false;
 
-            if (sesiAktif === 'true' && namaKasirSesi && API_URL) {
+            // Kalau waktu sejak aktivitas terakhir sudah melewati batas idle
+            // (termasuk selama aplikasi di-minimize / proses sempat mati),
+            // anggap sesi kedaluwarsa dan paksa login ulang -- jangan
+            // langsung auto-login begitu saja walau datanya masih ada.
+            if (sesiAktif === 'true' && sesiSudahKedaluwarsa()) {
+                bersihkanSesiLogin();
+            } else if (sesiAktif === 'true' && namaKasirSesi && API_URL) {
                 // Jangan pernah percaya begitu saja pada role yang tersimpan di
-                // sessionStorage (bisa diubah manual lewat DevTools). Role wajib
+                // localStorage (bisa diubah manual lewat DevTools). Role wajib
                 // dicocokkan ulang ke data akun asli dari server setiap kali
                 // aplikasi dibuka.
                 try {
@@ -1044,7 +1086,7 @@
 
                         if (akunDitemukan) {
                             roleKasirSesi = String(akunDitemukan.Role || akunDitemukan.role || akunDitemukan.ROLE || 'Kasir').trim();
-                            sessionStorage.setItem('cox_role', roleKasirSesi);
+                            localStorage.setItem('cox_role', roleKasirSesi);
                             sesiValid = true;
                         }
                     }
@@ -1060,12 +1102,13 @@
                 document.getElementById('namaKasir').innerText = namaKasirSesi;
                 document.getElementById('badgeRoleKasir').innerText = roleKasirSesi;
 
+                catatAktivitasTerakhir(); // reset jam idle begitu berhasil masuk lagi
                 terapkanHakAksesRole(); 
                 sinkronisasiData();
             } else if (sesiAktif === 'true') {
                 // Sesi lama ada tapi akunnya tidak bisa diverifikasi ulang
-                // (misal akun dihapus, atau sessionStorage dipalsukan) -> paksa logout.
-                sessionStorage.clear();
+                // (misal akun dihapus, atau localStorage dipalsukan) -> paksa logout.
+                bersihkanSesiLogin();
             }
         });
 
@@ -1781,7 +1824,7 @@
             if (!tanggal || !keterangan || !nominal || nominal <= 0) { alert('Mohon lengkapi seluruh data pengeluaran dengan benar!'); return; }
 
             const idPengeluaran = 'EXP' + Date.now();
-            const pencatat = sessionStorage.getItem('cox_kasir') || 'Admin';
+            const pencatat = localStorage.getItem('cox_kasir') || 'Admin';
             const btn = document.getElementById('btnSimpanPengeluaran'), originalHtml = btn.innerHTML;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...'; btn.disabled = true;
 
@@ -1841,7 +1884,7 @@
         function renderStatusPresensiHariIni() {
             const statusEl = document.getElementById('statusPresensiSaya');
             const btnMasuk = document.getElementById('btnAbsenMasuk'), btnPulang = document.getElementById('btnAbsenPulang');
-            const username = sessionStorage.getItem('cox_kasir');
+            const username = localStorage.getItem('cox_kasir');
             if (!statusEl || !username) return;
 
             const idHariIni = buatIdPresensiHariIni(username);
@@ -1880,7 +1923,7 @@
         }
 
         async function absenMasuk() {
-            const username = sessionStorage.getItem('cox_kasir');
+            const username = localStorage.getItem('cox_kasir');
             if (!username) return;
             const idHariIni = buatIdPresensiHariIni(username);
             if (masterPresensi.some(p => String(p.ID_Presensi) === idHariIni)) { alert('Anda sudah tercatat absen masuk hari ini.'); return; }
@@ -1905,7 +1948,7 @@
         }
 
         async function absenPulang() {
-            const username = sessionStorage.getItem('cox_kasir');
+            const username = localStorage.getItem('cox_kasir');
             if (!username) return;
             const idHariIni = buatIdPresensiHariIni(username);
             const rec = masterPresensi.find(p => String(p.ID_Presensi) === idHariIni);
@@ -2787,17 +2830,17 @@
                 const hasil = await kirimKeApiScript({ sheetName: "Pengguna", action: "login", username: user, password: pass });
                 const userRole = String(hasil.role || 'Kasir').trim();
 
-                sessionStorage.setItem('cox_logged_in', 'true');
-                sessionStorage.setItem('cox_kasir', user);
-                sessionStorage.setItem('cox_role', userRole);
+                localStorage.setItem('cox_logged_in', 'true');
+                localStorage.setItem('cox_kasir', user);
+                localStorage.setItem('cox_role', userRole);
                 // sessionToken dipakai server untuk membuktikan role Admin pada
                 // aksi sensitif (Kelola Layanan, hapus Pengeluaran, tambah
                 // pegawai) -- lihat ADMIN_ONLY_ACTIONS di code.gs. Berbeda dari
                 // cox_role di atas, ini TIDAK bisa dipalsukan lewat DevTools
                 // karena server memverifikasinya lewat CacheService, bukan
                 // dari nilai yang diklaim client.
-                sessionStorage.setItem('cox_session', hasil.sessionToken || '');
-                waktuTerakhirAktif = Date.now();
+                localStorage.setItem('cox_session', hasil.sessionToken || '');
+                catatAktivitasTerakhir();
 
                 document.getElementById('namaKasir').innerText = user;
                 document.getElementById('badgeRoleKasir').innerText = userRole;
@@ -2837,7 +2880,7 @@
             }
         }
 
-        function logout() { if(confirm('Apakah Anda yakin ingin keluar?')) { sessionStorage.clear(); location.reload(); } }
+        function logout() { if(confirm('Apakah Anda yakin ingin keluar?')) { bersihkanSesiLogin(); location.reload(); } }
         function buatNoInvoice() { const dateStr = new Date().toISOString().slice(2,10).replace(/-/g, ''); const randomNum = Math.floor(1000 + Math.random() * 9000); return `INV${dateStr}${randomNum}`; }
         function bukaModalPesanan() { document.getElementById('noInvoiceDisplay').innerText = buatNoInvoice(); const overlay = document.getElementById('modalPesananOverlay'), content = document.getElementById('modalPesananContent'); overlay.classList.remove('hidden'); setTimeout(() => { overlay.classList.remove('opacity-0'); content.classList.add('active'); }, 10); }
         function tutupModalPesanan() { const overlay = document.getElementById('modalPesananOverlay'), content = document.getElementById('modalPesananContent'); content.classList.remove('active'); overlay.classList.add('opacity-0'); setTimeout(() => { overlay.classList.add('hidden'); resetFormPesanan(); }, 300); }
