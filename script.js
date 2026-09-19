@@ -91,6 +91,8 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbxq3pGfjN4bLTZ9X-ZxoDdZ
                 // Ingin Kasir bisa mencatat pengeluaran operasional harian?
                 // Tambahkan 'pengeluaran' ke daftar ini.
                 // Ingin Kasir bisa melihat tab Laporan? Tambahkan 'laporan'.
+                // Ingin Kasir bisa mengedit data mentah pesanan (bukan cuma
+                // tandai selesai)? Tambahkan 'edit_pesanan'.
             ] 
         };
 
@@ -1928,6 +1930,103 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbxq3pGfjN4bLTZ9X-ZxoDdZ
             printWindow.document.write(html); printWindow.document.close();
         }
 
+        // ==========================================
+        // EDIT PESANAN (Admin) -- edit langsung field mentah transaksi
+        // ==========================================
+        function bukaModalEditPesanan(noInvoice) {
+            const trx = masterTransaksi.find(t => String(t.No_Invoice) === String(noInvoice));
+            if (!trx) { alert('Data transaksi tidak ditemukan. Coba sinkronisasi ulang.'); return; }
+
+            document.getElementById('editNoInvoice').value = trx.No_Invoice;
+            document.getElementById('editPesananInvoiceLabel').innerText = trx.No_Invoice;
+            document.getElementById('editNamaPelanggan').value = trx.Nama_Pelanggan || '';
+            document.getElementById('editNoHp').value = trx.No_HP || '';
+            document.getElementById('editLayanan').value = trx.Layanan || '';
+            document.getElementById('editJumlahKiloan').value = trx.Jumlah_Kiloan || '';
+            document.getElementById('editTotalHarga').value = parseFloat(trx.Total_Harga) || 0;
+            // Input datetime-local butuh format "YYYY-MM-DDTHH:mm" (pakai T,
+            // bukan spasi) -- data dari server sudah bersih "YYYY-MM-DD HH:mm"
+            // (lihat formatNilaiSel_ di code.gs) jadi tinggal ganti spasi jadi T.
+            document.getElementById('editTanggalMasuk').value = String(trx.Tanggal_Masuk || '').replace(' ', 'T').slice(0, 16);
+            document.getElementById('editTanggalSelesai').value = String(trx.Tanggal_Selesai || '').replace(' ', 'T').slice(0, 16);
+            document.getElementById('editStatus').value = trx.Status || 'Baru';
+            document.getElementById('editMetodePembayaran').value = trx.Metode_Pembayaran || trx.Metode || trx.Pembayaran || 'Tunai';
+
+            const overlay = document.getElementById('modalEditPesananOverlay'), content = document.getElementById('modalEditPesananContent');
+            overlay.classList.remove('hidden'); setTimeout(() => { overlay.classList.remove('opacity-0'); content.classList.add('active'); }, 10);
+        }
+
+        function tutupModalEditPesanan() {
+            const overlay = document.getElementById('modalEditPesananOverlay'), content = document.getElementById('modalEditPesananContent');
+            content.classList.remove('active'); overlay.classList.add('opacity-0');
+            setTimeout(() => overlay.classList.add('hidden'), 300);
+        }
+
+        async function simpanEditPesanan() {
+            if (!API_URL) { alert('URL Apps Script belum diisi!'); return; }
+            const noInvoice = document.getElementById('editNoInvoice').value;
+            const namaPelanggan = document.getElementById('editNamaPelanggan').value.trim();
+            const noHp = document.getElementById('editNoHp').value.trim();
+            const layanan = document.getElementById('editLayanan').value.trim();
+            const jumlahKiloan = document.getElementById('editJumlahKiloan').value;
+            const totalHarga = document.getElementById('editTotalHarga').value;
+            const tanggalMasuk = document.getElementById('editTanggalMasuk').value;
+            const tanggalSelesai = document.getElementById('editTanggalSelesai').value;
+            const status = document.getElementById('editStatus').value;
+            const metodePembayaran = document.getElementById('editMetodePembayaran').value;
+
+            if (!namaPelanggan || !noHp || !tanggalMasuk || !tanggalSelesai) {
+                alert('Nama pelanggan, No. HP, Tanggal Masuk, dan Estimasi Selesai wajib diisi!');
+                return;
+            }
+            if (totalHarga === '' || parseFloat(totalHarga) < 0) {
+                alert('Total Harga wajib diisi dan tidak boleh negatif!');
+                return;
+            }
+
+            const updateData = {
+                "Nama_Pelanggan": namaPelanggan,
+                "No_HP": noHp,
+                "Layanan": layanan,
+                "Jumlah_Kiloan": jumlahKiloan,
+                "Total_Harga": totalHarga,
+                "Tanggal_Masuk": tanggalMasuk,
+                "Tanggal_Selesai": tanggalSelesai,
+                "Status": status,
+                "Metode_Pembayaran": metodePembayaran
+            };
+
+            const btn = document.getElementById('btnSimpanEditPesanan');
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...'; btn.disabled = true;
+
+            try {
+                await kirimKeApiScript({ sheetName: "Transaksi", action: "update", id: noInvoice, updateData });
+                // Update lokal langsung (bukan sinkronisasi ulang ke 6 sheet)
+                // -- kita sudah tahu persis perubahannya.
+                const trxLokal = masterTransaksi.find(t => String(t.No_Invoice) === String(noInvoice));
+                if (trxLokal) {
+                    trxLokal.Nama_Pelanggan = namaPelanggan;
+                    trxLokal.No_HP = noHp;
+                    trxLokal.Layanan = layanan;
+                    trxLokal.Jumlah_Kiloan = jumlahKiloan;
+                    trxLokal.Total_Harga = totalHarga;
+                    trxLokal.Tanggal_Masuk = tanggalMasuk.replace('T', ' ');
+                    trxLokal.Tanggal_Selesai = tanggalSelesai.replace('T', ' ');
+                    trxLokal.Status = status;
+                    trxLokal.Metode_Pembayaran = metodePembayaran;
+                }
+                kalkulasiDashboard(masterTransaksi);
+                renderDaftarPesanan(masterTransaksi);
+                tutupModalEditPesanan();
+                alert('Pesanan berhasil diperbarui!');
+            } catch (err) {
+                alert(`Gagal menyimpan perubahan: ${err.message}`);
+            } finally {
+                btn.innerHTML = originalHtml; btn.disabled = false;
+            }
+        }
+
         async function updateStatus(invoice) {
             if(!confirm(`Ubah pesanan ${invoice} menjadi SELESAI?`)) return;
             if(!API_URL) return;
@@ -1997,6 +2096,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbxq3pGfjN4bLTZ9X-ZxoDdZ
                     <div class="flex justify-between items-center pt-1">
                         <div class="flex gap-2">
                             ${btnSelesaiHtml}
+                            <button data-feature="edit_pesanan" onclick="bukaModalEditPesanan('${trx.No_Invoice}')" class="bg-slate-800 text-amber-400 border border-amber-500/50 hover:bg-amber-500 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold transition flex items-center gap-1"><i class="fa-solid fa-pen"></i></button>
                         </div>
                         <div class="flex gap-2">
                             <button onclick="kirimWA('${trx.No_Invoice}')" class="bg-slate-800 text-blue-300 border border-blue-800 hover:text-emerald-400 hover:border-emerald-500 px-3 py-1.5 rounded-lg text-[10px] font-bold transition flex items-center gap-1"><i class="fa-brands fa-whatsapp text-sm"></i> WA</button>
@@ -2008,6 +2108,12 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbxq3pGfjN4bLTZ9X-ZxoDdZ
                 </div>`;
             });
             container.innerHTML = html;
+            // Daftar ini di-render ulang berkali-kali (tiap sinkronisasi,
+            // tiap update status/pesanan baru) -- terapkanHakAksesRole()
+            // dipanggil ulang di sini supaya tombol ber-data-feature (mis.
+            // "Edit" khusus Admin) konsisten tersembunyi/tampil sesuai role,
+            // bukan cuma benar sesaat setelah login pertama kali.
+            terapkanHakAksesRole();
         }
 
         async function prosesLogin(e) {

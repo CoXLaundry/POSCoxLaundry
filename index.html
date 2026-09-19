@@ -783,6 +783,82 @@
             </div>
         </div>
     </div>
+
+    <!-- MODAL EDIT PESANAN (Admin) -->
+    <div id="modalEditPesananOverlay" class="absolute inset-0 bg-black/60 z-40 hidden backdrop-blur-sm transition-opacity opacity-0" onclick="tutupModalEditPesanan()"></div>
+    <div id="modalEditPesananContent" class="absolute bottom-0 left-0 right-0 bg-cox-bg rounded-t-3xl z-50 slide-up h-[92%] flex flex-col border-t border-blue-800">
+        <div class="w-full flex justify-center py-3" onclick="tutupModalEditPesanan()">
+            <div class="w-12 h-1.5 bg-blue-800 rounded-full"></div>
+        </div>
+        <div class="px-6 pb-2 border-b border-blue-900/60 flex justify-between items-center">
+            <h3 class="text-lg font-bold text-white">Edit Pesanan</h3>
+            <span id="editPesananInvoiceLabel" class="text-[10px] text-blue-300 font-mono"></span>
+        </div>
+
+        <div class="flex-1 overflow-y-auto no-scrollbar p-6 space-y-4">
+            <p class="text-[10px] text-amber-400 bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 leading-relaxed">
+                <i class="fa-solid fa-triangle-exclamation"></i> Anda mengedit data mentah transaksi secara langsung. Pastikan datanya benar sebelum menyimpan -- perubahan ini tidak melalui perhitungan otomatis seperti saat membuat pesanan baru.
+            </p>
+
+            <input type="hidden" id="editNoInvoice" value="">
+
+            <div>
+                <label class="block text-[11px] font-medium text-blue-300 mb-1">Nama Pelanggan</label>
+                <input type="text" id="editNamaPelanggan" class="w-full bg-slate-900 border border-blue-800 rounded-xl py-2.5 px-3 text-xs text-white focus:outline-none focus:border-cox-cyan">
+            </div>
+            <div>
+                <label class="block text-[11px] font-medium text-blue-300 mb-1">No. HP</label>
+                <input type="text" id="editNoHp" inputmode="numeric" class="w-full bg-slate-900 border border-blue-800 rounded-xl py-2.5 px-3 text-xs text-white focus:outline-none focus:border-cox-cyan">
+            </div>
+            <div>
+                <label class="block text-[11px] font-medium text-blue-300 mb-1">Layanan (teks bebas)</label>
+                <textarea id="editLayanan" rows="2" class="w-full bg-slate-900 border border-blue-800 rounded-xl py-2.5 px-3 text-xs text-white focus:outline-none focus:border-cox-cyan"></textarea>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-[11px] font-medium text-blue-300 mb-1">Jumlah Kiloan</label>
+                    <input type="number" id="editJumlahKiloan" step="0.1" min="0" class="w-full bg-slate-900 border border-blue-800 rounded-xl py-2.5 px-3 text-xs text-white focus:outline-none focus:border-cox-cyan">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-medium text-blue-300 mb-1">Total Harga (Rp)</label>
+                    <input type="number" id="editTotalHarga" min="0" class="w-full bg-slate-900 border border-blue-800 rounded-xl py-2.5 px-3 text-xs text-white focus:outline-none focus:border-cox-cyan">
+                </div>
+            </div>
+            <div>
+                <label class="block text-[11px] font-medium text-blue-300 mb-1">Tanggal Masuk</label>
+                <input type="datetime-local" id="editTanggalMasuk" class="w-full bg-slate-900 border border-blue-800 rounded-xl py-2.5 px-3 text-xs text-white focus:outline-none focus:border-cox-cyan [color-scheme:dark]">
+            </div>
+            <div>
+                <label class="block text-[11px] font-medium text-blue-300 mb-1">Estimasi Selesai</label>
+                <input type="datetime-local" id="editTanggalSelesai" class="w-full bg-slate-900 border border-blue-800 rounded-xl py-2.5 px-3 text-xs text-white focus:outline-none focus:border-cox-cyan [color-scheme:dark]">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-[11px] font-medium text-blue-300 mb-1">Status</label>
+                    <select id="editStatus" class="w-full bg-slate-900 border border-blue-800 rounded-xl py-2.5 px-3 text-xs text-white focus:outline-none focus:border-cox-cyan appearance-none">
+                        <option value="Baru">Baru</option>
+                        <option value="Proses">Proses</option>
+                        <option value="Selesai">Selesai</option>
+                        <option value="Diambil">Diambil</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-medium text-blue-300 mb-1">Metode Pembayaran</label>
+                    <select id="editMetodePembayaran" class="w-full bg-slate-900 border border-blue-800 rounded-xl py-2.5 px-3 text-xs text-white focus:outline-none focus:border-cox-cyan appearance-none">
+                        <option value="Tunai">Tunai</option>
+                        <option value="QRIS">QRIS</option>
+                        <option value="Bayar Nanti">Bayar Nanti</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-cox-card p-4 border-t border-blue-900/60 pb-6 rounded-t-2xl shadow-[0_-10px_20px_rgba(0,0,0,0.3)]">
+            <button id="btnSimpanEditPesanan" onclick="simpanEditPesanan()" class="w-full bg-cox-cyan text-cox-bg font-bold py-3 rounded-xl hover:bg-white transition flex justify-center items-center gap-2 shadow-neon text-sm">
+                <i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan
+            </button>
+        </div>
+    </div>
     </div>
 
     <script>
