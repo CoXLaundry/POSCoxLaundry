@@ -6,18 +6,27 @@
     <title>Lacak Pesanan - Cox Laundry</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font: Plus Jakarta Sans (seragam dengan aplikasi kasir) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <script>
         tailwind.config = {
             theme: {
                 extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'ui-sans-serif', 'system-ui', 'sans-serif']
+                    },
                     colors: {
                         'cox-bg': '#02024D',
                         'cox-card': '#0A0C75',
                         'cox-cyan': '#00E5FF',
                         'cox-blue': '#0055FF',
-                        'cox-text': '#E0E7FF'
+                        'cox-text': '#E8ECF8',
+                        'cox-peach': '#FFB86B',
+                        'cox-mint': '#5EEAD4'
                     },
                     boxShadow: { 'neon': '0 0 10px rgba(0, 229, 255, 0.3)' }
                 }
@@ -29,6 +38,47 @@
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* ===== SKIN "FUTURISTIC-FRIENDLY" (seragam dengan index.html) ===== */
+        :root {
+            --grad-cta: linear-gradient(135deg, #00E5FF 0%, #4F8CFF 100%);
+            --glass: linear-gradient(160deg, rgba(28,32,150,0.55), rgba(10,12,90,0.42));
+            --glow-cyan: 0 0 22px rgba(0,229,255,0.30);
+        }
+        body {
+            font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+            background:
+                radial-gradient(1100px 600px at 12% -8%, rgba(0,85,255,0.22), transparent 60%),
+                radial-gradient(900px 520px at 108% 6%, rgba(0,229,255,0.16), transparent 55%),
+                radial-gradient(700px 600px at 50% 118%, rgba(255,184,107,0.09), transparent 60%),
+                #05053a !important;
+        }
+        .bg-cox-bg {
+            background:
+                radial-gradient(600px 320px at 15% -10%, rgba(0,85,255,0.28), transparent 60%),
+                linear-gradient(160deg, rgba(12,14,110,0.92), rgba(4,4,60,0.94)) !important;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+        }
+        .bg-cox-card {
+            background: var(--glass) !important;
+            backdrop-filter: blur(14px) saturate(150%);
+            -webkit-backdrop-filter: blur(14px) saturate(150%);
+        }
+        .bg-cox-cyan {
+            background: var(--grad-cta) !important;
+            box-shadow: 0 6px 20px rgba(0,140,255,0.35);
+        }
+        .bg-cox-cyan:hover { filter: brightness(1.07); box-shadow: var(--glow-cyan); }
+        button, [onclick] {
+            transition: transform .18s ease, box-shadow .25s ease, filter .2s ease,
+                        background-color .25s ease, border-color .25s ease, color .2s ease;
+        }
+        button:active, [onclick]:active { transform: scale(.97); }
+        input:focus { box-shadow: 0 0 0 3px rgba(0,229,255,0.18) !important; }
+        h1 { letter-spacing: .2px; }
+        @media (prefers-reduced-motion: reduce) {
+            * { animation: none !important; transition: none !important; }
+        }
     </style>
 </head>
 <body class="bg-slate-900 font-sans antialiased text-white flex justify-center items-center min-h-screen p-4">

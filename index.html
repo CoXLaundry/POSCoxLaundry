@@ -14,6 +14,10 @@
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font: Plus Jakarta Sans (modern-geometris, hangat) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- jsPDF: dipakai untuk membuat PDF nota berukuran pas kertas thermal
@@ -25,12 +29,17 @@
         tailwind.config = {
             theme: {
                 extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'ui-sans-serif', 'system-ui', 'sans-serif']
+                    },
                     colors: {
                         'cox-bg': '#02024D',
                         'cox-card': '#0A0C75',
                         'cox-cyan': '#00E5FF',
                         'cox-blue': '#0055FF',
-                        'cox-text': '#E0E7FF'
+                        'cox-text': '#E8ECF8',
+                        'cox-peach': '#FFB86B',
+                        'cox-mint': '#5EEAD4'
                     },
                     boxShadow: { 'neon': '0 0 10px rgba(0, 229, 255, 0.3)' }
                 }
@@ -44,6 +53,75 @@
         .slide-up.active { transform: translateY(0); }
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* ==========================================
+           SKIN "FUTURISTIC-FRIENDLY" (murni CSS, tidak mengubah struktur)
+           - latar mesh lembut, kartu glassmorphism, CTA bergradasi + glow,
+             micro-interaction halus, fokus input bercahya.
+           ========================================== */
+        :root {
+            --grad-cta: linear-gradient(135deg, #00E5FF 0%, #4F8CFF 100%);
+            --glass: linear-gradient(160deg, rgba(28,32,150,0.55), rgba(10,12,90,0.42));
+            --glass-brd: rgba(255,255,255,0.09);
+            --glow-cyan: 0 0 22px rgba(0,229,255,0.30);
+        }
+
+        /* Latar belakang halaman (mesh gradient lembut) */
+        body {
+            background:
+                radial-gradient(1100px 600px at 12% -8%, rgba(0,85,255,0.20), transparent 60%),
+                radial-gradient(900px 520px at 108% 6%, rgba(0,229,255,0.14), transparent 55%),
+                radial-gradient(700px 600px at 50% 118%, rgba(255,184,107,0.08), transparent 60%),
+                #05053a !important;
+        }
+
+        /* Frame aplikasi & layar login: mesh gradient di dalam (bukan navy polos) */
+        #appContainer, #loginScreen {
+            background:
+                radial-gradient(900px 500px at 15% -10%, rgba(0,85,255,0.22), transparent 60%),
+                radial-gradient(700px 500px at 112% 8%, rgba(0,229,255,0.14), transparent 55%),
+                radial-gradient(620px 600px at 50% 116%, rgba(255,184,107,0.07), transparent 60%),
+                #04043a !important;
+        }
+
+        /* Semua kartu jadi kaca (glassmorphism). Border asli tetap dipertahankan
+           supaya efek hover:border-* yang sudah ada tidak hilang. */
+        .bg-cox-card {
+            background: var(--glass) !important;
+            backdrop-filter: blur(16px) saturate(150%);
+            -webkit-backdrop-filter: blur(16px) saturate(150%);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.28);
+        }
+
+        /* Tombol/aksen CTA padat: gradasi cyan -> biru + glow */
+        .bg-cox-cyan {
+            background: var(--grad-cta) !important;
+            box-shadow: 0 6px 20px rgba(0,140,255,0.35);
+        }
+        .bg-cox-cyan:hover { filter: brightness(1.07); box-shadow: var(--glow-cyan); }
+
+        /* Micro-interaction: transisi halus + efek "menekan" */
+        button, [onclick] {
+            transition: transform .18s ease, box-shadow .25s ease, filter .2s ease,
+                        background-color .25s ease, border-color .25s ease, color .2s ease;
+        }
+        button:active, [onclick]:active { transform: scale(.96); }
+
+        /* Tile menu beranda: icon-nya berpendar saat disentuh/hover */
+        .group:hover .shadow-neon { box-shadow: var(--glow-cyan); }
+
+        /* Fokus input/select/textarea: cincin cahaya lembut */
+        input:focus, select:focus, textarea:focus {
+            box-shadow: 0 0 0 3px rgba(0,229,255,0.18) !important;
+        }
+
+        /* Judul sedikit lebih tegas */
+        h1, h2, h3, h4 { letter-spacing: .2px; }
+
+        /* Hormati pengguna yang mengurangi animasi */
+        @media (prefers-reduced-motion: reduce) {
+            * { animation: none !important; transition: none !important; }
+        }
     </style>
 </head>
 <body class="bg-slate-900 font-sans antialiased text-white flex justify-center items-center min-h-screen relative">
