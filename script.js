@@ -129,6 +129,24 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbxq3pGfjN4bLTZ9X-ZxoDdZ
         const minutes = String(now.getMinutes()).padStart(2, '0');
         const currentDateTimeString = `${year}-${month}-${day}T${hours}:${minutes}`;
 
+        // ==========================================
+        // HELPER: tanggal "hari ini" / bulan dalam ZONA WAKTU LOKAL
+        // ==========================================
+        // Sebelumnya kode memakai new Date().toISOString().slice(0,10) yang
+        // menghasilkan tanggal UTC. Untuk WIB (UTC+7), antara pukul 00.00-07.00
+        // hasil UTC masih "kemarin" -- akibatnya ID presensi, filter
+        // "Pengeluaran Hari Ini", dan label grafik tren bisa geser satu hari.
+        // Helper ini selalu memakai komponen tanggal lokal (getFullYear dst).
+        function tanggalLokalDari(d) {
+            const dt = (d instanceof Date) ? d : new Date();
+            const y = dt.getFullYear();
+            const m = String(dt.getMonth() + 1).padStart(2, '0');
+            const day = String(dt.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        }
+        function tanggalLokalIni() { return tanggalLokalDari(new Date()); }
+        function bulanLokalIni() { return tanggalLokalIni().slice(0, 7); }
+
         document.getElementById('tanggalHariIni').innerText = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
         document.getElementById('inputTglMasuk').value = currentDateTimeString;
 
@@ -789,8 +807,8 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbxq3pGfjN4bLTZ9X-ZxoDdZ
         function getFilterKeyLaporan() {
             let tglInput = document.getElementById('inputTanggalLaporan');
             let bulanInput = document.getElementById('inputBulanLaporan');
-            if (!tglInput.value) tglInput.value = new Date().toISOString().slice(0, 10);
-            if (!bulanInput.value) bulanInput.value = new Date().toISOString().slice(0, 7);
+            if (!tglInput.value) tglInput.value = tanggalLokalIni();
+            if (!bulanInput.value) bulanInput.value = bulanLokalIni();
             return periodeLaporanAktif === 'harian' ? tglInput.value : bulanInput.value;
         }
 
@@ -920,7 +938,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbxq3pGfjN4bLTZ9X-ZxoDdZ
             if (periodeLaporanAktif === 'harian') {
                 for (let i = 6; i >= 0; i--) {
                     let d = new Date(); d.setDate(d.getDate() - i);
-                    let key = d.toISOString().slice(0, 10);
+                    let key = tanggalLokalDari(d);
                     let total = masterTransaksi.filter(t => getTanggalDariString(t.Tanggal_Masuk) === key).reduce((s, t) => s + (parseFloat(t.Total_Harga) || 0), 0);
                     labels.push(d.toLocaleDateString('id-ID', { weekday: 'short' }));
                     values.push(total);
@@ -928,7 +946,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbxq3pGfjN4bLTZ9X-ZxoDdZ
             } else {
                 for (let i = 5; i >= 0; i--) {
                     let d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - i);
-                    let key = d.toISOString().slice(0, 7);
+                    let key = tanggalLokalDari(d).slice(0, 7);
                     let total = masterTransaksi.filter(t => getTanggalDariString(t.Tanggal_Masuk).startsWith(key)).reduce((s, t) => s + (parseFloat(t.Total_Harga) || 0), 0);
                     labels.push(d.toLocaleDateString('id-ID', { month: 'short' }));
                     values.push(total);
@@ -979,7 +997,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbxq3pGfjN4bLTZ9X-ZxoDdZ
         // PENCATATAN PENGELUARAN
         // ==========================================
         function bukaModalPengeluaran() {
-            document.getElementById('inputTglPengeluaran').value = new Date().toISOString().slice(0, 10);
+            document.getElementById('inputTglPengeluaran').value = tanggalLokalIni();
             document.getElementById('inputKategoriPengeluaran').selectedIndex = 0;
             document.getElementById('inputKeteranganPengeluaran').value = '';
             document.getElementById('inputNominalPengeluaran').value = '';
@@ -994,7 +1012,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbxq3pGfjN4bLTZ9X-ZxoDdZ
         }
 
         function renderPengeluaranHariIni() {
-            const todayStr = new Date().toISOString().slice(0, 10);
+            const todayStr = tanggalLokalIni();
             const container = document.getElementById('listPengeluaranHariIni');
             const badge = document.getElementById('badgeTotalPengeluaranHariIni');
             let listHariIni = masterPengeluaran.filter(p => getTanggalDariString(p.Tanggal) === todayStr);
@@ -1069,7 +1087,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbxq3pGfjN4bLTZ9X-ZxoDdZ
         // PRESENSI / ABSENSI PEGAWAI
         // ==========================================
         function buatIdPresensiHariIni(username) {
-            const todayStr = new Date().toISOString().slice(0, 10);
+            const todayStr = tanggalLokalIni();
             return `${username}_${todayStr}`;
         }
 
@@ -1114,7 +1132,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbxq3pGfjN4bLTZ9X-ZxoDdZ
         function renderDaftarPresensiSemua() {
             const container = document.getElementById('listPresensiSemua');
             if (!container) return;
-            const todayStr = new Date().toISOString().slice(0, 10);
+            const todayStr = tanggalLokalIni();
             let listHariIni = masterPresensi.filter(p => getTanggalDariString(p.Tanggal) === todayStr);
             if (listHariIni.length === 0) {
                 container.innerHTML = `<p class="text-[11px] text-blue-400 text-center py-3 italic">Belum ada pegawai yang absen hari ini.</p>`;
@@ -1135,7 +1153,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbxq3pGfjN4bLTZ9X-ZxoDdZ
 
             const now = new Date();
             const jamStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-            const tglStr = now.toISOString().slice(0, 10);
+            const tglStr = tanggalLokalDari(now);
 
             const btn = document.getElementById('btnAbsenMasuk'); btn.disabled = true; const original = btn.innerHTML;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses...';
@@ -1144,6 +1162,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbxq3pGfjN4bLTZ9X-ZxoDdZ
             try {
                 await kirimKeApiScript(payload);
                 masterPresensi.push({ ID_Presensi: idHariIni, Username: username, Tanggal: tglStr, Jam_Masuk: jamStr, Jam_Pulang: "", Status: "Masuk" });
+                btn.innerHTML = original;
                 renderStatusPresensiHariIni(); renderDaftarPresensiSemua();
                 alert(`Absen masuk berhasil dicatat pukul ${jamStr}.`);
             } catch (err) {
@@ -1170,6 +1189,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbxq3pGfjN4bLTZ9X-ZxoDdZ
             try {
                 await kirimKeApiScript(payload);
                 rec.Jam_Pulang = jamStr; rec.Status = "Pulang";
+                btn.innerHTML = original;
                 renderStatusPresensiHariIni(); renderDaftarPresensiSemua();
                 alert(`Absen pulang berhasil dicatat pukul ${jamStr}.`);
             } catch (err) {
@@ -2190,7 +2210,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbxq3pGfjN4bLTZ9X-ZxoDdZ
         }
 
         function logout() { if(confirm('Apakah Anda yakin ingin keluar?')) { bersihkanSesiLogin(); location.reload(); } }
-        function buatNoInvoice() { const dateStr = new Date().toISOString().slice(2,10).replace(/-/g, ''); const randomNum = Math.floor(1000 + Math.random() * 9000); return `INV${dateStr}${randomNum}`; }
+        function buatNoInvoice() { const dateStr = tanggalLokalIni().slice(2).replace(/-/g, ''); const randomNum = Math.floor(1000 + Math.random() * 9000); return `INV${dateStr}${randomNum}`; }
         function bukaModalPesanan() { document.getElementById('noInvoiceDisplay').innerText = buatNoInvoice(); const overlay = document.getElementById('modalPesananOverlay'), content = document.getElementById('modalPesananContent'); overlay.classList.remove('hidden'); setTimeout(() => { overlay.classList.remove('opacity-0'); content.classList.add('active'); }, 10); }
         function tutupModalPesanan() { const overlay = document.getElementById('modalPesananOverlay'), content = document.getElementById('modalPesananContent'); content.classList.remove('active'); overlay.classList.add('opacity-0'); setTimeout(() => { overlay.classList.add('hidden'); resetFormPesanan(); }, 300); }
 
@@ -2258,10 +2278,19 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbxq3pGfjN4bLTZ9X-ZxoDdZ
             let totalOrderBaru = existingPelanggan ? (parseInt(existingPelanggan.Total_Order || 0) + 1) : 1;
             let idPelanggan = existingPelanggan ? existingPelanggan.ID_Pelanggan : "CUST" + Date.now().toString().slice(-6);
 
-            const payloadPelanggan = {
-                sheetName: "Pelanggan", action: "insert",
-                rowData: { "ID_Pelanggan": idPelanggan, "Nama": nama, "No_HP": noHp, "Total_Order": totalOrderBaru }
-            };
+            // Pelanggan yang SUDAH ada di-update (bukan di-insert lagi).
+            // Sebelumnya selalu insert -> menambah baris duplikat di Sheet
+            // "Pelanggan" tiap kali pelanggan lama order, dan sekarang juga
+            // akan ditolak server karena ID_Pelanggan bersifat unik.
+            const payloadPelanggan = existingPelanggan
+                ? {
+                    sheetName: "Pelanggan", action: "update", idField: "ID_Pelanggan", id: idPelanggan,
+                    updateData: { "Nama": nama, "No_HP": noHp, "Total_Order": totalOrderBaru }
+                }
+                : {
+                    sheetName: "Pelanggan", action: "insert",
+                    rowData: { "ID_Pelanggan": idPelanggan, "Nama": nama, "No_HP": noHp, "Total_Order": totalOrderBaru }
+                };
 
             try {
                 // Simpan transaksi dulu -- ini yang paling penting.
@@ -2281,7 +2310,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbxq3pGfjN4bLTZ9X-ZxoDdZ
                     // sudah tersimpan -- jangan buat kasir mengira transaksinya
                     // hilang, cukup beri tahu bagian mana yang perlu dicek manual.
                     await kirimKeApiScript(payloadPelanggan);
-                    if (existingPelanggan) { existingPelanggan.Total_Order = totalOrderBaru; }
+                    if (existingPelanggan) { existingPelanggan.Total_Order = totalOrderBaru; existingPelanggan.Nama = nama; existingPelanggan.No_HP = noHp; }
                     else { masterPelanggan.push({ ID_Pelanggan: idPelanggan, Nama: nama, No_HP: noHp, Total_Order: totalOrderBaru }); }
                     alert(`Transaksi ${noInv} berhasil disimpan & data pelanggan tercatat!`);
                 } catch (errPelanggan) {
